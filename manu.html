@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blueprint ManufacturingIQ - Production Analysis</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        blueprint: {
+                            blue: '#233ED8',     // Vibrant Blueprint blue from screenshot
+                            blueHover: '#1D35BB',
+                            dark: '#0F1115',     // Main background
+                            panel: '#16181D',    // Dark panel/card background
+                            border: '#272A31',   // Subtle borders
+                            text: '#A0A4B0',     // Muted text
+                            chatBg: '#FFFFFF',   // Genie NLQ background
+                            chatBorder: '#E5E7EB'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4B5563; }
+        
+        /* Genie scrollbar */
+        .genie-scroll::-webkit-scrollbar-thumb { background: #D1D5DB; }
+        
+        .code-block {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #000000;
+            color: #E2E8F0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border: 1px solid #272A31;
+        }
+        .keyword { color: #F87171; } /* Red */
+        .string { color: #A7F3D0; } /* Green */
+        .comment { color: #94A3B8; } /* Gray */
+        .function { color: #60A5FA; } /* Blue */
+
+        /* Smooth sidebar transition */
+        #nav-sidebar {
+            transition: width 0.3s ease-in-out;
+        }
+        .sidebar-collapsed {
+            width: 0 !important;
+        }
+        .sidebar-collapsed .nav-inner {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .nav-inner {
+            width: 16rem; /* Keeps content 64 units wide during shrink */
+            transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-blueprint-dark h-screen flex overflow-hidden text-gray-200 font-sans">
+
+    <!-- Panel 1: Genie NLQ Chat Interface (Far Left) -->
+    <aside class="w-72 bg-blueprint-chatBg text-gray-900 flex flex-col h-full shadow-2xl z-20 flex-shrink-0 border-r border-blueprint-chatBorder">
+        <!-- Chat Header -->
+        <div class="p-6 flex justify-between items-center">
+            <span class="font-bold text-blueprint-blue text-lg">Hello</span>
+            <button class="bg-gray-100 p-2 rounded text-gray-600 hover:bg-gray-200 transition">
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Chat Prompts Area -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 genie-scroll">
+            <button class="w-full text-left text-xs font-bold text-blueprint-blue border-2 border-blueprint-blue/30 rounded p-4 hover:bg-blue-50 transition-colors uppercase leading-relaxed">
+                Are we on track to meet the Q3 ramp target for the Alpha-9 build?
+            </button>
+            <button class="w-full text-left text-xs font-bold text-blueprint-blue border-2 border-blueprint-blue/30 rounded p-4 hover:bg-blue-50 transition-colors uppercase leading-relaxed">
+                Which manufacturing location is currently experiencing the highest tolerance deviation?
+            </button>
+            <button class="w-full text-left text-xs font-bold text-blueprint-blue border-2 border-blueprint-blue/30 rounded p-4 hover:bg-blue-50 transition-colors uppercase leading-relaxed">
+                Forecast precision aluminum part shortages across all global sites for the next 30 days.
+            </button>
+            <button class="w-full text-left text-xs font-bold text-blueprint-blue border-2 border-blueprint-blue/30 rounded p-4 hover:bg-blue-50 transition-colors uppercase leading-relaxed">
+                What is the root cause of the current downtime on the Berlin CNC milling line?
+            </button>
+            <button class="w-full text-left text-xs font-bold text-blueprint-blue border-2 border-blueprint-blue/30 rounded p-4 hover:bg-blue-50 transition-colors uppercase leading-relaxed">
+                Show me the real-time build productivity and yield rates for the last 24 hours.
+            </button>
+            <button class="w-full text-left text-xs font-bold text-blueprint-blue border-2 border-blueprint-blue/30 rounded p-4 hover:bg-blue-50 transition-colors uppercase leading-relaxed">
+                Identify the top 5 stations with recurring micro-stoppages.
+            </button>
+            <button class="w-full text-left text-xs font-bold text-blueprint-blue border-2 border-blueprint-blue/30 rounded p-4 hover:bg-blue-50 transition-colors uppercase leading-relaxed">
+                How does our current inventory align with the planned delivery pipeline?
+            </button>
+        </div>
+
+        <!-- Chat Input Area -->
+        <div class="p-4 bg-white border-t border-gray-100">
+            <div class="flex items-center bg-gray-100 rounded-full border border-gray-300 p-1 pl-4">
+                <input type="text" placeholder="" class="bg-transparent flex-1 focus:outline-none text-sm text-gray-800">
+                <button class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-400 hover:text-blueprint-blue shadow-sm border border-gray-200">
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Panel 2: Navigation Sidebar (Middle) -->
+    <aside id="nav-sidebar" class="w-64 bg-blueprint-panel h-full border-r border-blueprint-border z-10 flex-shrink-0 relative">
+        <!-- Collapse Toggle Button -->
+        <button onclick="toggleSidebar()" class="absolute -right-3.5 top-1/2 transform -translate-y-1/2 bg-blueprint-border hover:bg-gray-600 text-white w-7 h-14 rounded-l-none rounded-r-md flex items-center justify-center z-50 border border-l-0 border-gray-600 shadow-lg cursor-pointer transition-colors" title="Toggle Sidebar">
+            <i id="toggle-icon" class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+
+        <!-- Inner Content Wrapper -->
+        <div class="nav-inner flex flex-col h-full">
+            <div class="p-6">
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-2 mt-2">App Navigation</div>
+                
+                <nav class="space-y-1.5">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors bg-blueprint-blue/20 text-blueprint-blue border border-blueprint-blue/30">
+                        <i class="fa-solid fa-industry w-5"></i>
+                        Production Dashboard
+                    </button>
+                    
+                    <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-boxes-stacked w-5"></i>
+                        Inventory & Forecasting
+                    </button>
+                    
+                    <button onclick="switchTab('quality')" id="nav-quality" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-ruler-combined w-5"></i>
+                        Quality & Tolerance
+                    </button>
+                    
+                    <button onclick="switchTab('tracking')" id="nav-tracking" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-bars-progress w-5"></i>
+                        Real-Time Build Tracking
+                    </button>
+
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2 pt-6">Technical</div>
+                    
+                    <button onclick="switchTab('architecture')" id="nav-architecture" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-diagram-project w-5"></i>
+                        System Architecture
+                    </button>
+
+                    <button onclick="switchTab('details')" id="nav-details" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-code w-5"></i>
+                        Implementation Details
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Panel 3: Main Content Area (Right) -->
+    <main class="flex-1 h-full overflow-y-auto p-10 relative bg-blueprint-dark">
+        
+        <!-- ==================== VIEW 1: EXECUTIVE DASHBOARD ==================== -->
+        <div id="view-dashboard" class="view-section">
+            <div class="mb-10">
+                <h1 class="text-2xl font-bold flex items-center gap-2 text-white">
+                    <span class="text-blueprint-blue font-bold text-3xl tracking-tight">Blueprint</span> 
+                    <span class="text-gray-400 font-normal">ManufacturingIQ</span>
+                </h1>
+            </div>
+
+            <div class="mb-8 border-b border-blueprint-border pb-4 flex justify-between items-end">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-200">Predictive Production & Model Health</h2>
+                    <div class="text-xs text-gray-500 mt-2 flex items-center gap-1">Powered by <i class="fa-solid fa-cube ml-1"></i> Mosaic AI</div>
+                </div>
+                <div class="flex gap-4">
+                    <span class="bg-blueprint-dark border border-blueprint-border px-3 py-1 rounded text-xs text-gray-400 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-500"></div> Model Registry: prod_tolerance_v3.1</span>
+                    <span class="bg-blueprint-dark border border-blueprint-border px-3 py-1 rounded text-xs text-gray-400 flex items-center gap-2"><i class="fa-solid fa-bolt text-yellow-500"></i> Streaming Enabled</span>
+                </div>
+            </div>
+
+            <!-- Model Health KPIs -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-blueprint-panel p-5 rounded-lg border border-blueprint-border border-l-2 border-l-blueprint-blue">
+                    <div class="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Model F1-Score</div>
+                    <div class="text-3xl font-bold text-white mb-1">0.942</div>
+                    <div class="text-xs text-green-400"><i class="fa-solid fa-arrow-up text-[10px]"></i> 0.015 vs Baseline</div>
+                </div>
+                
+                <div class="bg-blueprint-panel p-5 rounded-lg border border-blueprint-border border-l-2 border-l-purple-500">
+                    <div class="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Inference Latency</div>
+                    <div class="text-3xl font-bold text-white mb-1">42<span class="text-sm font-normal text-gray-500 ml-1">ms</span></div>
+                    <div class="text-xs text-gray-400">Target: < 50ms</div>
+                </div>
+                
+                <div class="bg-blueprint-panel p-5 rounded-lg border border-blueprint-border border-l-2 border-l-green-500">
+                    <div class="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Data Drift Status</div>
+                    <div class="text-3xl font-bold text-white mb-1">1.2<span class="text-sm font-normal text-gray-500 ml-1">%</span></div>
+                    <div class="text-xs text-green-400"><i class="fa-solid fa-check text-[10px]"></i> Stable Distribution</div>
+                </div>
+
+                <div class="bg-blueprint-panel p-5 rounded-lg border border-red-900/30 border-l-2 border-l-red-500 bg-red-900/10">
+                    <div class="text-xs font-semibold text-red-400 mb-1 uppercase tracking-wider">Anomalies Detected (1h)</div>
+                    <div class="text-3xl font-bold text-red-400 mb-1">87</div>
+                    <div class="text-xs text-red-400"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i> 12 High Confidence</div>
+                </div>
+            </div>
+
+            <!-- Data Science Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Main Scatter Plot -->
+                <div class="lg:col-span-2 bg-blueprint-panel p-6 rounded-lg border border-blueprint-border">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-semibold text-white">IoT Tolerance Outliers (DBSCAN Clusters)</h3>
+                        <div class="flex items-center gap-3">
+                            <label class="text-xs text-gray-400 flex items-center gap-1"><input type="checkbox" checked class="accent-blueprint-blue"> Show Boundaries</label>
+                            <i class="fa-solid fa-expand text-gray-500 text-sm cursor-pointer hover:text-white"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-blueprint-text mb-4">Vibration vs Temperature with predicted anomaly zones overlay.</p>
+                    
+                    <div class="w-full h-72">
+                        <canvas id="anomalyScatterChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Feature Importance Chart -->
+                <div class="bg-blueprint-panel p-6 rounded-lg border border-blueprint-border">
+                    <h3 class="font-semibold text-white mb-2">SHAP Feature Importance</h3>
+                    <p class="text-xs text-blueprint-text mb-4">Global impact on defect prediction model.</p>
+                    
+                    <div class="w-full h-72">
+                        <canvas id="shapFeatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Inference Feed -->
+            <div class="bg-blueprint-panel rounded-lg border border-blueprint-border overflow-hidden">
+                <div class="px-6 py-4 border-b border-blueprint-border bg-blueprint-dark/50 flex justify-between items-center">
+                    <h3 class="font-semibold text-white text-sm"><i class="fa-solid fa-satellite-dish text-blue-400 mr-2"></i>Live Streaming Inference Feed</h3>
+                    <div class="text-xs font-mono text-gray-500">Polling: 1s</div>
+                </div>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-blueprint-dark/20 border-b border-blueprint-border text-xs text-blueprint-text uppercase tracking-wider">
+                            <th class="py-2 px-6 font-semibold">Timestamp</th>
+                            <th class="py-2 px-6 font-semibold">Asset ID</th>
+                            <th class="py-2 px-6 font-semibold">Model Prediction</th>
+                            <th class="py-2 px-6 font-semibold">Confidence</th>
+                            <th class="py-2 px-6 font-semibold">Key Driver (Local SHAP)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm font-mono">
+                        <tr class="border-b border-blueprint-border/50 hover:bg-white/5 transition-colors text-red-400 bg-red-900/10">
+                            <td class="py-3 px-6">08:52:14.302</td>
+                            <td class="py-3 px-6">CNC-Milling-BER-04</td>
+                            <td class="py-3 px-6 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1 align-middle"></i> Defect / Out-of-Spec</td>
+                            <td class="py-3 px-6">98.2%</td>
+                            <td class="py-3 px-6">Vibration_Hz (+2.4)</td>
+                        </tr>
+                        <tr class="border-b border-blueprint-border/50 hover:bg-white/5 transition-colors text-gray-300">
+                            <td class="py-3 px-6">08:52:14.115</td>
+                            <td class="py-3 px-6">Assembly-Arm-TOK-01</td>
+                            <td class="py-3 px-6"><i class="fa-solid fa-circle text-[8px] text-gray-600 mr-1 align-middle"></i> Nominal</td>
+                            <td class="py-3 px-6">99.8%</td>
+                            <td class="py-3 px-6">Torque_Nm (-0.1)</td>
+                        </tr>
+                        <tr class="border-b border-blueprint-border/50 hover:bg-white/5 transition-colors text-gray-300">
+                            <td class="py-3 px-6">08:52:13.980</td>
+                            <td class="py-3 px-6">Lathe-DET-12</td>
+                            <td class="py-3 px-6"><i class="fa-solid fa-circle text-[8px] text-gray-600 mr-1 align-middle"></i> Nominal</td>
+                            <td class="py-3 px-6">94.5%</td>
+                            <td class="py-3 px-6">Spindle_RPM (+0.3)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 2: INVENTORY & FORECASTING ==================== -->
+        <div id="view-inventory" class="view-section hidden">
+            <div class="mb-10">
+                <h1 class="text-2xl font-bold flex items-center gap-2 text-white mb-2">
+                    <span class="text-blueprint-blue font-bold text-3xl tracking-tight">Blueprint</span> 
+                    <span class="text-gray-400 font-normal">Inventory & Pipelines</span>
+                </h1>
+                <p class="text-blueprint-text">Crunch parts across multi-location inventories and build a forecasting ramp for delivery.</p>
+            </div>
+
+            <div class="bg-blueprint-panel rounded-lg border border-blueprint-border overflow-hidden mb-8">
+                <div class="px-6 py-4 border-b border-blueprint-border bg-blueprint-dark/50 flex justify-between items-center">
+                    <h3 class="font-semibold text-white">Component Availability by Site</h3>
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-500 text-sm"></i>
+                        <input type="text" placeholder="Search components..." class="pl-9 pr-4 py-1.5 bg-[#0F1115] border border-blueprint-border text-white rounded text-sm focus:outline-none focus:border-blueprint-blue">
+                    </div>
+                </div>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-blueprint-dark/50 border-b border-blueprint-border text-sm text-blueprint-text">
+                            <th class="py-4 px-6 font-semibold">Facility / Component</th>
+                            <th class="py-4 px-6 font-semibold">Stock Status</th>
+                            <th class="py-4 px-6 font-semibold">Predicted Shortage</th>
+                            <th class="py-4 px-6 font-semibold">Ramp Pipeline Impact</th>
+                            <th class="py-4 px-6 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-blueprint-border/50 hover:bg-white/5 transition-colors">
+                            <td class="py-4 px-6 font-medium text-white">Berlin / CNC Alloy Block A</td>
+                            <td class="py-4 px-6"><span class="bg-green-500/20 text-green-400 border border-green-500/30 py-1 px-3 rounded-full text-xs font-semibold flex w-max items-center gap-1"><i class="fa-solid fa-check-circle"></i> Healthy (14 Days)</span></td>
+                            <td class="py-4 px-6 text-gray-400">N/A</td>
+                            <td class="py-4 px-6 text-gray-400">None</td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="bg-blueprint-dark border border-blueprint-border text-white py-1.5 px-3 rounded text-xs hover:bg-blueprint-border transition-colors">Rebalance</button>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-blueprint-border/50 hover:bg-white/5 transition-colors">
+                            <td class="py-4 px-6 font-medium text-white">Detroit / Precision Bearings</td>
+                            <td class="py-4 px-6"><span class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 py-1 px-3 rounded-full text-xs font-semibold flex w-max items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> Low Stock (3 Days)</span></td>
+                            <td class="py-4 px-6 text-gray-400">Oct 15, 2026</td>
+                            <td class="py-4 px-6 text-yellow-400 font-semibold">Moderate (Alpha-9)</td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="bg-blueprint-dark border border-blueprint-border text-white py-1.5 px-3 rounded text-xs hover:bg-blueprint-border transition-colors">Rebalance</button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="py-4 px-6 font-medium text-white">Tokyo / Sensor Array X-12</td>
+                            <td class="py-4 px-6"><span class="bg-red-500/20 text-red-400 border border-red-500/30 py-1 px-3 rounded-full text-xs font-semibold flex w-max items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> Critical (< 1 Day)</span></td>
+                            <td class="py-4 px-6 text-gray-400">Oct 12, 2026</td>
+                            <td class="py-4 px-6 text-red-400 font-bold">Severe Delay</td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="bg-blueprint-dark border border-blueprint-border text-white py-1.5 px-3 rounded text-xs hover:bg-blueprint-border transition-colors text-red-400">Expedite P.O.</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="bg-blueprint-panel p-6 rounded-lg border border-blueprint-border">
+                <h3 class="font-semibold text-lg mb-4 text-white"><i class="fa-solid fa-truck-fast text-blue-400 mr-2"></i> Ramp Pipeline Forecaster</h3>
+                <p class="text-sm text-blueprint-text mb-6">Run AI simulations based on current inventory, supplier lead times, and planned production schedules to forecast delivery outputs.</p>
+                <button class="bg-blueprint-blue hover:bg-blueprint-blueHover text-white font-semibold py-2 px-6 rounded transition-colors text-sm">
+                    Run Monte Carlo Simulation
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 3: QUALITY & TOLERANCE ==================== -->
+        <div id="view-quality" class="view-section hidden">
+            <div class="mb-10">
+                <h1 class="text-2xl font-bold flex items-center gap-2 text-white mb-2">
+                    <span class="text-blueprint-blue font-bold text-3xl tracking-tight">Blueprint</span> 
+                    <span class="text-gray-400 font-normal">Quality & Tolerance</span>
+                </h1>
+                <p class="text-blueprint-text">Real-time ingestion of micrometer and IoT sensor data to ensure precision machining remains within specification.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-blueprint-panel p-6 rounded-lg border border-blueprint-border">
+                    <div class="text-sm font-semibold text-blueprint-text mb-1">Parts Inspected (Last 24h)</div>
+                    <div class="text-4xl font-light text-white">2,854,000</div>
+                    <div class="text-sm text-gray-500 mt-1">Processed via Computer Vision edge nodes</div>
+                </div>
+                <div class="bg-[#2D161A] p-6 rounded-lg border border-red-900/50">
+                    <div class="text-sm font-semibold text-red-400 mb-1">Tolerance Deviations (Out of Spec)</div>
+                    <div class="text-4xl font-bold text-red-500">14</div>
+                    <div class="text-sm text-red-400/80 mt-1">Spike detected on Lathe Line B (Tokyo)</div>
+                </div>
+            </div>
+
+            <div class="bg-blueprint-panel p-6 rounded-lg border border-blueprint-border">
+                <h3 class="font-semibold text-lg mb-6 text-white">Precision Machining Inspection Flow</h3>
+                <div class="flex justify-between relative h-64 border border-blueprint-border bg-blueprint-dark/50 rounded-lg p-4">
+                    <!-- Placeholder for Flow Graphic -->
+                    <div class="absolute inset-0 flex items-center justify-center text-blueprint-text">
+                        [Streaming Sensor/Visual Inspection Sankey Diagram]
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 4: BUILD TRACKING ==================== -->
+        <div id="view-tracking" class="view-section hidden">
+            <div class="mb-10">
+                <h1 class="text-2xl font-bold flex items-center gap-2 text-white mb-2">
+                    <span class="text-blueprint-blue font-bold text-3xl tracking-tight">Blueprint</span> 
+                    <span class="text-gray-400 font-normal">Real-Time Build Tracking</span>
+                </h1>
+                <p class="text-blueprint-text">Granular, real-time tracking of parts, batches, and operations across global shop floors.</p>
+            </div>
+
+            <div class="bg-blueprint-panel rounded-lg border border-blueprint-border overflow-hidden">
+                <div class="px-6 py-4 border-b border-blueprint-border bg-blueprint-dark/50 grid grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-blueprint-text mb-1">Batch / Work Order</label>
+                        <select class="w-full bg-[#0F1115] border border-blueprint-border text-white rounded p-1.5 text-sm focus:outline-none"><option>All Active Orders</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-blueprint-text mb-1">Station / Machine</label>
+                        <select class="w-full bg-[#0F1115] border border-blueprint-border text-white rounded p-1.5 text-sm focus:outline-none">
+                            <option>All CNC Lathes</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2 flex items-end justify-end">
+                        <button class="bg-blueprint-dark border border-blueprint-border text-white py-1.5 px-4 rounded text-sm hover:bg-blueprint-border transition-colors"><i class="fa-solid fa-download mr-1"></i> Export Telemetry</button>
+                    </div>
+                </div>
+                
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-blueprint-border text-xs text-blueprint-text uppercase tracking-wider bg-blueprint-dark/20">
+                            <th class="py-3 px-4">Timestamp</th>
+                            <th class="py-3 px-4">Batch ID</th>
+                            <th class="py-3 px-4">Station / Machine</th>
+                            <th class="py-3 px-4">Status / Defect Flag</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-blueprint-border hover:bg-white/5">
+                            <td class="py-3 px-4 text-gray-400">2026-03-09 08:42:15</td>
+                            <td class="py-3 px-4 text-white font-medium">B-9982-XYZ</td>
+                            <td class="py-3 px-4 text-gray-300">Detroit-CNC-Line1</td>
+                            <td class="py-3 px-4"><span class="bg-green-500/20 text-green-400 border border-green-500/30 py-1 px-2 rounded text-xs">Operation Complete</span></td>
+                        </tr>
+                        <tr class="border-b border-blueprint-border bg-[#2D161A]">
+                            <td class="py-3 px-4 text-gray-400">2026-03-09 08:35:02</td>
+                            <td class="py-3 px-4 text-white font-medium">A-1102-MDF</td>
+                            <td class="py-3 px-4 text-gray-300">Tokyo-Mill-C4</td>
+                            <td class="py-3 px-4"><span class="bg-red-500/20 text-red-400 border border-red-500/30 py-1 px-2 rounded text-xs font-bold">Vibration Anomaly (Paused)</span></td>
+                        </tr>
+                        <tr class="border-b border-blueprint-border hover:bg-white/5">
+                            <td class="py-3 px-4 text-gray-400">2026-03-09 08:31:11</td>
+                            <td class="py-3 px-4 text-white font-medium">C-4421-ALP</td>
+                            <td class="py-3 px-4 text-gray-300">Berlin-Assembly-Arm2</td>
+                            <td class="py-3 px-4"><span class="bg-gray-700 text-gray-300 py-1 px-2 rounded text-xs">In Progress</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 5: ARCHITECTURE ==================== -->
+        <div id="view-architecture" class="view-section hidden">
+            <div class="mb-10">
+                <h1 class="text-2xl font-bold flex items-center gap-2 text-white mb-2">
+                    <span class="text-blueprint-blue font-bold text-3xl tracking-tight">Blueprint</span> 
+                    <span class="text-gray-400 font-normal">Architecture</span>
+                </h1>
+                <p class="text-blueprint-text">End-to-end IoT and ERP data flow for ManufacturingIQ on Databricks.</p>
+            </div>
+            <div class="bg-blueprint-panel rounded-xl p-12 text-center border border-blueprint-border shadow-2xl">
+                <i class="fa-solid fa-server text-6xl text-blueprint-blue mb-6"></i>
+                <p class="text-white text-lg mb-4">Manufacturing Reference Architecture</p>
+                <p class="text-blueprint-text text-sm max-w-2xl mx-auto">SCADA & IoT Sensors <i class="fa-solid fa-arrow-right mx-2 text-gray-600"></i> Event Hubs / Kafka <i class="fa-solid fa-arrow-right mx-2 text-gray-600"></i> Databricks Structured Streaming (Bronze/Silver/Gold) <i class="fa-solid fa-arrow-right mx-2 text-gray-600"></i> Mosaic AI (Predictive Maintenance & Tolerance Models) <i class="fa-solid fa-arrow-right mx-2 text-gray-600"></i> Dashboards & ERP Sync.</p>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 6: DETAILS & CODE MOCKUPS ==================== -->
+        <div id="view-details" class="view-section hidden">
+            <div class="mb-10">
+                <h1 class="text-2xl font-bold flex items-center gap-2 text-white mb-2">
+                    <span class="text-blueprint-blue font-bold text-3xl tracking-tight">Blueprint</span> 
+                    <span class="text-gray-400 font-normal">Implementation Details</span>
+                </h1>
+                <p class="text-blueprint-text">Under the hood: How ManufacturingIQ leverages Spark Structured Streaming and MLflow for real-time factory intelligence.</p>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Section 1 -->
+                <div class="bg-blueprint-panel p-6 rounded-lg border border-blueprint-border">
+                    <h3 class="font-semibold text-lg mb-2 text-white border-b border-blueprint-border pb-2">1. Real-Time Tolerance Anomaly Detection (Spark Streaming)</h3>
+                    <p class="text-sm text-blueprint-text mb-4">Ingesting high-frequency IoT sensor data (vibration, temperature, micrometer readings) from CNC machines to detect out-of-tolerance deviations instantly.</p>
+                    
+                    <div class="code-block">
+<span class="keyword">from</span> pyspark.sql.functions <span class="keyword">import</span> from_json, col, window
+<span class="keyword">import</span> mlflow.pyfunc
+
+<span class="comment"># Load predictive maintenance/tolerance model from MLflow Registry</span>
+model_uri = <span class="string">"models:/CNC_Tolerance_Anomaly/Production"</span>
+anomaly_udf = mlflow.pyfunc.spark_udf(spark, model_uri)
+
+<span class="comment"># Stream IoT data from Kafka/EventHubs</span>
+streaming_df = spark.readStream \
+    .format(<span class="string">"kafka"</span>) \
+    .option(<span class="string">"kafka.bootstrap.servers"</span>, <span class="string">"factory-kafka.internal:9092"</span>) \
+    .option(<span class="string">"subscribe"</span>, <span class="string">"cnc-telemetry-v1"</span>) \
+    .load()
+
+<span class="comment"># Parse payload and apply ML model to detect deviations in real-time</span>
+processed_stream = streaming_df.selectExpr(<span class="string">"CAST(value AS STRING) as json_payload"</span>) \
+    .select(from_json(col(<span class="string">"json_payload"</span>), schema).alias(<span class="string">"data"</span>)) \
+    .select(<span class="string">"data.*"</span>) \
+    .withColumn(<span class="string">"is_anomalous"</span>, anomaly_udf(col(<span class="string">"vibration_hz"</span>), col(<span class="string">"temp_c"</span>), col(<span class="string">"spindle_rpm"</span>)))
+
+<span class="comment"># Write flags to Silver Delta Table to trigger alerts on the shop floor</span>
+query = processed_stream.writeStream \
+    .format(<span class="string">"delta"</span>) \
+    .outputMode(<span class="string">"append"</span>) \
+    .option(<span class="string">"checkpointLocation"</span>, <span class="string">"/mnt/delta/checkpoints/cnc_telemetry"</span>) \
+    .table(<span class="string">"main.factory_silver.cnc_anomalies"</span>)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Sidebar Toggle Logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('nav-sidebar');
+            const icon = document.getElementById('toggle-icon');
+            
+            sidebar.classList.toggle('sidebar-collapsed');
+            
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-left');
+            }
+        }
+
+        // Tab switching logic
+        function switchTab(tabId) {
+            // Hide all views
+            const views = document.querySelectorAll('.view-section');
+            views.forEach(view => {
+                view.classList.add('hidden');
+            });
+
+            // Show selected view
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+
+            // Update nav button states
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => {
+                // Reset to unselected state
+                btn.classList.remove('bg-blueprint-blue/20', 'text-blueprint-blue', 'border-blueprint-blue/30');
+                btn.classList.add('text-blueprint-text', 'border-transparent');
+            });
+
+            // Set active state
+            const activeBtn = document.getElementById('nav-' + tabId);
+            activeBtn.classList.remove('text-blueprint-text', 'border-transparent');
+            activeBtn.classList.add('bg-blueprint-blue/20', 'text-blueprint-blue', 'border-blueprint-blue/30');
+        }
+
+        // Initialize Chart.js for the Data Science Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup default font color for dark mode charts
+            Chart.defaults.color = '#A0A4B0';
+            Chart.defaults.borderColor = '#272A31';
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            
+            // Generate some random cluster data for normal and anomalies
+            const normalData = Array.from({length: 80}, () => ({
+                x: 40 + Math.random() * 20, // Temp
+                y: 10 + Math.random() * 15  // Vibration
+            }));
+            
+            const anomalyData = Array.from({length: 15}, () => ({
+                x: 65 + Math.random() * 25, // High Temp
+                y: 28 + Math.random() * 20  // High Vibration
+            }));
+
+            // 1. SCATTER CHART (Anomaly Clusters)
+            const scatterCtx = document.getElementById('anomalyScatterChart').getContext('2d');
+            new Chart(scatterCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Normal Operation',
+                            data: normalData,
+                            backgroundColor: '#233ED8', // Blueprint blue
+                            borderColor: 'transparent',
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Predicted Anomalies',
+                            data: anomalyData,
+                            backgroundColor: '#EF4444', // Red
+                            borderColor: '#B91C1C',
+                            borderWidth: 1,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            pointStyle: 'triangle'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Temperature (°C)', color: '#6B7280' },
+                            grid: { color: '#272A31', borderDash: [5, 5] }
+                        },
+                        y: {
+                            title: { display: true, text: 'Vibration (Hz)', color: '#6B7280' },
+                            grid: { color: '#272A31', borderDash: [5, 5] }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Temp: ${context.parsed.x.toFixed(1)}°C, Vib: ${context.parsed.y.toFixed(1)}Hz`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. HORIZONTAL BAR CHART (SHAP Feature Importance)
+            const shapCtx = document.getElementById('shapFeatureChart').getContext('2d');
+            new Chart(shapCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Vibration (Hz)', 'Temperature (°C)', 'Spindle RPM', 'Tool Wear Index', 'Feed Rate'],
+                    datasets: [{
+                        label: 'Mean |SHAP Value|',
+                        data: [0.45, 0.32, 0.18, 0.12, 0.05],
+                        backgroundColor: [
+                            '#233ED8', // Primary
+                            '#3B82F6', 
+                            '#60A5FA', 
+                            '#93C5FD', 
+                            '#DBEAFE'
+                        ],
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Makes it a horizontal bar chart
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            title: { display: true, text: 'Impact on Model Output', color: '#6B7280', font: {size: 10} }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `SHAP Value: ${context.parsed.x}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
