@@ -62,11 +62,18 @@
 
         /* Smooth sidebar transition */
         #nav-sidebar {
-            transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transition: width 0.3s ease-in-out;
         }
         .sidebar-collapsed {
             width: 0 !important;
+        }
+        .sidebar-collapsed .nav-inner {
             opacity: 0;
+            visibility: hidden;
+        }
+        .nav-inner {
+            width: 16rem; /* Keeps content 64 units wide during shrink */
+            transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
             overflow: hidden;
         }
     </style>
@@ -120,48 +127,51 @@
     </aside>
 
     <!-- Panel 2: Navigation Sidebar (Middle) -->
-    <aside id="nav-sidebar" class="w-64 bg-blueprint-panel flex flex-col h-full border-r border-blueprint-border z-10 flex-shrink-0 relative">
+    <aside id="nav-sidebar" class="w-64 bg-blueprint-panel h-full border-r border-blueprint-border z-10 flex-shrink-0 relative">
         <!-- Collapse Toggle Button -->
         <button onclick="toggleSidebar()" class="absolute -right-3.5 top-1/2 transform -translate-y-1/2 bg-blueprint-border hover:bg-gray-600 text-white w-7 h-14 rounded-l-none rounded-r-md flex items-center justify-center z-50 border border-l-0 border-gray-600 shadow-lg cursor-pointer transition-colors" title="Toggle Sidebar">
             <i id="toggle-icon" class="fa-solid fa-chevron-left text-xs"></i>
         </button>
 
-        <div class="p-6">
-            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-2 mt-2">App Navigation</div>
-            
-            <nav class="space-y-1.5">
-                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors bg-blueprint-blue/20 text-blueprint-blue border border-blueprint-blue/30">
-                    <i class="fa-solid fa-chart-line w-5"></i>
-                    Executive Dashboard
-                </button>
+        <!-- Inner Content Wrapper -->
+        <div class="nav-inner flex flex-col h-full">
+            <div class="p-6">
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-2 mt-2">App Navigation</div>
                 
-                <button onclick="switchTab('compliance')" id="nav-compliance" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
-                    <i class="fa-solid fa-clipboard-check w-5"></i>
-                    Compliance & Audit Hub
-                </button>
-                
-                <button onclick="switchTab('pii')" id="nav-pii" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
-                    <i class="fa-solid fa-shield-halved w-5"></i>
-                    Real-Time PII Monitor
-                </button>
-                
-                <button onclick="switchTab('rbac')" id="nav-rbac" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
-                    <i class="fa-solid fa-users-viewfinder w-5"></i>
-                    Advanced RBAC Logs
-                </button>
+                <nav class="space-y-1.5">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors bg-blueprint-blue/20 text-blueprint-blue border border-blueprint-blue/30">
+                        <i class="fa-solid fa-chart-line w-5"></i>
+                        Executive Dashboard
+                    </button>
+                    
+                    <button onclick="switchTab('compliance')" id="nav-compliance" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-clipboard-check w-5"></i>
+                        Compliance & Audit Hub
+                    </button>
+                    
+                    <button onclick="switchTab('pii')" id="nav-pii" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-shield-halved w-5"></i>
+                        Real-Time PII Monitor
+                    </button>
+                    
+                    <button onclick="switchTab('rbac')" id="nav-rbac" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-users-viewfinder w-5"></i>
+                        Advanced RBAC Logs
+                    </button>
 
-                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2 pt-6">Technical</div>
-                
-                <button onclick="switchTab('architecture')" id="nav-architecture" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
-                    <i class="fa-solid fa-diagram-project w-5"></i>
-                    Solution Architecture
-                </button>
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2 pt-6">Technical</div>
+                    
+                    <button onclick="switchTab('architecture')" id="nav-architecture" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-diagram-project w-5"></i>
+                        Solution Architecture
+                    </button>
 
-                <button onclick="switchTab('details')" id="nav-details" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
-                    <i class="fa-solid fa-code w-5"></i>
-                    Implementation Details
-                </button>
-            </nav>
+                    <button onclick="switchTab('details')" id="nav-details" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-blueprint-text hover:bg-white/5 hover:text-white transition-colors border border-transparent">
+                        <i class="fa-solid fa-code w-5"></i>
+                        Implementation Details
+                    </button>
+                </nav>
+            </div>
         </div>
     </aside>
 
