@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiskIQ - Powered by Databricks & Blueprint</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        databricks: '#FF3621',
+                        sidebar: '#1B2333',
+                        surface: '#F5F7FA',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        
+        .code-block {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #1E293B;
+            color: #E2E8F0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        .keyword { color: #F87171; } /* Red */
+        .string { color: #A7F3D0; } /* Green */
+        .comment { color: #94A3B8; } /* Gray */
+        .function { color: #60A5FA; } /* Blue */
+    </style>
+</head>
+<body class="bg-surface h-screen flex overflow-hidden text-gray-800 font-sans">
+
+    <!-- Left Navigation Sidebar -->
+    <aside class="w-64 bg-sidebar text-white flex flex-col h-full shadow-xl z-10 flex-shrink-0">
+        <!-- Logo Area -->
+        <div class="p-6 border-b border-gray-700">
+            <div class="flex items-center gap-2 mb-1">
+                <i class="fa-solid fa-cube text-databricks text-xl"></i>
+                <span class="font-bold text-xl tracking-tight">Databricks</span>
+            </div>
+            <div class="text-xl font-semibold flex items-center gap-2">
+                <span class="text-white">Risk</span><span class="text-databricks">IQ</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-1">Powered by Blueprint</div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3 mt-4">Navigation</div>
+            
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors bg-white/10 text-white">
+                <i class="fa-solid fa-chart-line w-5"></i>
+                Executive Dashboard
+            </button>
+            
+            <button onclick="switchTab('compliance')" id="nav-compliance" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                <i class="fa-solid fa-clipboard-check w-5"></i>
+                Compliance & Audit Hub
+            </button>
+            
+            <button onclick="switchTab('pii')" id="nav-pii" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                <i class="fa-solid fa-shield-halved w-5"></i>
+                Real-Time PII Monitor
+            </button>
+            
+            <button onclick="switchTab('rbac')" id="nav-rbac" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                <i class="fa-solid fa-users-viewfinder w-5"></i>
+                Advanced RBAC Logs
+            </button>
+
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3 mt-8">Technical</div>
+            
+            <button onclick="switchTab('architecture')" id="nav-architecture" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                <i class="fa-solid fa-diagram-project w-5"></i>
+                Solution Architecture
+            </button>
+
+            <button onclick="switchTab('details')" id="nav-details" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-blue-400 hover:bg-white/5 hover:text-blue-300 transition-colors">
+                <i class="fa-solid fa-code w-5"></i>
+                Implementation Details
+            </button>
+        </nav>
+
+        <!-- User Profile -->
+        <div class="p-4 border-t border-gray-700">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-databricks flex items-center justify-center text-sm font-bold">
+                    CR
+                </div>
+                <div>
+                    <div class="text-sm font-medium">CRO Profile</div>
+                    <div class="text-xs text-gray-400">Chief Risk Officer</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 h-full overflow-y-auto p-8 relative">
+        
+        <!-- ==================== VIEW 1: EXECUTIVE DASHBOARD ==================== -->
+        <div id="view-dashboard" class="view-section">
+            <div class="mb-8 border-b border-gray-300 pb-4">
+                <h1 class="text-3xl font-bold flex items-center gap-3 text-gray-900">
+                    <i class="fa-solid fa-chart-column text-databricks"></i>
+                    Executive Risk Dashboard
+                </h1>
+                <p class="text-gray-600 mt-2">Comprehensive overview of organizational risk exposure across financial and compliance tracks.</p>
+            </div>
+
+            <!-- Selectors -->
+            <div class="flex gap-6 mb-8 bg-card p-4 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Risk Track</label>
+                    <select class="w-full border border-gray-300 rounded-md p-2 text-sm bg-gray-50 focus:outline-none focus:border-blue-500">
+                        <option>Combined (Financial & Other)</option>
+                        <option>Financial Risk Only</option>
+                        <option>Compliance/Other Risk Only</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Lookback Window</label>
+                    <select class="w-full border border-gray-300 rounded-md p-2 text-sm bg-gray-50 focus:outline-none focus:border-blue-500">
+                        <option>Last 30 Days</option>
+                        <option>Last 90 Days</option>
+                        <option>Year to Date</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <span class="text-sm text-gray-500 mb-2"><i class="fa-solid fa-rotate-right mr-1"></i> Synced 5m ago</span>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-red-500 relative overflow-hidden">
+                    <div class="text-sm font-semibold text-gray-500 mb-1">Total Financial Risk Exposure</div>
+                    <div class="text-3xl font-bold text-gray-900">$2.4M</div>
+                    <div class="text-sm text-red-500 mt-2 font-medium"><i class="fa-solid fa-arrow-trend-up"></i> +12% vs last month</div>
+                    <i class="fa-solid fa-money-bill-wave absolute -bottom-4 -right-4 text-7xl text-gray-100"></i>
+                </div>
+                <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-green-500 relative overflow-hidden">
+                    <div class="text-sm font-semibold text-gray-500 mb-1">Compliance Risk Score</div>
+                    <div class="text-3xl font-bold text-gray-900">84<span class="text-lg text-gray-400">/100</span></div>
+                    <div class="text-sm text-green-500 mt-2 font-medium"><i class="fa-solid fa-arrow-trend-up"></i> +3 pts vs last month</div>
+                    <i class="fa-solid fa-scale-balanced absolute -bottom-4 -right-4 text-7xl text-gray-100"></i>
+                </div>
+                <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-orange-500 relative overflow-hidden">
+                    <div class="text-sm font-semibold text-gray-500 mb-1">Active High-Severity Alerts</div>
+                    <div class="text-3xl font-bold text-red-600">3</div>
+                    <div class="text-sm text-gray-500 mt-2">Requires immediate attention</div>
+                    <i class="fa-solid fa-triangle-exclamation absolute -bottom-4 -right-4 text-7xl text-gray-100"></i>
+                </div>
+            </div>
+
+            <!-- Chart Area -->
+            <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 class="font-semibold text-lg mb-4 text-gray-800">Risk Events Forecast vs. Actuals</h3>
+                <div class="w-full h-80">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 2: COMPLIANCE HUB ==================== -->
+        <div id="view-compliance" class="view-section hidden">
+            <div class="mb-8 border-b border-gray-300 pb-4">
+                <h1 class="text-3xl font-bold flex items-center gap-3 text-gray-900">
+                    <i class="fa-solid fa-clipboard-check text-blue-600"></i>
+                    Compliance & Audit Hub
+                </h1>
+                <p class="text-gray-600 mt-2">Track regulatory alignment and generate audit-ready reporting packages instantly.</p>
+            </div>
+
+            <div class="bg-card rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-semibold text-lg text-gray-800">Framework Overview</h3>
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                        <input type="text" placeholder="Search frameworks..." class="pl-9 pr-4 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-600">
+                            <th class="py-3 px-6 font-semibold">Framework</th>
+                            <th class="py-3 px-6 font-semibold">Status</th>
+                            <th class="py-3 px-6 font-semibold">Last Audit Date</th>
+                            <th class="py-3 px-6 font-semibold">Open Violations</th>
+                            <th class="py-3 px-6 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-4 px-6 font-medium text-gray-900">GDPR (EU)</td>
+                            <td class="py-4 px-6"><span class="bg-green-100 text-green-800 py-1 px-3 rounded-full text-xs font-semibold flex w-max items-center gap-1"><i class="fa-solid fa-check-circle"></i> Compliant</span></td>
+                            <td class="py-4 px-6 text-gray-600">Oct 12, 2025</td>
+                            <td class="py-4 px-6 text-gray-600">0</td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="bg-white border border-gray-300 text-gray-700 py-1.5 px-3 rounded text-xs hover:bg-gray-50 font-medium shadow-sm">Generate Report</button>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-4 px-6 font-medium text-gray-900">CCPA (California)</td>
+                            <td class="py-4 px-6"><span class="bg-yellow-100 text-yellow-800 py-1 px-3 rounded-full text-xs font-semibold flex w-max items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> Needs Review</span></td>
+                            <td class="py-4 px-6 text-gray-600">Aug 05, 2025</td>
+                            <td class="py-4 px-6 text-yellow-600 font-semibold">2</td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="bg-white border border-gray-300 text-gray-700 py-1.5 px-3 rounded text-xs hover:bg-gray-50 font-medium shadow-sm">Generate Report</button>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="py-4 px-6 font-medium text-gray-900">SOC 2 Type II</td>
+                            <td class="py-4 px-6"><span class="bg-green-100 text-green-800 py-1 px-3 rounded-full text-xs font-semibold flex w-max items-center gap-1"><i class="fa-solid fa-check-circle"></i> Compliant</span></td>
+                            <td class="py-4 px-6 text-gray-600">Jan 10, 2026</td>
+                            <td class="py-4 px-6 text-gray-600">0</td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="bg-white border border-gray-300 text-gray-700 py-1.5 px-3 rounded text-xs hover:bg-gray-50 font-medium shadow-sm">Generate Report</button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-4 px-6 font-medium text-gray-900">HIPAA</td>
+                            <td class="py-4 px-6"><span class="bg-red-100 text-red-800 py-1 px-3 rounded-full text-xs font-semibold flex w-max items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> At Risk</span></td>
+                            <td class="py-4 px-6 text-gray-600">Nov 22, 2025</td>
+                            <td class="py-4 px-6 text-red-600 font-bold">14</td>
+                            <td class="py-4 px-6 text-right">
+                                <button class="bg-white border border-gray-300 text-gray-700 py-1.5 px-3 rounded text-xs hover:bg-gray-50 font-medium shadow-sm">Generate Report</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 class="font-semibold text-lg mb-4 text-gray-800"><i class="fa-solid fa-file-pdf text-red-500 mr-2"></i> Custom Audit Report Generator</h3>
+                <p class="text-sm text-gray-600 mb-6">Select data domains and timeframes to generate a comprehensive proof-of-compliance package compiled from Unity Catalog logs.</p>
+                
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Data Domains</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" checked class="rounded text-blue-600"> Customer Profiles</label>
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" checked class="rounded text-blue-600"> Payment History</label>
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" class="rounded text-blue-600"> Internal HR Records</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Audit Window</label>
+                        <input type="date" class="border border-gray-300 rounded p-2 text-sm w-full mb-2">
+                        <input type="date" class="border border-gray-300 rounded p-2 text-sm w-full">
+                    </div>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded shadow-sm transition-colors">
+                    Run Compliance Job
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 3: PII MONITOR ==================== -->
+        <div id="view-pii" class="view-section hidden">
+            <div class="mb-8 border-b border-gray-300 pb-4">
+                <h1 class="text-3xl font-bold flex items-center gap-3 text-gray-900">
+                    <i class="fa-solid fa-shield-halved text-green-600"></i>
+                    Real-Time PII Monitor
+                </h1>
+                <p class="text-gray-600 mt-2">Active monitoring of data pipelines for exposed Personal Identifiable Information.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200">
+                    <div class="text-sm font-semibold text-gray-500 mb-1">Scanned Records (Last 24h)</div>
+                    <div class="text-4xl font-light text-gray-900">1.2B</div>
+                </div>
+                <div class="bg-card p-6 rounded-lg shadow-sm border border-red-200 bg-red-50">
+                    <div class="text-sm font-semibold text-red-700 mb-1">Flagged PII Anomalies</div>
+                    <div class="text-4xl font-bold text-red-600">142</div>
+                    <div class="text-sm text-red-600 mt-1">Found in unmasked Silver tables</div>
+                </div>
+            </div>
+
+            <!-- Conceptual Flow Graphic -->
+            <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200 relative">
+                <h3 class="font-semibold text-lg mb-6 text-gray-800">Data Flow & Exposure Risk</h3>
+                
+                <div class="flex items-center justify-between text-sm font-semibold text-gray-500 mb-4 px-4">
+                    <div class="w-1/3 text-center">Data Sources</div>
+                    <div class="w-1/3 text-center">Mosaic AI Classifier</div>
+                    <div class="w-1/3 text-center">Access Destination</div>
+                </div>
+                
+                <div class="flex justify-between relative h-64 border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <!-- Lines connecting blocks (CSS generated) -->
+                    <svg class="absolute top-0 left-0 w-full h-full pointer-events-none" style="z-index: 1;">
+                        <!-- Safe Path -->
+                        <path d="M 150 60 C 300 60, 400 60, 600 60" stroke="#3B82F6" stroke-width="20" fill="none" opacity="0.4" />
+                        <path d="M 600 60 C 800 60, 900 60, 1000 60" stroke="#3B82F6" stroke-width="15" fill="none" opacity="0.4" />
+                        
+                        <!-- PII Risk Path -->
+                        <path d="M 150 180 C 300 180, 400 120, 600 120" stroke="#EF4444" stroke-width="8" fill="none" opacity="0.6" />
+                        <path d="M 600 120 C 800 120, 900 180, 1000 180" stroke="#EF4444" stroke-width="8" fill="none" opacity="0.8" />
+                    </svg>
+
+                    <!-- Nodes -->
+                    <div class="w-1/4 flex flex-col justify-around z-10">
+                        <div class="bg-white border border-gray-300 p-3 rounded shadow text-center font-medium">CRM Data<br><span class="text-xs text-gray-500">800M rows</span></div>
+                        <div class="bg-white border border-gray-300 p-3 rounded shadow text-center font-medium">App Logs<br><span class="text-xs text-gray-500">400M rows</span></div>
+                    </div>
+                    
+                    <div class="w-1/4 flex flex-col justify-center z-10">
+                        <div class="bg-sidebar text-white border border-gray-800 p-4 rounded-lg shadow-lg text-center font-bold">
+                            <i class="fa-solid fa-brain mb-2 text-xl text-databricks"></i><br>
+                            RiskIQ NLP Engine
+                        </div>
+                    </div>
+
+                    <div class="w-1/4 flex flex-col justify-around z-10">
+                        <div class="bg-white border border-blue-300 p-3 rounded shadow text-center font-medium">Masked Analytics DB<br><span class="text-xs text-green-600">Authorized</span></div>
+                        <div class="bg-white border border-red-500 p-3 rounded shadow text-center font-medium ring-2 ring-red-200">Ad-Hoc Query DB<br><span class="text-xs text-red-600 font-bold">Anomalous Access</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 4: RBAC ==================== -->
+        <div id="view-rbac" class="view-section hidden">
+            <div class="mb-8 border-b border-gray-300 pb-4">
+                <h1 class="text-3xl font-bold flex items-center gap-3 text-gray-900">
+                    <i class="fa-solid fa-users-viewfinder text-purple-600"></i>
+                    Advanced RBAC Logging Layer
+                </h1>
+                <p class="text-gray-600 mt-2">Enhanced accountability logs built on top of Unity Catalog to track exactly who accessed what, and why.</p>
+            </div>
+
+            <div class="bg-card rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 grid grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">User/Role</label>
+                        <select class="w-full border border-gray-300 rounded p-1.5 text-sm bg-white"><option>All Users</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Data Asset</label>
+                        <select class="w-full border border-gray-300 rounded p-1.5 text-sm bg-white"><option>All Catalogs</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Risk Level</label>
+                        <select class="w-full border border-gray-300 rounded p-1.5 text-sm bg-white">
+                            <option>High Anomalies Only</option>
+                            <option>All Access</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end justify-end">
+                        <button class="bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 py-1.5 px-4 rounded text-sm font-medium shadow-sm"><i class="fa-solid fa-download mr-1"></i> Export CSV</button>
+                    </div>
+                </div>
+                
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
+                            <th class="py-3 px-4">Timestamp</th>
+                            <th class="py-3 px-4">User Identity</th>
+                            <th class="py-3 px-4">Asset Accessed</th>
+                            <th class="py-3 px-4">Query / Action</th>
+                            <th class="py-3 px-4">Policy Flag</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-gray-100 bg-red-50">
+                            <td class="py-3 px-4 text-gray-600">2026-03-08 14:32:01</td>
+                            <td class="py-3 px-4 font-medium">j.doe@company.com<br><span class="text-xs text-gray-500">Role: Marketing Intern</span></td>
+                            <td class="py-3 px-4">prod_catalog.finance.payroll_q1</td>
+                            <td class="py-3 px-4 font-mono text-xs bg-white border border-gray-200 p-1 rounded">SELECT * FROM ...</td>
+                            <td class="py-3 px-4"><span class="bg-red-600 text-white py-1 px-2 rounded text-xs font-bold">Unusual Access Vector</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-3 px-4 text-gray-600">2026-03-08 14:15:22</td>
+                            <td class="py-3 px-4 font-medium">sys_pipeline_01<br><span class="text-xs text-gray-500">Role: Service Principal</span></td>
+                            <td class="py-3 px-4">dev_catalog.silver.user_events</td>
+                            <td class="py-3 px-4 font-mono text-xs bg-gray-50 border border-gray-200 p-1 rounded">MERGE INTO ...</td>
+                            <td class="py-3 px-4"><span class="bg-gray-200 text-gray-700 py-1 px-2 rounded text-xs">Standard Baseline</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-100 bg-yellow-50">
+                            <td class="py-3 px-4 text-gray-600">2026-03-08 13:05:11</td>
+                            <td class="py-3 px-4 font-medium">a.smith@company.com<br><span class="text-xs text-gray-500">Role: Data Scientist</span></td>
+                            <td class="py-3 px-4">prod_catalog.gold.cust_profiles</td>
+                            <td class="py-3 px-4 font-mono text-xs bg-white border border-gray-200 p-1 rounded">SELECT email, phone...</td>
+                            <td class="py-3 px-4"><span class="bg-yellow-500 text-white py-1 px-2 rounded text-xs font-bold">High Volume Export</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 5: ARCHITECTURE ==================== -->
+        <div id="view-architecture" class="view-section hidden">
+            <!-- Included just to represent the tab exists based on the requirement -->
+            <div class="mb-8 border-b border-gray-300 pb-4">
+                <h1 class="text-3xl font-bold flex items-center gap-3 text-gray-900">
+                    <i class="fa-solid fa-diagram-project text-indigo-600"></i>
+                    Solution Architecture
+                </h1>
+                <p class="text-gray-600 mt-2">End-to-end data flow for RiskIQ on Databricks.</p>
+            </div>
+            <div class="bg-sidebar rounded-xl p-8 text-center text-white border border-gray-700 shadow-2xl">
+                <p class="text-xl mb-4 font-light">Reference Architecture diagram goes here.</p>
+                <i class="fa-solid fa-sitemap text-6xl text-gray-600 mb-4"></i>
+                <p class="text-gray-400 text-sm max-w-2xl mx-auto">Ingesting from Cloud Storage -> Lakeflow (Bronze, Silver, Gold with Delta Lake) -> Mosaic AI (Risk Models, PII Classification) -> Unity Catalog Governance Layer -> Databricks AI/BI Dashboards.</p>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW 6: DETAILS & CODE MOCKUPS ==================== -->
+        <div id="view-details" class="view-section hidden">
+            <div class="mb-8 border-b border-gray-300 pb-4">
+                <h1 class="text-3xl font-bold flex items-center gap-3 text-gray-900">
+                    <i class="fa-solid fa-code text-blue-500"></i>
+                    Implementation Details
+                </h1>
+                <p class="text-gray-600 mt-2">Under the hood: How RiskIQ leverages PySpark, MLflow, and Unity Catalog to power these insights.</p>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Section 1 -->
+                <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="font-semibold text-xl mb-2 text-gray-800 border-b border-gray-100 pb-2">1. PII Detection Pipeline (Mosaic AI / PySpark)</h3>
+                    <p class="text-sm text-gray-600 mb-4">RiskIQ uses automated data classification jobs that run against new Delta Lake tables to identify unmasked PII (SSNs, Emails, Phone numbers) using NLP libraries like Presidio integrated via PySpark UDFs.</p>
+                    
+                    <div class="code-block">
+<span class="keyword">from</span> pyspark.sql.functions <span class="keyword">import</span> udf, col
+<span class="keyword">from</span> presidio_analyzer <span class="keyword">import</span> AnalyzerEngine
+
+<span class="comment"># Initialize NLP Analyzer</span>
+analyzer = AnalyzerEngine()
+
+<span class="keyword">def</span> <span class="function">detect_pii</span>(text):
+    <span class="keyword">if not</span> text: <span class="keyword">return</span> <span class="string">"None"</span>
+    results = analyzer.analyze(text=text, entities=[<span class="string">"PHONE_NUMBER"</span>, <span class="string">"EMAIL_ADDRESS"</span>, <span class="string">"US_SSN"</span>], language=<span class="string">"en"</span>)
+    <span class="keyword">return</span> <span class="string">","</span>.join([r.entity_type <span class="keyword">for</span> r <span class="keyword">in</span> results])
+
+<span class="comment"># Register UDF for distributed execution</span>
+detect_pii_udf = udf(detect_pii)
+
+<span class="comment"># Apply to raw bronze table to flag risky columns</span>
+df_bronze = spark.read.table(<span class="string">"main.raw_data.customer_intake"</span>)
+df_flagged = df_bronze.withColumn(<span class="string">"pii_detected"</span>, detect_pii_udf(col(<span class="string">"free_text_notes"</span>)))
+
+<span class="comment"># Save to Silver layer for dashboard reporting</span>
+df_flagged.filter(col(<span class="string">"pii_detected"</span>) != <span class="string">"None"</span>).write.mode(<span class="string">"append"</span>).saveAsTable(<span class="string">"main.governance.pii_alerts"</span>)
+                    </div>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="font-semibold text-xl mb-2 text-gray-800 border-b border-gray-100 pb-2">2. Enhanced RBAC Auditing via Unity Catalog Logs</h3>
+                    <p class="text-sm text-gray-600 mb-4">Standard RBAC restricts access, but RiskIQ analyzes the <code>system.access.audit</code> tables to establish behavioral baselines. If a user downloads 100x their normal volume, the ML model flags it as "High Vol Export".</p>
+                    
+                    <div class="code-block">
+<span class="keyword">import</span> mlflow
+
+<span class="comment"># Load Unity Catalog System Audit Logs</span>
+audit_logs = spark.sql(<span class="string">"""
+    SELECT event_time, user_identity, action_name, request_params.table_full_name
+    FROM system.access.audit
+    WHERE action_name IN ('generateTemporaryTableCredential', 'runCommand')
+"""</span>)
+
+<span class="comment"># Load trained MLflow Anomaly Detection Model (Isolation Forest)</span>
+model_uri = <span class="string">"models:/RiskIQ_Access_Anomaly/Production"</span>
+anomaly_model = mlflow.pyfunc.load_model(model_uri)
+
+<span class="comment"># Predict Anomalies on user behavior features</span>
+features_df = extract_user_features(audit_logs)
+predictions = anomaly_model.predict(features_df)
+
+<span class="comment"># Trigger Alert to Databricks SQL Dashboard and Slack</span>
+<span class="keyword">if</span> predictions.contains_anomaly:
+    trigger_slack_alert(user=features_df.user_identity, risk_level=<span class="string">"High"</span>)
+                    </div>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="bg-card p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="font-semibold text-xl mb-2 text-gray-800 border-b border-gray-100 pb-2">3. GDPR Right-To-Be-Forgotten Execution</h3>
+                    <p class="text-sm text-gray-600 mb-4">When compliance generates an audit report or executes a deletion request, RiskIQ uses Databricks Delta Lake's <code>DELETE</code> operations which natively support ACID compliance to prove to auditors the data was removed securely.</p>
+                    
+                    <div class="code-block">
+<span class="comment"># Execute GDPR Deletion across Gold Customer Tables</span>
+spark.sql(<span class="string">"""
+    DELETE FROM main.gold.customer_profiles 
+    WHERE customer_id = 'USER_99421';
+"""</span>)
+
+<span class="comment"># Force Vacuum to remove stale data files permanently (proving compliance)</span>
+spark.sql(<span class="string">"""
+    VACUUM main.gold.customer_profiles RETAIN 0 HOURS;
+"""</span>)
+
+<span class="comment"># Log execution for the Compliance & Audit Hub UI</span>
+log_compliance_action(framework=<span class="string">"GDPR"</span>, action=<span class="string">"Data Subject Deletion"</span>, status=<span class="string">"SUCCESS"</span>)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Tab switching logic
+        function switchTab(tabId) {
+            // Hide all views
+            const views = document.querySelectorAll('.view-section');
+            views.forEach(view => {
+                view.classList.add('hidden');
+            });
+
+            // Show selected view
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+
+            // Update nav button states
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => {
+                // Reset to unselected state
+                btn.classList.remove('bg-white/10', 'text-white');
+                if(btn.id !== 'nav-details') {
+                    btn.classList.add('text-gray-300');
+                }
+            });
+
+            // Set active state
+            const activeBtn = document.getElementById('nav-' + tabId);
+            activeBtn.classList.remove('text-gray-300', 'text-blue-400');
+            if(tabId === 'details') {
+                activeBtn.classList.add('bg-white/10', 'text-blue-300');
+            } else {
+                activeBtn.classList.add('bg-white/10', 'text-white');
+            }
+        }
+
+        // Initialize Chart.js for the Executive Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mar 1', 'Mar 2', 'Mar 3', 'Mar 4', 'Mar 5', 'Mar 6', 'Mar 7', 'Mar 8'],
+                    datasets: [
+                        {
+                            label: 'Financial Risk Volume',
+                            data: [12, 19, 15, 17, 22, 24, 20, 25],
+                            backgroundColor: '#3B82F6', // Blue
+                            order: 2
+                        },
+                        {
+                            label: 'Compliance Flags',
+                            data: [5, 4, 7, 3, 6, 8, 4, 9],
+                            backgroundColor: '#F97316', // Orange
+                            order: 3
+                        },
+                        {
+                            label: 'Moving Average (Score)',
+                            data: [10, 12, 11, 10, 14, 16, 12, 17],
+                            type: 'line',
+                            borderColor: '#EF4444', // Red
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#F3F4F6'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
