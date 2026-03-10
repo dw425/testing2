@@ -1,0 +1,120 @@
+app:
+  name: GamingIQ
+  title: "Blueprint GamingIQ"
+  subtitle: "Player Intelligence & Live Ops"
+  catalog: gaming_iq
+  warehouse_http_path: "/sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>"
+
+brand:
+  primary_color: "#233ED8"
+  accent_colors:
+    healthy: "#22C55E"
+    warning: "#EAB308"
+    critical: "#EF4444"
+
+data:
+  game_titles: [Stellar Conquest, Shadow Realms, Velocity Rush]
+  regions: [NA-East, NA-West, EU-West, EU-North, APAC-SEA, APAC-JP]
+  player_segments: [Whale, Dolphin, Minnow, Free-to-Play]
+  telemetry:
+    dau: 2400000
+    concurrent_peak: 847000
+    events_per_second: 125000
+    avg_session_minutes: 42
+  player_health:
+    d1_retention: 0.68
+    d7_retention: 0.41
+    d30_retention: 0.22
+    churn_risk_high: 34200
+    ltv_avg: 47.80
+  economy:
+    daily_revenue: 284000
+    arpdau: 0.118
+    items_traded_24h: 1850000
+    inflation_index: 1.03
+    suspicious_transactions: 89
+  matchmaking:
+    avg_queue_time_sec: 12.4
+    skill_rating_spread: 0.15
+    matches_24h: 4200000
+    reported_unfair: 0.008
+
+ml:
+  churn_model:
+    name: Player_Churn_Predictor
+    features: [days_since_last_login, session_frequency_7d, purchase_count_30d, friend_count, skill_rating_delta, matches_played_7d]
+    algorithm: XGBClassifier
+    target_metric: auc_roc
+    target_value: 0.91
+  fraud_model:
+    name: Economy_Fraud_Detector
+    features: [transaction_velocity, gold_delta_1h, item_rarity_traded, account_age_days, ip_change_count]
+    algorithm: IsolationForest
+
+pages:
+  - id: dashboard
+    label: Live Ops Dashboard
+    icon: fa-gamepad
+    enabled: true
+  - id: player_health
+    label: "Player Health & Retention"
+    icon: fa-users
+    enabled: true
+  - id: economy
+    label: In-Game Economy
+    icon: fa-coins
+    enabled: true
+  - id: matchmaking
+    label: "Matchmaking & Performance"
+    icon: fa-ranking-star
+    enabled: true
+  - id: architecture
+    label: Solution Architecture
+    icon: fa-diagram-project
+    enabled: true
+  - id: details
+    label: Implementation Details
+    icon: fa-code
+    enabled: true
+
+genie:
+  space_name: "GamingIQ Genie"
+  tables:
+    - gaming_iq.gold.live_ops_kpis
+    - gaming_iq.gold.player_retention_cohorts
+    - gaming_iq.gold.economy_health_metrics
+    - gaming_iq.gold.matchmaking_fairness
+    - gaming_iq.silver.player_telemetry
+    - gaming_iq.silver.transaction_log
+  sample_questions:
+    - "What is the current DAU trend across all game titles this week?"
+    - "Which player segment has the highest churn risk in Stellar Conquest?"
+    - "Is there evidence of gold duplication exploits in Shadow Realms?"
+    - "Show me matchmaking fairness metrics for Velocity Rush ranked mode."
+    - "What is our predicted D30 retention for the latest cohort?"
+    - "Which region has the highest ARPDAU and what's driving it?"
+    - "Identify the top 5 items causing economy inflation this week."
+
+dashboard:
+  kpis:
+    - title: "Daily Active Users"
+      query: "SELECT dau FROM gold.live_ops_kpis ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:,.0f}"
+      value: "2.4M"
+      accent: blue
+    - title: "Concurrent Players"
+      query: "SELECT concurrent_peak FROM gold.live_ops_kpis ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:,.0f}"
+      value: "847K"
+      accent: purple
+    - title: "D7 Retention"
+      query: "SELECT d7_retention FROM gold.player_retention_cohorts ORDER BY cohort_date DESC LIMIT 1"
+      format: "{:.0%}"
+      value: "41%"
+      accent: green
+    - title: "High Churn Risk"
+      query: "SELECT churn_risk_high FROM gold.live_ops_kpis ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:,.0f}"
+      value: "34.2K"
+      accent: red
+      alert: true

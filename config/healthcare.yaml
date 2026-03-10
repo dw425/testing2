@@ -1,0 +1,110 @@
+app:
+  name: HealthcareIQ
+  title: "Blueprint HealthcareIQ"
+  subtitle: "Clinical Operations Analytics"
+  catalog: healthcare_iq
+  warehouse_http_path: "/sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>"
+
+brand:
+  primary_color: "#233ED8"
+  accent_colors:
+    healthy: "#22C55E"
+    warning: "#EAB308"
+    critical: "#EF4444"
+
+data:
+  facilities: [Metro General Hospital, Westside Medical Center, Eastview Community Clinic]
+  departments: [Emergency, ICU, Cardiology, Orthopedics, Oncology, Pediatrics]
+  equipment_types:
+    Metro General: [MRI-MGH-01, CT-Scanner-MGH-02, Ventilator-MGH-14]
+    Westside: [MRI-WSM-01, Ultrasound-WSM-03, Infusion-Pump-WSM-22]
+    Eastview: [X-Ray-EVC-01, ECG-Monitor-EVC-05, Lab-Analyzer-EVC-08]
+  patient_flow:
+    avg_daily_admissions: 285
+    avg_ed_wait_minutes: 34
+    bed_utilization_pct: 87.3
+    avg_los_days: 4.2
+  readmissions:
+    total_discharges_30d: 4200
+    readmission_rate: 0.082
+    high_risk_patients: 156
+  equipment_monitoring:
+    total_assets: 1240
+    maintenance_due: 47
+    critical_alerts: 3
+
+ml:
+  readmission_model:
+    name: Readmission_Risk_Predictor
+    features: [age, diagnosis_code, los_days, prior_admissions_12m, comorbidity_index, insurance_type]
+    algorithm: GradientBoostingClassifier
+    target_metric: auc_roc
+    target_value: 0.89
+  equipment_model:
+    name: Equipment_Failure_Predictor
+    features: [usage_hours, maintenance_history, vibration, temperature, error_count]
+    algorithm: RandomForestClassifier
+
+pages:
+  - id: dashboard
+    label: Operations Dashboard
+    icon: fa-heart-pulse
+    enabled: true
+  - id: patient_flow
+    label: "Patient Flow & Capacity"
+    icon: fa-bed-pulse
+    enabled: true
+  - id: readmissions
+    label: Readmission Risk
+    icon: fa-rotate-left
+    enabled: true
+  - id: equipment
+    label: "Equipment & Asset Monitoring"
+    icon: fa-stethoscope
+    enabled: true
+  - id: architecture
+    label: Solution Architecture
+    icon: fa-diagram-project
+    enabled: true
+  - id: details
+    label: Implementation Details
+    icon: fa-code
+    enabled: true
+
+genie:
+  space_name: "HealthcareIQ Genie"
+  tables:
+    - healthcare_iq.gold.operations_kpis
+    - healthcare_iq.gold.patient_flow_metrics
+    - healthcare_iq.gold.readmission_predictions
+    - healthcare_iq.gold.equipment_health
+    - healthcare_iq.silver.ed_encounters
+    - healthcare_iq.silver.discharge_events
+  sample_questions:
+    - "What is the current bed utilization rate across all facilities?"
+    - "Which department has the longest average patient wait time today?"
+    - "Predict readmission risk for patients discharged in the last 48 hours."
+    - "Are there any critical equipment maintenance alerts I should act on now?"
+    - "Show me patient flow bottlenecks in the Emergency Department this week."
+    - "Which facility is trending toward capacity limits in the next 72 hours?"
+    - "What are the top predictors for 30-day readmission in our cardiology patients?"
+
+dashboard:
+  kpis:
+    - title: Bed Utilization
+      query: "SELECT bed_utilization_pct FROM gold.operations_kpis ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:.1f}%"
+      accent: blue
+    - title: Avg ED Wait Time
+      query: "SELECT avg_ed_wait_minutes FROM gold.operations_kpis ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:.0f} min"
+      accent: purple
+    - title: "Readmission Rate (30d)"
+      query: "SELECT readmission_rate_30d FROM gold.operations_kpis ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:.1f}%"
+      accent: green
+    - title: Critical Equipment Alerts
+      query: "SELECT critical_alerts FROM gold.operations_kpis ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:.0f}"
+      accent: red
+      alert: true

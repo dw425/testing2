@@ -1,0 +1,8 @@
+command:
+  - python
+  - app/main.py
+env:
+  - name: USE_CASE
+    value: manufacturing
+  - name: CATALOG
+    value: manufacturing_iq

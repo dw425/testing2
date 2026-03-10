@@ -1,0 +1,121 @@
+app:
+  name: RiskIQ
+  title: "Blueprint RiskIQ"
+  subtitle: "Customer Analysis"
+  catalog: risk_iq
+  warehouse_http_path: "/sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>"
+
+brand:
+  primary_color: "#233ED8"
+  accent_colors:
+    healthy: "#22C55E"
+    warning: "#EAB308"
+    critical: "#EF4444"
+
+data:
+  domains: [Finance, Healthcare, Customer, HR]
+  risk_types: [Financial Risk, Compliance Risk]
+  compliance_frameworks:
+    - name: GDPR
+      region: EU
+      status: Compliant
+      violations: 0
+    - name: CCPA
+      region: California
+      status: Needs Review
+      violations: 2
+    - name: HIPAA
+      region: US
+      status: At Risk
+      violations: 14
+    - name: SOC 2 Type II
+      region: Global
+      status: Compliant
+      violations: 0
+    - name: PCI-DSS
+      region: Global
+      status: Needs Review
+      violations: 1
+  pii_monitoring:
+    records_scanned_24h: 1200000000
+    flagged_anomalies: 142
+    pii_types: [PHONE_NUMBER, EMAIL_ADDRESS, US_SSN, CREDIT_CARD]
+  rbac_logs:
+    users:
+      - j.doe@company.com
+      - sys_pipeline_01
+      - a.smith@company.com
+      - ml_service_account
+    risk_levels: [High, Medium, Low, Standard Baseline]
+
+ml:
+  anomaly_model:
+    name: Access_Anomaly_Detector
+    features: [access_frequency, data_sensitivity, time_of_day, role_match_score, geo_distance]
+    algorithm: IsolationForest
+  compliance_model:
+    name: Compliance_Risk_Predictor
+    algorithm: GradientBoostingClassifier
+
+pages:
+  - id: dashboard
+    label: Executive Dashboard
+    icon: fa-chart-line
+    enabled: true
+  - id: compliance
+    label: "Compliance & Audit Hub"
+    icon: fa-clipboard-check
+    enabled: true
+  - id: pii
+    label: Real-Time PII Monitor
+    icon: fa-shield-halved
+    enabled: true
+  - id: rbac
+    label: Advanced RBAC Logs
+    icon: fa-users-viewfinder
+    enabled: true
+  - id: architecture
+    label: Solution Architecture
+    icon: fa-diagram-project
+    enabled: true
+  - id: details
+    label: Implementation Details
+    icon: fa-code
+    enabled: true
+
+genie:
+  space_name: "RiskIQ Genie"
+  tables:
+    - risk_iq.gold.risk_summary
+    - risk_iq.gold.compliance_scores
+    - risk_iq.gold.active_alerts
+    - risk_iq.gold.pii_scan_results
+    - risk_iq.silver.rbac_access_logs
+    - risk_iq.silver.anomaly_detections
+  sample_questions:
+    - "Is my compliance posture healthy right now, and where is it most at risk?"
+    - "What is the root cause of the recent PII exposure and what is my team doing about it?"
+    - "Who and what is impacted by the GDPR compliance warning right now?"
+    - "What should we do to improve RBAC logging in the future?"
+    - "Who are the top five users with anomalous data access?"
+    - "What data domain experiences the most regulatory risk?"
+    - "Which systems are most likely to fail a SOC 2 audit?"
+
+dashboard:
+  kpis:
+    - title: Total Financial Risk Exposure
+      query: "SELECT financial_risk_exposure FROM gold.risk_summary ORDER BY snapshot_time DESC LIMIT 1"
+      format: "${}M"
+      accent: blue
+      delta: "+12%"
+    - title: Compliance Risk Score
+      query: "SELECT compliance_risk_score FROM gold.compliance_scores ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:.0f}"
+      accent: blue
+      delta: "+3.1"
+    - title: Active High-Severity Alerts
+      query: "SELECT active_high_severity_alerts FROM gold.active_alerts ORDER BY snapshot_time DESC LIMIT 1"
+      format: "{:.0f}"
+      accent: blue
+      alert: true
+      delta: "-2"
