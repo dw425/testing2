@@ -288,6 +288,91 @@ def get_base_stylesheet() -> str:
         border-color: {COLORS["blue"]};
     }}
 
+    /* ---------- genie panel (mockup-style white bg) ---------- */
+    .genie-panel-mockup {{
+        /* Base styles set via inline, this adds scrollbar overrides */
+    }}
+
+    .genie-panel-mockup ::-webkit-scrollbar-track {{
+        background: transparent;
+    }}
+    .genie-panel-mockup ::-webkit-scrollbar-thumb {{
+        background: #D1D5DB;
+        border-radius: 3px;
+    }}
+
+    .genie-question-card:hover {{
+        background-color: #EFF6FF !important;
+    }}
+
+    /* Genie send button hover */
+    #genie-send-btn:hover {{
+        color: {COLORS["blue"]} !important;
+        border-color: {COLORS["blue"]} !important;
+    }}
+
+    /* Genie close button hover */
+    #genie-close-btn:hover {{
+        background-color: #E5E7EB !important;
+    }}
+
+    /* ---------- chat message bubbles ---------- */
+    .genie-msg-user {{
+        background-color: {COLORS["blue"]};
+        color: #FFFFFF;
+        padding: 10px 14px;
+        border-radius: 12px 12px 4px 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        max-width: 85%;
+        margin-left: auto;
+        margin-bottom: 8px;
+        word-wrap: break-word;
+    }}
+
+    .genie-msg-ai {{
+        background-color: #F3F4F6;
+        color: #1F2937;
+        padding: 12px 14px;
+        border-radius: 12px 12px 12px 4px;
+        font-size: 13px;
+        line-height: 1.6;
+        max-width: 95%;
+        margin-bottom: 8px;
+        word-wrap: break-word;
+    }}
+
+    .genie-msg-ai strong {{
+        color: #111827;
+    }}
+
+    .genie-msg-sql {{
+        background-color: #0F1115;
+        color: #E2E8F0;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        overflow-x: auto;
+        margin-top: 8px;
+        border: 1px solid #272A31;
+    }}
+
+    .genie-msg-source {{
+        font-size: 10px;
+        color: #9CA3AF;
+        text-align: right;
+        margin-top: 4px;
+        margin-bottom: 12px;
+    }}
+
+    .genie-msg-divider {{
+        border: none;
+        border-top: 1px solid #E5E7EB;
+        margin: 16px 0;
+    }}
+
     /* ---------- utilities ---------- */
     .text-muted {{ color: {COLORS["text_muted"]}; }}
     .text-white {{ color: {COLORS["white"]}; }}

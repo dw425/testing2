@@ -15,7 +15,7 @@ os.environ.setdefault("USE_DEMO_DATA", "true")
 os.environ.setdefault("USE_CASE", "manufacturing")
 
 import dash  # noqa: E402
-from dash import Input, Output, State, callback_context, dcc, html  # noqa: E402
+from dash import Input, Output, State, callback_context, dcc, html, ALL  # noqa: E402
 
 from app.data_access import (  # noqa: E402
     get_anomaly_scatter_data,
@@ -27,6 +27,7 @@ from app.data_access import (  # noqa: E402
     get_quality_summary,
     get_shap_importance,
 )
+from app.genie_backend import ask_genie  # noqa: E402
 from app.layout import build_layout  # noqa: E402
 from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS, get_base_stylesheet  # noqa: E402
 
@@ -1534,17 +1535,15 @@ def toggle_genie_panel(close_clicks, open_clicks, current_style):
         hidden_style = dict(current_style or {})
         hidden_style["width"] = "0px"
         hidden_style["minWidth"] = "0px"
-        hidden_style["padding"] = "0"
         hidden_style["overflow"] = "hidden"
-        hidden_style["border"] = "none"
+        hidden_style["borderRight"] = "none"
         return hidden_style, {"display": "block"}
     else:
         visible_style = dict(current_style or {})
-        visible_style["width"] = "280px"
-        visible_style["minWidth"] = "280px"
-        visible_style["padding"] = "20px"
-        visible_style["overflow"] = "auto"
-        visible_style["borderRight"] = f"1px solid {COLORS['border']}"
+        visible_style["width"] = "288px"
+        visible_style["minWidth"] = "288px"
+        visible_style["overflow"] = "hidden"
+        visible_style["borderRight"] = "1px solid #E5E7EB"
         return visible_style, {"display": "none"}
 
 
@@ -1568,6 +1567,188 @@ def update_active_nav(pathname, nav_ids):
         else:
             classes.append("nav-link")
     return classes
+
+
+# ===================================================================
+#  Genie AI Chat Callbacks
+# ===================================================================
+
+
+def _render_chat_messages(history):
+    """Convert the chat history list into Dash HTML components for display."""
+    elements = []
+    for msg in history:
+        role = msg.get("role", "user")
+        text = msg.get("text", "")
+
+        if role == "user":
+            elements.append(
+                html.Div(text, className="genie-msg-user")
+            )
+        elif role == "ai":
+            # Parse markdown-style bold (**text**) for display
+            parts = []
+            remaining = text
+            while "**" in remaining:
+                before, _, after = remaining.partition("**")
+                if "**" in after:
+                    bold_text, _, after = after.partition("**")
+                    if before:
+                        parts.append(before)
+                    parts.append(html.Strong(bold_text))
+                    remaining = after
+                else:
+                    parts.append(remaining)
+                    remaining = ""
+                    break
+            if remaining:
+                parts.append(remaining)
+
+            ai_children = []
+            # Render the text content with line breaks
+            if parts:
+                # Split by newlines to create proper line breaks
+                final_parts = []
+                for part in parts:
+                    if isinstance(part, str):
+                        lines = part.split("\n")
+                        for i, line in enumerate(lines):
+                            final_parts.append(line)
+                            if i < len(lines) - 1:
+                                final_parts.append(html.Br())
+                    else:
+                        final_parts.append(part)
+                ai_children.extend(final_parts)
+            else:
+                lines = text.split("\n")
+                for i, line in enumerate(lines):
+                    ai_children.append(line)
+                    if i < len(lines) - 1:
+                        ai_children.append(html.Br())
+
+            elements.append(
+                html.Div(ai_children, className="genie-msg-ai")
+            )
+
+            # Add SQL block if present
+            sql = msg.get("sql")
+            if sql:
+                elements.append(
+                    html.Div([
+                        html.Div(
+                            "SQL Query",
+                            style={
+                                "fontSize": "10px",
+                                "color": "#9CA3AF",
+                                "marginBottom": "4px",
+                                "textTransform": "uppercase",
+                                "letterSpacing": "0.5px",
+                            },
+                        ),
+                        html.Pre(sql, className="genie-msg-sql"),
+                    ])
+                )
+
+            # Add source badge
+            source = msg.get("source", "demo")
+            source_labels = {
+                "genie": "Databricks Genie",
+                "fm": "Foundation Model",
+                "demo": "Demo Mode",
+            }
+            elements.append(
+                html.Div(
+                    f"Source: {source_labels.get(source, source)}",
+                    className="genie-msg-source",
+                )
+            )
+
+    return elements
+
+
+@app.callback(
+    Output("genie-response", "children"),
+    Output("genie-input", "value"),
+    Output("genie-chat-history", "data"),
+    Input("genie-send-btn", "n_clicks"),
+    Input("genie-input", "n_submit"),
+    Input({"type": "genie-q", "index": ALL}, "n_clicks"),
+    State("genie-input", "value"),
+    State({"type": "genie-q", "index": ALL}, "children"),
+    State("genie-chat-history", "data"),
+    prevent_initial_call=True,
+)
+def handle_genie_query(send_clicks, n_submit, q_clicks, input_value, q_labels, chat_history):
+    """Handle a Genie chat query from the send button, Enter key, or a question card.
+
+    Determines the question source, calls ask_genie(), and updates the chat display.
+    """
+    ctx = callback_context
+    if not ctx.triggered:
+        raise dash.exceptions.PreventUpdate
+
+    # Initialize history if needed
+    if chat_history is None:
+        chat_history = []
+
+    # Determine the question text from the trigger
+    trigger = ctx.triggered[0]
+    trigger_id = trigger["prop_id"]
+    question = None
+
+    if "genie-send-btn" in trigger_id or "genie-input" in trigger_id:
+        # Send button or Enter key pressed
+        question = input_value
+    else:
+        # A question card was clicked -- use ctx.triggered_id for reliable detection
+        triggered_id = ctx.triggered_id
+        if isinstance(triggered_id, dict) and triggered_id.get("type") == "genie-q":
+            # Find the matching label by index
+            clicked_index = triggered_id.get("index", "")
+            for i, label in enumerate(q_labels or []):
+                label_text = label if isinstance(label, str) else str(label)
+                if label_text[:20] == clicked_index:
+                    question = label_text
+                    break
+
+        # Fallback: find any card with clicks > 0
+        if question is None:
+            for i, clicks in enumerate(q_clicks or []):
+                if clicks and clicks > 0 and i < len(q_labels):
+                    question = q_labels[i] if isinstance(q_labels[i], str) else str(q_labels[i])
+                    break
+
+    if not question or (isinstance(question, str) and not question.strip()):
+        raise dash.exceptions.PreventUpdate
+
+    question = question.strip()
+
+    # Call the genie backend
+    try:
+        result = ask_genie(question, use_case)
+    except Exception as e:
+        result = {
+            "answer": f"Sorry, I encountered an error processing your question: {str(e)}",
+            "sql": None,
+            "source": "error",
+            "data": None,
+        }
+
+    # Add the exchange to chat history
+    chat_history.append({"role": "user", "text": question})
+    chat_history.append({
+        "role": "ai",
+        "text": result.get("answer", "No response available."),
+        "sql": result.get("sql"),
+        "source": result.get("source", "demo"),
+        "data": result.get("data"),
+    })
+
+    # Render all chat messages
+    rendered = _render_chat_messages(chat_history)
+
+    # Clear input field
+    return rendered, "", chat_history
 
 
 # ---------------------------------------------------------------------------
