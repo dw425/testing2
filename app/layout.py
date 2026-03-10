@@ -23,19 +23,19 @@ from app.theme import COLORS, FONT_FAMILY
 # ---------------------------------------------------------------------------
 
 _USE_CASE_ICONS = {
-    "manufacturing": "fa-industry",
-    "risk": "fa-shield-halved",
-    "healthcare": "fa-heart-pulse",
     "gaming": "fa-gamepad",
+    "telecom": "fa-tower-cell",
+    "media": "fa-film",
     "financial_services": "fa-building-columns",
+    "hls": "fa-heart-pulse",
 }
 
 _USE_CASE_GENIE_DESC = {
-    "manufacturing": "Ask questions about your manufacturing data",
-    "risk": "Ask questions about risk and compliance data",
-    "healthcare": "Ask questions about clinical operations data",
     "gaming": "Ask questions about player and game analytics",
-    "financial_services": "Ask questions about financial risk data",
+    "telecom": "Ask questions about network and subscriber data",
+    "media": "Ask questions about audience and content analytics",
+    "financial_services": "Ask questions about banking, markets, and insurance data",
+    "hls": "Ask questions about clinical, health plan, and pharma data",
 }
 
 
@@ -120,7 +120,7 @@ def build_genie_panel(use_case: str = "manufacturing") -> html.Div:
                 },
                 children=[
                     html.Span(
-                        "Hello",
+                        "Genie AI",
                         style={
                             "fontWeight": "700",
                             "color": COLORS["blue"],

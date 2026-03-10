@@ -1,0 +1,148 @@
+app:
+  name: TelecomIQ
+  title: Blueprint TelecomIQ
+  subtitle: Network Intelligence & Customer Experience
+  catalog: telecom_iq
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
+brand:
+  primary_color: '#233ED8'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#EAB308'
+    critical: '#EF4444'
+data:
+  regions:
+  - Northeast
+  - Southeast
+  - Midwest
+  - West Coast
+  - International
+  technologies:
+  - 4G LTE
+  - 5G
+  - Fiber
+  - Fixed Wireless
+  subscriber_segments:
+  - Consumer
+  - SMB
+  - Enterprise
+  - Government
+  plan_types:
+  - Prepaid
+  - Postpaid
+  - Family
+  - Business
+  - IoT
+  network_stats:
+    subscriber_base: 14200000
+    network_uptime: 0.9997
+    avg_arpu: 52.30
+    churn_rate_monthly: 0.018
+    nps: 42
+    csat: 4.1
+    five_g_coverage_pct: 0.67
+    iot_connected_devices: 2400000
+  field_ops:
+    mttr_hours: 3.2
+    fcr_rate: 0.78
+    truck_roll_rate: 0.32
+    sla_achievement: 0.978
+    work_orders_daily: 1240
+  fraud_stats:
+    fraud_detection_rate: 0.962
+    fraud_loss_prevented_monthly: 4200000
+    sim_swap_attempts_daily: 142
+    subscription_fraud_daily: 87
+ml:
+  churn_model:
+    name: Subscriber_Churn_Predictor
+    features:
+    - tenure_months
+    - data_usage_gb
+    - support_tickets_90d
+    - arpu
+    - contract_remaining_days
+    - nps_score
+    algorithm: XGBClassifier
+    target_metric: auc_roc
+    target_value: 0.92
+  fraud_model:
+    name: Telecom_Fraud_Detector
+    features:
+    - sim_swap_velocity
+    - international_call_ratio
+    - usage_spike_score
+    - account_age_days
+    - device_change_count
+    - ip_anomaly_score
+    algorithm: IsolationForest
+    target_metric: precision
+    target_value: 0.94
+pages:
+- id: dashboard
+  label: Network Command Center
+  icon: fa-tower-cell
+  enabled: true
+- id: customer
+  label: Customer Intelligence
+  icon: fa-users
+  enabled: true
+- id: revenue
+  label: Revenue & Growth
+  icon: fa-chart-line
+  enabled: true
+- id: fraud
+  label: Fraud & Security
+  icon: fa-shield-halved
+  enabled: true
+- id: field_ops
+  label: Field Operations
+  icon: fa-truck
+  enabled: true
+- id: b2b_iot
+  label: B2B & IoT
+  icon: fa-microchip
+  enabled: true
+genie:
+  space_name: TelecomIQ Genie
+  tables:
+  - telecom_iq.gold.subscriber_metrics
+  - telecom_iq.gold.network_performance
+  - telecom_iq.gold.fraud_events
+  - telecom_iq.gold.field_operations
+  - telecom_iq.silver.call_detail_records
+  - telecom_iq.silver.network_events
+  sample_questions:
+  - What is the current customer churn rate by segment?
+  - Show me network uptime by region and technology type.
+  - Which regions have the highest MTTR for field operations?
+  - How many SIM swap fraud attempts were detected this month?
+  - What is the first-call resolution rate by service type?
+  - Show me ARPU trends by plan type over the last 6 months.
+  - Which cell sites have capacity utilization above 85%?
+  - What is the order-to-activate cycle time by region?
+  - How many IoT devices are connected by customer segment?
+  - What is the NPS score distribution across consumer segments?
+dashboard:
+  kpis:
+  - title: Subscriber Base
+    query: SELECT subscriber_base FROM gold.subscriber_metrics ORDER BY snapshot_time DESC LIMIT 1
+    format: '{:,.0f}'
+    value: 14.2M
+    accent: blue
+  - title: Network Uptime
+    query: SELECT network_uptime FROM gold.network_performance ORDER BY snapshot_time DESC LIMIT 1
+    format: '{:.2f}%'
+    value: 99.97%
+    accent: green
+  - title: Monthly Churn
+    query: SELECT churn_rate_monthly FROM gold.subscriber_metrics ORDER BY snapshot_time DESC LIMIT 1
+    format: '{:.1f}%'
+    value: 1.8%
+    accent: purple
+  - title: Fraud Blocked (24h)
+    query: SELECT fraud_blocked_24h FROM gold.fraud_events ORDER BY snapshot_time DESC LIMIT 1
+    format: '{:.0f}'
+    value: '229'
+    accent: red
+    alert: true

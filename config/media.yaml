@@ -1,0 +1,159 @@
+app:
+  name: MediaIQ
+  title: "Blueprint MediaIQ"
+  subtitle: "Audience Intelligence & Content Analytics"
+  catalog: media_iq
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
+
+brand:
+  primary_color: '#233ED8'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#EAB308'
+    critical: '#EF4444'
+
+data:
+  content_types:
+    - Original
+    - Licensed
+    - UGC
+  genres:
+    - Drama
+    - Action
+    - Comedy
+    - Documentary
+    - Sports
+    - Reality
+    - News
+  platforms:
+    - Web
+    - iOS
+    - Android
+    - Smart TV
+    - Console
+  regions:
+    - US
+    - UK
+    - EU
+    - APAC
+    - LATAM
+  subscription_tiers:
+    - Premium
+    - Standard
+    - Free
+    - Trial
+  ad_formats:
+    - Pre-roll
+    - Mid-roll
+    - Display
+    - Native
+    - CTV
+  audience_stats:
+    monthly_active_viewers: 8400000
+    avg_watch_time_min: 47
+    cross_platform_match_rate: 0.74
+    subscriber_ltv_avg: 142.0
+    monthly_churn_rate: 0.042
+  content_metrics:
+    catalog_utilization: 0.68
+    recommendation_ctr: 0.124
+    content_roi_avg: 2.8
+    total_titles: 4200
+  ad_metrics:
+    avg_cpm: 14.20
+    fill_rate: 0.92
+    avg_roas: 3.4
+    vcr: 0.76
+    brand_safety_score: 0.982
+  streaming_qos:
+    buffering_rate_pct: 0.008
+    avg_start_time_sec: 1.8
+    peak_concurrent: 1240000
+
+ml:
+  churn_model:
+    name: Subscriber_Churn_Predictor
+    features:
+      - watch_time_7d
+      - content_diversity
+      - login_frequency
+      - plan_price
+      - tenure_months
+      - recommendation_ctr
+    algorithm: XGBClassifier
+    target_metric: auc_roc
+    target_value: 0.89
+  recommendation_model:
+    name: Content_Recommender
+    features:
+      - viewing_history
+      - genre_affinity
+      - watch_time_patterns
+      - social_signals
+      - device_type
+    algorithm: NeuralCollaborativeFiltering
+    target_metric: ndcg_at_10
+    target_value: 0.42
+
+pages:
+  - id: dashboard
+    label: Audience Command Center
+    icon: fa-users
+    enabled: true
+  - id: content
+    label: Content Performance
+    icon: fa-film
+    enabled: true
+  - id: subscriptions
+    label: Subscription & Revenue
+    icon: fa-credit-card
+    enabled: true
+  - id: advertising
+    label: Advertising & Yield
+    icon: fa-rectangle-ad
+    enabled: true
+  - id: creative
+    label: Creative & Campaigns
+    icon: fa-palette
+    enabled: true
+  - id: platform
+    label: Platform & QoS
+    icon: fa-server
+    enabled: true
+
+genie:
+  space_name: MediaIQ Genie
+  tables:
+    - media_iq.gold.viewer_metrics
+    - media_iq.gold.content_performance
+    - media_iq.gold.ad_performance
+    - media_iq.gold.subscription_events
+    - media_iq.silver.viewing_sessions
+    - media_iq.silver.ad_impressions
+  sample_questions:
+    - "What is the average subscriber LTV by plan type?"
+    - "Show me content ROI for original vs licensed content."
+    - "Which content genres have the highest completion rate?"
+    - "What is the current ad fill rate and CPM by ad format?"
+    - "How does monthly churn rate vary by subscription tier?"
+    - "What is the recommendation engine click-through rate by genre?"
+    - "Show me streaming quality metrics by platform."
+    - "Which advertising campaigns have the best ROAS this quarter?"
+    - "What is the cross-platform identity match rate by region?"
+    - "How does average watch time per day trend over the last 90 days?"
+
+dashboard:
+  kpis:
+    - title: Monthly Active Viewers
+      value: "8.4M"
+      accent: blue
+    - title: Subscriber LTV
+      value: "$142"
+      accent: green
+    - title: Avg CPM
+      value: "$14.20"
+      accent: purple
+    - title: Monthly Churn
+      value: "4.2%"
+      accent: red
+      alert: true

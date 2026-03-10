@@ -1,65 +1,65 @@
-"""Tests for data access layer - validates demo mode returns expected data."""
+"""Tests for data access layer - validates config loading and demo mode."""
 
 import os
 import pytest
 
 # Force demo mode for testing
 os.environ["USE_DEMO_DATA"] = "true"
-os.environ["USE_CASE"] = "manufacturing"
+os.environ["USE_CASE"] = "gaming"
 
 
-def test_get_production_kpis():
-    from app.data_access import get_production_kpis
-    kpis = get_production_kpis()
-    assert kpis is not None
-    assert "model_f1_score" in kpis
-    assert kpis["model_f1_score"] == 0.947
+def test_get_config_for_all_verticals():
+    from app.data_access import get_config_for
+    verticals = ["gaming", "telecom", "media", "financial_services", "hls"]
+    for v in verticals:
+        cfg = get_config_for(v)
+        assert cfg is not None
+        assert "app" in cfg
+        assert "pages" in cfg
+        assert "genie" in cfg
 
 
-def test_get_anomaly_scatter_data():
-    from app.data_access import get_anomaly_scatter_data
-    data = get_anomaly_scatter_data()
-    assert isinstance(data, list)
-    assert len(data) > 0
-    first = data[0]
-    assert "vibration_hz" in first
-    assert "temp_c" in first
-    assert "is_anomaly" in first or "is_anomalous" in first
+def test_set_active_vertical():
+    from app.data_access import set_active_vertical, _active_vertical
+    set_active_vertical("telecom")
+    assert _active_vertical.get() == "telecom"
+    set_active_vertical("gaming")
+    assert _active_vertical.get() == "gaming"
 
 
-def test_get_shap_importance():
-    from app.data_access import get_shap_importance
-    shap = get_shap_importance()
-    assert shap is not None
-    assert isinstance(shap, list)
-    assert any(s.get("feature") == "vibration_hz" for s in shap)
+def test_config_has_app_metadata():
+    from app.data_access import get_config_for
+    for v in ["gaming", "telecom", "media", "financial_services", "hls"]:
+        cfg = get_config_for(v)
+        assert "name" in cfg["app"]
+        assert "title" in cfg["app"]
+        assert "catalog" in cfg["app"]
 
 
-def test_get_live_inference_feed():
-    from app.data_access import get_live_inference_feed
-    feed = get_live_inference_feed()
-    assert isinstance(feed, list)
-    assert len(feed) > 0
+def test_config_has_ml_models():
+    from app.data_access import get_config_for
+    for v in ["gaming", "telecom", "media", "financial_services", "hls"]:
+        cfg = get_config_for(v)
+        ml = cfg.get("ml", {})
+        assert len(ml) >= 2, f"{v} should have at least 2 ML models"
 
 
-def test_get_inventory_status():
-    from app.data_access import get_inventory_status
-    inventory = get_inventory_status()
-    assert isinstance(inventory, list)
-    assert len(inventory) > 0
-    # Should have Critical status item
-    statuses = [item.get("stock_status", item.get("status", "")) for item in inventory]
-    assert any(s in ("Critical", "critical") for s in statuses)
+def test_config_has_genie_questions():
+    from app.data_access import get_config_for
+    for v in ["gaming", "telecom", "media", "financial_services", "hls"]:
+        cfg = get_config_for(v)
+        questions = cfg["genie"].get("sample_questions", [])
+        assert len(questions) == 10, f"{v} should have 10 sample questions"
 
 
-def test_get_quality_summary():
-    from app.data_access import get_quality_summary
-    quality = get_quality_summary()
-    assert quality is not None
+def test_config_has_six_pages():
+    from app.data_access import get_config_for
+    for v in ["gaming", "telecom", "media", "financial_services", "hls"]:
+        cfg = get_config_for(v)
+        pages = cfg.get("pages", [])
+        assert len(pages) == 6, f"{v} should have 6 pages, got {len(pages)}"
 
 
-def test_get_build_tracking():
-    from app.data_access import get_build_tracking
-    tracking = get_build_tracking()
-    assert isinstance(tracking, list)
-    assert len(tracking) > 0
+def test_is_demo_mode():
+    from app.data_access import is_demo_mode
+    assert is_demo_mode() is True

@@ -1,0 +1,167 @@
+app:
+  name: HLSIQ
+  title: "Blueprint Health & Life Sciences IQ"
+  subtitle: "Providers · Health Plans · BioPharma · MedTech"
+  catalog: hls_iq
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
+
+brand:
+  primary_color: '#233ED8'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#EAB308'
+    critical: '#EF4444'
+
+data:
+  sub_verticals:
+    - Providers
+    - Health Plans
+    - BioPharma
+    - MedTech
+  facilities:
+    - Metro General Hospital
+    - Westside Medical Center
+    - Eastview Community Clinic
+  departments:
+    - Emergency
+    - ICU
+    - Cardiology
+    - Orthopedics
+    - Oncology
+    - Pediatrics
+  plan_types:
+    - HMO
+    - PPO
+    - Medicare Advantage
+    - Medicaid
+  therapeutic_areas:
+    - Oncology
+    - Cardiology
+    - Neurology
+    - Immunology
+    - Respiratory
+  medtech_categories:
+    - Surgical
+    - Diagnostic
+    - Implant
+    - Digital Health
+  provider_metrics:
+    avg_daily_admissions: 285
+    avg_ed_wait_minutes: 34
+    bed_utilization_pct: 87.3
+    avg_los_days: 4.2
+    readmission_rate_30d: 0.082
+    hcahps_score: 82
+    denial_rate: 0.068
+    ar_days: 42
+    sepsis_bundle_compliance: 0.91
+  health_plan_metrics:
+    medical_loss_ratio: 0.842
+    claims_processing_days: 4.8
+    prior_auth_hours: 18
+    fwa_detection_rate: 0.047
+    star_rating: 4.2
+    member_retention_rate: 0.89
+    care_gap_closure_rate: 0.72
+  biopharma_metrics:
+    trial_enrollment_rate: 0.78
+    time_to_market_months: 14.2
+    manufacturing_yield: 0.946
+    rx_fulfillment_rate: 0.91
+    hcp_engagement_score: 3.8
+    adverse_event_rate: 0.021
+  medtech_metrics:
+    pipeline_value: 1200000000
+    regulatory_approval_rate: 0.82
+    manufacturing_yield: 0.968
+    field_service_response_hrs: 4.2
+    procedure_volume_growth_yoy: 0.12
+    capa_closure_rate: 0.88
+
+ml:
+  readmission_model:
+    name: Readmission_Risk_Predictor
+    features:
+      - age
+      - diagnosis_code
+      - los_days
+      - prior_admissions_12m
+      - comorbidity_index
+      - sdoh_risk_factors
+    algorithm: GradientBoostingClassifier
+    target_metric: auc_roc
+    target_value: 0.89
+  fwa_model:
+    name: FWA_Detection_Model
+    features:
+      - claim_amount
+      - provider_history
+      - diagnosis_frequency
+      - billing_pattern
+      - member_risk_score
+    algorithm: IsolationForest
+    target_metric: precision
+    target_value: 0.91
+
+pages:
+  - id: dashboard
+    label: HLS Command Center
+    icon: fa-heart-pulse
+    enabled: true
+  - id: provider_ops
+    label: Provider Operations
+    icon: fa-hospital
+    enabled: true
+  - id: clinical_quality
+    label: Clinical Quality & Outcomes
+    icon: fa-stethoscope
+    enabled: true
+  - id: health_plans
+    label: Health Plan Analytics
+    icon: fa-file-medical
+    enabled: true
+  - id: biopharma
+    label: BioPharma Intelligence
+    icon: fa-flask
+    enabled: true
+  - id: medtech
+    label: MedTech & Supply Chain
+    icon: fa-microchip
+    enabled: true
+
+genie:
+  space_name: HLSIQ Genie
+  tables:
+    - hls_iq.gold.patient_encounters
+    - hls_iq.gold.revenue_cycle
+    - hls_iq.gold.health_plan_claims
+    - hls_iq.gold.clinical_quality
+    - hls_iq.silver.admission_events
+    - hls_iq.silver.claims_raw
+  sample_questions:
+    - What is the current bed utilization rate by facility?
+    - Show me 30-day readmission rates by department and diagnosis.
+    - What is the claims processing time by plan type?
+    - Which clinical quality measures are below national benchmark?
+    - How many clinical trials are currently enrolling vs target?
+    - What is the denial rate by payer and denial reason?
+    - Show me the fraud, waste, and abuse detection rate by claim type.
+    - What is the manufacturing yield for MedTech products by category?
+    - How does the ED wait time vary by facility and time of day?
+    - What is the care gap closure rate by health plan?
+
+dashboard:
+  kpis:
+    - title: Bed Utilization
+      value: "87.3%"
+      accent: blue
+    - title: Readmission Rate
+      value: "8.2%"
+      accent: purple
+    - title: Star Rating
+      value: "4.2"
+      accent: green
+    - title: Claims FWA Rate
+      value: "4.7%"
+      accent: red
+      alert: true

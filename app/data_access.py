@@ -22,7 +22,7 @@ import yaml
 # Configuration
 # ---------------------------------------------------------------------------
 
-_active_vertical = contextvars.ContextVar("active_vertical", default="manufacturing")
+_active_vertical = contextvars.ContextVar("active_vertical", default="gaming")
 
 _config_cache: Dict[str, dict] = {}
 
@@ -48,7 +48,7 @@ def _current_use_case() -> str:
         vertical = None
     if vertical is not None:
         return vertical
-    return os.environ.get("USE_CASE", "manufacturing")
+    return os.environ.get("USE_CASE", "gaming")
 
 
 def set_active_vertical(vertical: str) -> None:

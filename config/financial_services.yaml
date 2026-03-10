@@ -1,118 +1,201 @@
 app:
   name: FinancialServicesIQ
   title: "Blueprint FinancialServicesIQ"
-  subtitle: "Risk & Portfolio Intelligence"
+  subtitle: "Banking · Capital Markets · Insurance"
   catalog: financial_services_iq
-  warehouse_http_path: "/sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>"
-
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
 brand:
-  primary_color: "#233ED8"
+  primary_color: '#233ED8'
   accent_colors:
-    healthy: "#22C55E"
-    warning: "#EAB308"
-    critical: "#EF4444"
-
+    healthy: '#22C55E'
+    warning: '#EAB308'
+    critical: '#EF4444'
 data:
-  business_lines: [Retail Banking, Commercial Lending, Wealth Management, Insurance]
-  regions: [Northeast, Southeast, Midwest, West Coast, International]
-  transaction_channels: [Mobile App, Web Banking, ATM, Branch, Wire Transfer, ACH]
-  fraud_detection:
+  sub_verticals:
+  - Banking
+  - Capital Markets
+  - Insurance
+  banking_lines:
+  - Retail Banking
+  - Commercial Lending
+  - Wealth Management
+  - Cards
+  capital_markets_desks:
+  - Equities
+  - Fixed Income
+  - Derivatives
+  - Alternatives
+  insurance_lines:
+  - Auto
+  - Home
+  - Life
+  - Commercial
+  - Health
+  regions:
+  - Northeast
+  - Southeast
+  - Midwest
+  - West Coast
+  - International
+  channels:
+  - Mobile App
+  - Web Banking
+  - ATM
+  - Branch
+  - Wire Transfer
+  - ACH
+  customer_segments:
+  - Mass
+  - Affluent
+  - HNW
+  - UHNW
+  - SMB
+  - Corporate
+  banking_metrics:
+    net_interest_margin: 0.031
+    loan_origination_monthly: 420000000
+    card_activation_rate: 0.72
+    customer_ltv_avg: 4200
+    digital_adoption_rate: 0.67
+    nps: 38
+    call_center_aht_min: 6.2
+    fcr_rate: 0.74
+    stp_rate: 0.89
+  fraud_metrics:
     transactions_per_day: 12500000
     fraud_rate: 0.0023
     blocked_today: 847
     false_positive_rate: 0.004
     avg_fraud_amount: 3420
+    aml_alerts_monthly: 1240
+  capital_markets_metrics:
+    aum_total: 24500000000
+    var_95_daily: 47000000
+    sharpe_ratio: 1.42
+    alpha_bps: 180
+    trade_execution_quality: 0.973
+    stp_settlement_rate: 0.94
+    counterparty_exposure: 890000000
+    regulatory_capital_ratio: 0.142
+  insurance_metrics:
+    combined_ratio: 0.964
+    loss_ratio: 0.621
+    claims_fraud_rate: 0.082
+    policy_retention_rate: 0.87
+    underwriting_automation_pct: 0.64
+    claims_cycle_days: 12.4
+    premium_growth_yoy: 0.087
+    solvency_ratio: 1.85
   credit_risk:
     total_portfolio_value: 8400000000
     avg_credit_score: 714
     delinquency_rate_30d: 0.032
     high_risk_accounts: 12400
     expected_loss_rate: 0.018
-  portfolio:
-    aum_total: 24500000000
-    var_95_daily: 47000000
-    sharpe_ratio: 1.42
-    beta_portfolio: 0.94
-    active_positions: 8450
-
 ml:
   fraud_model:
     name: Transaction_Fraud_Detector
-    features: [amount, merchant_category, time_since_last_txn, distance_from_home, device_risk_score, velocity_1h]
+    features:
+    - amount
+    - merchant_category
+    - time_since_last_txn
+    - distance_from_home
+    - device_risk_score
+    - velocity_1h
     algorithm: XGBClassifier
     target_metric: auc_roc
     target_value: 0.97
   credit_model:
     name: Credit_Default_Predictor
-    features: [credit_score, dti_ratio, employment_years, loan_amount, payment_history_12m, utilization_ratio]
+    features:
+    - credit_score
+    - dti_ratio
+    - employment_years
+    - loan_amount
+    - payment_history_12m
+    - utilization_ratio
     algorithm: GradientBoostingClassifier
     target_metric: auc_roc
     target_value: 0.88
-
+  claims_fraud_model:
+    name: Claims_Fraud_Detector
+    features:
+    - claim_amount
+    - claim_frequency
+    - provider_pattern
+    - policy_age
+    - claimant_history
+    - geographic_anomaly
+    algorithm: XGBClassifier
+    target_metric: auc_roc
+    target_value: 0.93
 pages:
-  - id: dashboard
-    label: "Risk Overview Dashboard"
-    icon: fa-building-columns
-    enabled: true
-  - id: fraud
-    label: "Fraud Detection & AML"
-    icon: fa-shield-halved
-    enabled: true
-  - id: credit
-    label: "Credit Risk Analytics"
-    icon: fa-credit-card
-    enabled: true
-  - id: portfolio
-    label: "Portfolio & Market Risk"
-    icon: fa-chart-pie
-    enabled: true
-  - id: architecture
-    label: "Solution Architecture"
-    icon: fa-diagram-project
-    enabled: true
-  - id: details
-    label: "Implementation Details"
-    icon: fa-code
-    enabled: true
-
+- id: dashboard
+  label: Enterprise Risk Command Center
+  icon: fa-building-columns
+  enabled: true
+- id: banking
+  label: Banking Intelligence
+  icon: fa-university
+  enabled: true
+- id: capital_markets
+  label: Capital Markets Analytics
+  icon: fa-chart-pie
+  enabled: true
+- id: insurance
+  label: Insurance Operations
+  icon: fa-shield-halved
+  enabled: true
+- id: fraud_compliance
+  label: Fraud & Compliance Hub
+  icon: fa-gavel
+  enabled: true
+- id: customer
+  label: Customer & Distribution
+  icon: fa-users
+  enabled: true
 genie:
-  space_name: "FinancialServicesIQ Genie"
+  space_name: FinancialServicesIQ Genie
   tables:
-    - financial_services_iq.gold.risk_overview_kpis
-    - financial_services_iq.gold.fraud_detection_metrics
-    - financial_services_iq.gold.credit_risk_portfolio
-    - financial_services_iq.gold.portfolio_market_risk
-    - financial_services_iq.silver.transaction_anomalies
-    - financial_services_iq.silver.credit_default_predictions
+  - financial_services_iq.gold.transactions
+  - financial_services_iq.gold.customer_profiles
+  - financial_services_iq.gold.credit_portfolio
+  - financial_services_iq.gold.portfolio_positions
+  - financial_services_iq.gold.insurance_policies
+  - financial_services_iq.gold.claims
+  - financial_services_iq.silver.transaction_raw
+  - financial_services_iq.silver.market_data
   sample_questions:
-    - "What is the current fraud detection rate and how does it compare to last month?"
-    - "Which merchant category is experiencing the highest fraud velocity right now?"
-    - "Show me the credit default probability distribution for our commercial lending book."
-    - "Are there any suspicious transaction patterns indicating potential money laundering?"
-    - "What is our portfolio's current Value at Risk under stressed market conditions?"
-    - "Which customer segment has the fastest growing delinquency rate?"
-    - "Predict the expected credit loss for our Q2 loan originations."
-
+  - What is the transaction fraud detection rate by channel?
+  - Show me the credit portfolio delinquency breakdown by loan type.
+  - What is the portfolio VaR contribution by asset class?
+  - Which insurance product lines have the highest combined ratio?
+  - How many AML alerts are open vs resolved this month?
+  - What is the customer LTV distribution by segment?
+  - Show me claims fraud detection rate by claim type.
+  - What is the Sharpe ratio by portfolio over the last quarter?
+  - Which distribution channels have the highest policy retention?
+  - What is the STP settlement rate trend in capital markets?
 dashboard:
   kpis:
-    - title: "Transactions Today"
-      query: "SELECT transactions_today FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1"
-      format: "{:.1f}M"
-      value: "12.5M"
-      accent: blue
-    - title: "Fraud Blocked"
-      query: "SELECT fraud_blocked FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1"
-      format: "{:.0f}"
-      value: "847"
-      accent: purple
-    - title: "Portfolio VaR (95%)"
-      query: "SELECT var_95_daily FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1"
-      format: "${:.0f}M"
-      value: "$47M"
-      accent: green
-    - title: "High-Risk Accounts"
-      query: "SELECT high_risk_accounts FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1"
-      format: "{:.1f}K"
-      value: "12.4K"
-      accent: red
-      alert: true
+  - title: Transactions Today
+    query: SELECT transactions_today FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1
+    format: '{:.1f}M'
+    value: "12.5M"
+    accent: blue
+  - title: Fraud Blocked
+    query: SELECT fraud_blocked FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1
+    format: '{:.0f}'
+    value: "847"
+    accent: red
+    alert: true
+  - title: Portfolio VaR (95%)
+    query: SELECT var_95_daily FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1
+    format: ${:.0f}M
+    value: "$47M"
+    accent: purple
+  - title: Combined Ratio
+    query: SELECT combined_ratio FROM gold.insurance_metrics ORDER BY snapshot_time DESC LIMIT 1
+    format: '{:.1f}%'
+    value: "96.4%"
+    accent: green

@@ -1,10 +1,9 @@
 """
-Genie AI chat backend for Blueprint IQ.
+Genie AI chat backend for Blueprint IQ (v2).
 
-Routes questions to one of three backends:
-  1. Databricks Genie API  (GENIE_SPACE_ID env var)
-  2. Databricks Foundation Model  (DATABRICKS_FM_ENDPOINT env var)
-  3. Demo mode  (fallback) -- keyword-matched responses per vertical
+Always tries the Foundation Model first (via databricks-claude-sonnet-4-6),
+building a rich data context from YAML config for each vertical.
+Falls back to keyword-matched demo responses if the FM call fails.
 
 Public API:
     ask_genie(question, use_case) -> dict
@@ -20,154 +19,215 @@ logger = logging.getLogger(__name__)
 
 
 # ===================================================================
-#  Backend selection helpers
+#  Data summary cache
 # ===================================================================
 
-def _get_genie_space_id() -> Optional[str]:
-    return os.environ.get("GENIE_SPACE_ID")
+_DATA_SUMMARY_CACHE: Dict[str, Dict[str, Any]] = {}
+# Structure: { use_case: {"summary": str, "timestamp": float} }
+
+_CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
-def _get_fm_endpoint() -> Optional[str]:
-    return os.environ.get("DATABRICKS_FM_ENDPOINT")
+def _is_cache_valid(use_case: str) -> bool:
+    """Check whether the cached summary for a vertical is still fresh."""
+    entry = _DATA_SUMMARY_CACHE.get(use_case)
+    if entry is None:
+        return False
+    return (time.time() - entry["timestamp"]) < _CACHE_TTL_SECONDS
 
 
 # ===================================================================
-#  Backend 1: Databricks Genie API
+#  Helper utilities
 # ===================================================================
 
-def _ask_genie_api(question: str, use_case: str) -> Dict[str, Any]:
-    """Call the Databricks Genie Space API and poll for a result."""
-    from databricks.sdk import WorkspaceClient
+def _safe_call(fn, *args, **kwargs):
+    """Call a data function, returning an empty list/dict on failure."""
+    try:
+        result = fn(*args, **kwargs)
+        return result if result is not None else []
+    except Exception as e:
+        logger.debug("Data function %s failed: %s", fn.__name__, e)
+        return []
 
-    space_id = _get_genie_space_id()
-    w = WorkspaceClient()
 
-    # Start a conversation
-    resp = w.genie.start_conversation(space_id=space_id, content=question)
-    conversation_id = resp.conversation_id
-    message_id = resp.message_id
+def _summarize_list(data: list, label: str, max_rows: int = 5) -> str:
+    """Produce a compact text table from a list of dicts."""
+    if not data:
+        return f"{label}: No data available.\n"
+    keys = list(data[0].keys())
+    header = " | ".join(keys)
+    lines = [f"{label} ({len(data)} rows, showing top {min(max_rows, len(data))}):", header]
+    for row in data[:max_rows]:
+        lines.append(" | ".join(str(row.get(k, "")) for k in keys))
+    return "\n".join(lines) + "\n"
 
-    # Poll for completion (up to 60 seconds)
-    for _ in range(30):
-        time.sleep(2)
+
+def _agg_by(data: list, group_key: str, value_key: str) -> str:
+    """Group data by a key and compute avg/count for a value."""
+    if not data:
+        return ""
+    groups: Dict[str, List[float]] = {}
+    for row in data:
+        g = str(row.get(group_key, "unknown"))
+        val = row.get(value_key)
+        if val is not None:
+            try:
+                groups.setdefault(g, []).append(float(val))
+            except (ValueError, TypeError):
+                pass
+    if not groups:
+        return ""
+    lines = [f"  Breakdown by {group_key} (avg {value_key}):"]
+    for g, vals in sorted(groups.items(), key=lambda x: -sum(x[1]) / len(x[1]) if x[1] else 0):
+        avg = sum(vals) / len(vals)
+        lines.append(f"    {g}: avg={avg:.2f}, count={len(vals)}")
+    return "\n".join(lines) + "\n"
+
+
+# ===================================================================
+#  Config-based data summary builder
+# ===================================================================
+
+def _build_config_summary(use_case: str) -> str:
+    """Build a data summary from the vertical's YAML config."""
+    from app.data_access import get_config_for
+    cfg = get_config_for(use_case)
+
+    parts = []
+    app_cfg = cfg.get("app", {})
+    parts.append(f"=== {app_cfg.get('title', use_case)} ===")
+    parts.append(f"Subtitle: {app_cfg.get('subtitle', '')}")
+    parts.append(f"Catalog: {app_cfg.get('catalog', '')}")
+    parts.append("")
+
+    # Data section - dump all metrics
+    data_cfg = cfg.get("data", {})
+    for key, value in data_cfg.items():
+        if isinstance(value, dict):
+            parts.append(f"=== {key.replace('_', ' ').title()} ===")
+            for k, v in value.items():
+                parts.append(f"  {k}: {v}")
+            parts.append("")
+        elif isinstance(value, list) and value and isinstance(value[0], str):
+            parts.append(f"  {key}: {', '.join(value)}")
+
+    # ML models
+    ml_cfg = cfg.get("ml", {})
+    for model_key, model in ml_cfg.items():
+        if isinstance(model, dict) and "name" in model:
+            parts.append(f"\n=== ML Model: {model['name']} ===")
+            parts.append(f"  Algorithm: {model.get('algorithm', 'N/A')}")
+            parts.append(f"  Target: {model.get('target_metric', 'N/A')} = {model.get('target_value', 'N/A')}")
+            if 'features' in model:
+                parts.append(f"  Features: {', '.join(model['features'])}")
+
+    # Dashboard KPIs
+    kpis = cfg.get("dashboard", {}).get("kpis", [])
+    if kpis:
+        parts.append("\n=== Dashboard KPIs ===")
+        for kpi in kpis:
+            parts.append(f"  {kpi['title']}: {kpi.get('value', 'N/A')}")
+
+    # Genie tables
+    tables = cfg.get("genie", {}).get("tables", [])
+    if tables:
+        parts.append(f"\n=== Lakehouse Tables ===")
+        for t in tables:
+            parts.append(f"  {t}")
+
+    return "\n".join(parts)
+
+
+# ===================================================================
+#  Summary builders map
+# ===================================================================
+
+_SUMMARY_BUILDERS = {
+    "gaming": lambda: _build_config_summary("gaming"),
+    "telecom": lambda: _build_config_summary("telecom"),
+    "media": lambda: _build_config_summary("media"),
+    "financial_services": lambda: _build_config_summary("financial_services"),
+    "hls": lambda: _build_config_summary("hls"),
+}
+
+
+def _get_data_summary(use_case: str) -> str:
+    """Return a cached or freshly built data summary for the vertical."""
+    if _is_cache_valid(use_case):
+        return _DATA_SUMMARY_CACHE[use_case]["summary"]
+
+    builder = _SUMMARY_BUILDERS.get(use_case)
+    if builder is None:
+        summary = f"No detailed data available for vertical: {use_case}"
+    else:
         try:
-            msg = w.genie.get_message(space_id=space_id,
-                                      conversation_id=conversation_id,
-                                      message_id=message_id)
-            if msg.status and msg.status.value in ("COMPLETED", "COMPLETED_WITH_ERROR"):
-                break
-        except Exception:
-            continue
+            summary = builder()
+        except Exception as e:
+            logger.warning("Failed to build data summary for %s: %s", use_case, e)
+            summary = f"Data summary unavailable for {use_case}: {e}"
 
-    # Extract answer and SQL from attachments
-    answer_text = ""
-    sql_text = None
-
-    if hasattr(msg, "attachments") and msg.attachments:
-        for att in msg.attachments:
-            if hasattr(att, "text") and att.text:
-                if hasattr(att.text, "content"):
-                    answer_text += att.text.content + "\n"
-            if hasattr(att, "query") and att.query:
-                if hasattr(att.query, "query"):
-                    sql_text = att.query.query
-                    # Try to get query result
-                    try:
-                        result = w.genie.get_message_query_result(
-                            space_id=space_id,
-                            conversation_id=conversation_id,
-                            message_id=message_id,
-                            attachment_id=att.id,
-                        )
-                        if hasattr(result, "statement_response"):
-                            sr = result.statement_response
-                            if hasattr(sr, "result") and sr.result:
-                                data_chunk = sr.result
-                                if hasattr(data_chunk, "data_array"):
-                                    columns = [c.name for c in sr.manifest.schema.columns] if hasattr(sr, "manifest") else []
-                                    rows = []
-                                    for row in data_chunk.data_array or []:
-                                        rows.append(dict(zip(columns, row)) if columns else row)
-                                    return {
-                                        "answer": answer_text.strip() or "Here are the results from your Genie Space:",
-                                        "sql": sql_text,
-                                        "source": "genie",
-                                        "data": rows[:20],
-                                    }
-                    except Exception as e:
-                        logger.warning("Failed to get query result: %s", e)
-
-    return {
-        "answer": answer_text.strip() or "Genie processed your question but returned no text.",
-        "sql": sql_text,
-        "source": "genie",
-        "data": None,
-    }
+    _DATA_SUMMARY_CACHE[use_case] = {"summary": summary, "timestamp": time.time()}
+    return summary
 
 
 # ===================================================================
-#  Backend 2: Databricks Foundation Model
+#  System prompt builder
 # ===================================================================
+
+_VERTICAL_DESCRIPTIONS = {
+    "gaming": "player analytics, game development, and live game operations",
+    "telecom": "network operations, subscriber management, and telecommunications",
+    "media": "audience intelligence, content analytics, and media monetization",
+    "financial_services": "banking, capital markets, and insurance analytics",
+    "hls": "healthcare providers, health plans, biopharma, and medtech analytics",
+}
+
+_APP_NAMES = {
+    "gaming": "Gaming IQ",
+    "telecom": "Telecom IQ",
+    "media": "Media IQ",
+    "financial_services": "Financial Services IQ",
+    "hls": "Health & Life Sciences IQ",
+}
+
 
 def _build_fm_system_prompt(use_case: str) -> str:
-    """Build a system prompt with schema context from the config."""
-    try:
-        from app.data_access import get_config
-        cfg = get_config()
-    except Exception:
-        cfg = {}
+    """Build a rich system prompt with live data context for the FM."""
+    app_name = _APP_NAMES.get(use_case, "Blueprint IQ")
+    vertical_desc = _VERTICAL_DESCRIPTIONS.get(use_case, "data analytics")
+    data_summary = _get_data_summary(use_case)
 
-    genie_cfg = cfg.get("genie", {})
-    tables = genie_cfg.get("tables", [])
-    app_name = cfg.get("app", {}).get("name", "Blueprint IQ")
+    return (
+        f"You are a data analyst for {app_name}, a {vertical_desc} analytics platform.\n\n"
+        f"You have access to the following live data:\n\n"
+        f"{data_summary}\n\n"
+        f"Answer questions concisely and accurately based on this data. Include specific numbers.\n"
+        f"When relevant, mention trends, comparisons, and actionable insights.\n"
+        f"If you generate SQL, wrap it in ```sql blocks.\n"
+        f"Format your response with bold headers using **text** for key metrics.\n"
+        f"Keep responses focused and under 200 words."
+    )
 
-    # Build schema context from ML features and data config
-    ml_cfg = cfg.get("ml", {})
-    features_info = []
-    for model_key, model_info in ml_cfg.items():
-        if isinstance(model_info, dict) and "features" in model_info:
-            features_info.append(
-                f"  Model '{model_info.get('name', model_key)}' uses features: "
-                f"{', '.join(model_info['features'])}"
-            )
 
-    table_list = "\n".join(f"  - {t}" for t in tables) if tables else "  (no tables configured)"
-    features_list = "\n".join(features_info) if features_info else "  (no ML models configured)"
-
-    return f"""You are {app_name} AI Assistant, an expert data analyst for the {use_case} vertical.
-You answer questions about the data in the lakehouse and can generate SQL queries.
-
-Available tables in Unity Catalog:
-{table_list}
-
-ML model features:
-{features_list}
-
-When answering:
-- Be concise and data-driven
-- If a SQL query would help answer the question, include it in your response prefixed with ```sql
-- Reference specific tables and columns when relevant
-- Provide actionable insights, not just raw numbers
-"""
-
+# ===================================================================
+#  FM call
+# ===================================================================
 
 def _ask_fm(question: str, use_case: str) -> Dict[str, Any]:
-    """Call a Databricks Foundation Model serving endpoint."""
+    """Call the databricks-claude-sonnet-4-6 Foundation Model endpoint."""
     from databricks.sdk import WorkspaceClient
 
-    endpoint = _get_fm_endpoint()
     w = WorkspaceClient()
-
     system_prompt = _build_fm_system_prompt(use_case)
 
     response = w.serving_endpoints.query(
-        name=endpoint,
+        name="databricks-claude-sonnet-4-6",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question},
         ],
         max_tokens=1024,
-        temperature=0.3,
+        temperature=0.2,
     )
 
     answer_text = ""
@@ -191,878 +251,69 @@ def _ask_fm(question: str, use_case: str) -> Dict[str, Any]:
 
 
 # ===================================================================
-#  Backend 3: Demo mode -- intelligent keyword-matched responses
+#  Demo mode -- intelligent keyword-matched responses (fallback)
 # ===================================================================
 
 _DEMO_RESPONSES: Dict[str, List[Dict[str, Any]]] = {
-    # -----------------------------------------------------------------
-    # MANUFACTURING
-    # -----------------------------------------------------------------
-    "manufacturing": [
-        {
-            "patterns": [r"anomal", r"vibrat", r"sensor", r"alert"],
-            "answer": (
-                "**Anomaly Detection Summary (Last 1 Hour)**\n\n"
-                "We detected **87 anomalies** across all sites in the last hour. "
-                "The most significant is on **CNC-Milling-BER-04** in Berlin, which is showing "
-                "elevated vibration at **38.2 Hz** (normal range: 10-25 Hz) and temperature at "
-                "**72.4C** (normal: 40-60C). The anomaly score is **0.94**, well above the 0.65 threshold.\n\n"
-                "Root cause analysis points to **tool wear index** at 0.87, suggesting the cutting tool "
-                "is due for replacement. SHAP analysis shows vibration_hz (0.34) and tool_wear_index (0.28) "
-                "as the top contributing features.\n\n"
-                "**Recommendation:** Schedule immediate tool replacement on BER-04 and inspect "
-                "Lathe-DET-12 which shows early warning signs (score: 0.58)."
-            ),
-            "sql": (
-                "SELECT machine_id, vibration_hz, temp_c, anomaly_score, tool_wear_index\n"
-                "FROM manufacturing_iq.silver.cnc_anomalies\n"
-                "WHERE anomaly_score > 0.65\n"
-                "  AND timestamp >= current_timestamp() - INTERVAL 1 HOUR\n"
-                "ORDER BY anomaly_score DESC\n"
-                "LIMIT 10"
-            ),
-            "data": [
-                {"machine_id": "CNC-Milling-BER-04", "vibration_hz": 38.2, "temp_c": 72.4, "anomaly_score": 0.94, "tool_wear_index": 0.87},
-                {"machine_id": "Lathe-DET-12", "vibration_hz": 29.1, "temp_c": 63.8, "anomaly_score": 0.58, "tool_wear_index": 0.62},
-                {"machine_id": "Assembly-Arm-BER-07", "vibration_hz": 26.4, "temp_c": 61.2, "anomaly_score": 0.42, "tool_wear_index": 0.51},
-            ],
-        },
-        {
-            "patterns": [r"inventory", r"stock", r"shortage", r"supply", r"forecast", r"part"],
-            "answer": (
-                "**Inventory Forecast (Next 30 Days)**\n\n"
-                "Critical shortages predicted:\n"
-                "- **Sensor Array X-12** (Tokyo): Only **0.5 days** of stock remaining (150 units, 300/day usage). "
-                "URGENT -- production halt imminent.\n"
-                "- **Precision Bearings** (Detroit): **3 days** remaining (2,100 units). Reorder triggered.\n"
-                "- **Ceramic Insulator Plate** (Tokyo): **2 days** remaining (800 units).\n\n"
-                "Healthy components:\n"
-                "- CNC Alloy Block A (Berlin): 14 days remaining\n"
-                "- Titanium Fastener Set (Berlin): 21 days remaining\n"
-                "- Hydraulic Actuator B7 (Detroit): 7 days remaining\n\n"
-                "**Recommendation:** Expedite Sensor Array X-12 order immediately. "
-                "The Prophet forecasting model predicts Tokyo demand increasing 12% next quarter."
-            ),
-            "sql": (
-                "SELECT component, site, current_stock, daily_usage,\n"
-                "       current_stock / daily_usage AS days_remaining, status\n"
-                "FROM manufacturing_iq.gold.site_component_status\n"
-                "WHERE status IN ('Critical', 'Low')\n"
-                "ORDER BY days_remaining ASC"
-            ),
-            "data": [
-                {"component": "Sensor Array X-12", "site": "Tokyo", "current_stock": 150, "daily_usage": 300, "days_remaining": 0.5, "status": "Critical"},
-                {"component": "Ceramic Insulator Plate", "site": "Tokyo", "current_stock": 800, "daily_usage": 400, "days_remaining": 2.0, "status": "Low"},
-                {"component": "Precision Bearings", "site": "Detroit", "current_stock": 2100, "daily_usage": 700, "days_remaining": 3.0, "status": "Low"},
-            ],
-        },
-        {
-            "patterns": [r"quality", r"tolerance", r"inspect", r"spec", r"cpk", r"defect"],
-            "answer": (
-                "**Quality & Tolerance Report**\n\n"
-                "In the last 24 hours, we performed **2,854,000 inspections** across all sites.\n"
-                "- Out-of-spec count: **14** (0.0005% rate -- within target)\n"
-                "- Process capability: Cp = **1.45**, Cpk = **1.38** (target: Cpk > 1.33)\n\n"
-                "Site breakdown:\n"
-                "- Berlin: 1.2M inspections, 4 OOS, Cpk 1.42\n"
-                "- Detroit: 980K inspections, 6 OOS, Cpk 1.31 (below target)\n"
-                "- Tokyo: 674K inspections, 4 OOS, Cpk 1.44\n\n"
-                "**Alert:** Detroit's Cpk has dropped below the 1.33 threshold. "
-                "Investigation shows Lathe-DET-12 dimensional drift correlating with the vibration anomaly."
-            ),
-            "sql": (
-                "SELECT site, COUNT(*) AS inspections,\n"
-                "       SUM(CASE WHEN out_of_spec THEN 1 ELSE 0 END) AS oos_count,\n"
-                "       AVG(cpk) AS avg_cpk\n"
-                "FROM manufacturing_iq.gold.production_kpis\n"
-                "WHERE snapshot_time >= current_date()\n"
-                "GROUP BY site ORDER BY avg_cpk ASC"
-            ),
-            "data": [
-                {"site": "Detroit", "inspections": 980000, "oos_count": 6, "avg_cpk": 1.31},
-                {"site": "Berlin", "inspections": 1200000, "oos_count": 4, "avg_cpk": 1.42},
-                {"site": "Tokyo", "inspections": 674000, "oos_count": 4, "avg_cpk": 1.44},
-            ],
-        },
-        {
-            "patterns": [r"build", r"batch", r"track", r"production", r"yield", r"throughput"],
-            "answer": (
-                "**Build Tracking Summary**\n\n"
-                "Active batches: **3** across all sites\n"
-                "- **B-9982-XYZ** (Berlin): Complete -- 6 stations passed, 0 defects\n"
-                "- **A-1102-MDF** (Detroit): **DEFECT** detected at station 3 -- vibration anomaly flagged\n"
-                "- **C-4421-ALP** (Tokyo): In Progress -- currently at Assembly Line B (station 4/6)\n\n"
-                "Overall yield rate: **98.0%** | OEE: **91.4%**\n"
-                "Total units produced (24h): **148,320** with **2,966** defects.\n\n"
-                "**Note:** Batch A-1102-MDF defect correlates with the CNC-Milling-BER-04 anomaly pattern. "
-                "Recommend halting similar batches on Detroit line until tool is replaced."
-            ),
-            "sql": (
-                "SELECT batch_id, site, station, status, defect_flag,\n"
-                "       timestamp\n"
-                "FROM manufacturing_iq.silver.build_tracking\n"
-                "WHERE date(timestamp) = current_date()\n"
-                "ORDER BY timestamp DESC"
-            ),
-            "data": [
-                {"batch_id": "B-9982-XYZ", "site": "Berlin", "stations_complete": 6, "defects": 0, "status": "Complete"},
-                {"batch_id": "A-1102-MDF", "site": "Detroit", "stations_complete": 3, "defects": 1, "status": "Defect"},
-                {"batch_id": "C-4421-ALP", "site": "Tokyo", "stations_complete": 4, "defects": 0, "status": "In Progress"},
-            ],
-        },
-        {
-            "patterns": [r"model", r"f1", r"drift", r"ml", r"inference", r"latency", r"accuracy"],
-            "answer": (
-                "**ML Model Health Report**\n\n"
-                "**CNC_Tolerance_Anomaly model:**\n"
-                "- F1 Score: **0.947** (target: 0.94) -- Healthy\n"
-                "- Inference latency: **42 ms** (p99: 68ms)\n"
-                "- Data drift: **1.2%** (threshold: 5%) -- No significant drift\n"
-                "- Predictions served (24h): **487,200**\n\n"
-                "**Feature importance (SHAP):**\n"
-                "1. vibration_hz: 0.34\n"
-                "2. tool_wear_index: 0.28\n"
-                "3. temp_c: 0.19\n"
-                "4. spindle_rpm: 0.12\n"
-                "5. feed_rate: 0.07\n\n"
-                "**Inventory_Demand_Forecast model (Prophet):**\n"
-                "- MAPE: 4.2% | Horizon: 30 days\n"
-                "- Next retrain scheduled in 3 days."
-            ),
-            "sql": (
-                "SELECT model_name, f1_score, inference_latency_ms,\n"
-                "       data_drift_pct, predictions_24h\n"
-                "FROM manufacturing_iq.gold.model_health_metrics\n"
-                "ORDER BY snapshot_time DESC LIMIT 1"
-            ),
-            "data": [
-                {"model_name": "CNC_Tolerance_Anomaly", "f1_score": 0.947, "inference_latency_ms": 42, "data_drift_pct": 1.2, "predictions_24h": 487200},
-            ],
-        },
-        {
-            "patterns": [r"q3", r"ramp", r"target", r"alpha", r"on track"],
-            "answer": (
-                "**Q3 Ramp Target Analysis**\n\n"
-                "The Alpha-9 build is currently **on track** based on current production velocity.\n\n"
-                "- Current daily output: **148,320 units** (target: 145,000)\n"
-                "- Yield rate: **98.0%** (target: 97.5%)\n"
-                "- Berlin is leading production at 52,200 units/day\n"
-                "- Detroit is slightly behind target (-3.2%) due to the CNC line defects\n"
-                "- Tokyo is at target with 44,800 units/day\n\n"
-                "**Risk factor:** If the Detroit CNC anomaly is not resolved within 48 hours, "
-                "the Q3 target is at risk of a **2-day delay**. Recommend prioritizing tool replacement."
-            ),
-            "sql": (
-                "SELECT site, SUM(units_produced) AS daily_output,\n"
-                "       AVG(yield_pct) AS avg_yield\n"
-                "FROM manufacturing_iq.gold.production_kpis\n"
-                "WHERE snapshot_time >= current_date()\n"
-                "GROUP BY site"
-            ),
-            "data": [
-                {"site": "Berlin", "daily_output": 52200, "avg_yield": 98.4},
-                {"site": "Detroit", "daily_output": 51320, "avg_yield": 97.1},
-                {"site": "Tokyo", "daily_output": 44800, "avg_yield": 98.5},
-            ],
-        },
-        {
-            "patterns": [r"downtime", r"berlin", r"cnc", r"root cause", r"why"],
-            "answer": (
-                "**Root Cause Analysis: Berlin CNC Milling Line Downtime**\n\n"
-                "The primary cause of the current downtime on CNC-Milling-BER-04 is **excessive tool wear**.\n\n"
-                "Evidence chain:\n"
-                "1. Tool wear index reached **0.87** (replacement threshold: 0.80)\n"
-                "2. This caused vibration to spike to **38.2 Hz** (2.5x normal)\n"
-                "3. Temperature elevated to **72.4C** due to friction\n"
-                "4. Anomaly model flagged this with score **0.94** at 14:23 UTC\n"
-                "5. Automatic safety stop triggered at 14:25 UTC\n\n"
-                "**Historical pattern:** This machine has had 3 similar events in the last 90 days, "
-                "each correlated with tool wear exceeding 0.80. "
-                "Current maintenance schedule has tool changes every 500 hours; "
-                "recommend reducing to **400 hours** based on the data."
-            ),
-            "sql": (
-                "SELECT timestamp, machine_id, vibration_hz, temp_c,\n"
-                "       tool_wear_index, anomaly_score, event_type\n"
-                "FROM manufacturing_iq.silver.cnc_anomalies\n"
-                "WHERE machine_id = 'CNC-Milling-BER-04'\n"
-                "  AND timestamp >= current_timestamp() - INTERVAL 24 HOURS\n"
-                "ORDER BY timestamp DESC"
-            ),
-            "data": None,
-        },
-        {
-            "patterns": [r"station", r"micro.?stop", r"stoppage", r"recurring"],
-            "answer": (
-                "**Top 5 Stations with Recurring Micro-Stoppages (Last 7 Days)**\n\n"
-                "| Rank | Station | Site | Stoppages | Avg Duration | Impact |\n"
-                "|------|---------|------|-----------|-------------|--------|\n"
-                "| 1 | CNC Milling #4 | Berlin | 47 | 3.2 min | 2.5 hrs lost |\n"
-                "| 2 | Lathe Line #12 | Detroit | 38 | 4.1 min | 2.6 hrs lost |\n"
-                "| 3 | Assembly Arm #7 | Berlin | 31 | 2.8 min | 1.4 hrs lost |\n"
-                "| 4 | Press #03 | Tokyo | 24 | 1.9 min | 0.8 hrs lost |\n"
-                "| 5 | Assembly Arm #01 | Tokyo | 19 | 2.4 min | 0.8 hrs lost |\n\n"
-                "Berlin CNC Milling #4 leads with 47 micro-stoppages, directly linked "
-                "to the vibration anomaly. Lathe-DET-12 shows a distinct pattern of "
-                "stoppages during shift changes."
-            ),
-            "sql": (
-                "SELECT station_id, site, COUNT(*) AS stoppage_count,\n"
-                "       AVG(duration_minutes) AS avg_duration_min\n"
-                "FROM manufacturing_iq.silver.build_tracking\n"
-                "WHERE event_type = 'MICRO_STOPPAGE'\n"
-                "  AND timestamp >= current_date() - INTERVAL 7 DAYS\n"
-                "GROUP BY station_id, site\n"
-                "ORDER BY stoppage_count DESC LIMIT 5"
-            ),
-            "data": [
-                {"station": "CNC Milling #4", "site": "Berlin", "stoppages": 47, "avg_duration_min": 3.2},
-                {"station": "Lathe Line #12", "site": "Detroit", "stoppages": 38, "avg_duration_min": 4.1},
-                {"station": "Assembly Arm #7", "site": "Berlin", "stoppages": 31, "avg_duration_min": 2.8},
-            ],
-        },
-        {
-            "patterns": [r"delivery", r"pipeline", r"align", r"schedule"],
-            "answer": (
-                "**Inventory vs. Delivery Pipeline Alignment**\n\n"
-                "Overall alignment score: **78%** (target: 90%)\n\n"
-                "Gaps identified:\n"
-                "- **Sensor Array X-12**: Next delivery in 5 days, but stock runs out in 0.5 days. "
-                "Gap of **4.5 days**. Expedite required.\n"
-                "- **Precision Bearings**: Next delivery in 4 days, stock lasts 3 days. "
-                "Minor gap -- can mitigate with reduced production rate.\n"
-                "- **Ceramic Insulator Plate**: Next delivery in 3 days, stock lasts 2 days. "
-                "Gap of 1 day. Safety stock should be increased.\n\n"
-                "Well-aligned components: CNC Alloy Block A (14 days buffer), "
-                "Titanium Fastener Set (21 days), Hydraulic Actuator B7 (7 days)."
-            ),
-            "sql": (
-                "SELECT c.component, c.current_stock, c.daily_usage,\n"
-                "       c.current_stock/c.daily_usage AS days_remaining,\n"
-                "       f.next_delivery_date,\n"
-                "       DATEDIFF(f.next_delivery_date, current_date()) AS delivery_in_days\n"
-                "FROM manufacturing_iq.gold.site_component_status c\n"
-                "JOIN manufacturing_iq.gold.inventory_forecast f ON c.component = f.component\n"
-                "ORDER BY days_remaining ASC"
-            ),
-            "data": None,
-        },
-        {
-            "patterns": [r"productivity", r"yield", r"rate", r"24.?hour", r"last.*hour", r"today"],
-            "answer": (
-                "**Production Productivity & Yield (Last 24 Hours)**\n\n"
-                "Total units produced: **148,320**\n"
-                "Overall yield: **98.0%** | Defect rate: **2.0%**\n"
-                "OEE (Overall Equipment Effectiveness): **91.4%**\n\n"
-                "By site:\n"
-                "- Berlin: 52,200 units | 98.4% yield | OEE 93.1%\n"
-                "- Detroit: 51,320 units | 97.1% yield | OEE 88.7%\n"
-                "- Tokyo: 44,800 units | 98.5% yield | OEE 92.4%\n\n"
-                "Detroit's lower OEE is driven by the CNC-Milling line downtime (32 minutes unplanned). "
-                "Berlin and Tokyo are performing above target."
-            ),
-            "sql": (
-                "SELECT site, total_units_produced, yield_pct, oee_pct\n"
-                "FROM manufacturing_iq.gold.production_kpis\n"
-                "WHERE snapshot_time >= current_timestamp() - INTERVAL 24 HOURS\n"
-                "ORDER BY site"
-            ),
-            "data": [
-                {"site": "Berlin", "units": 52200, "yield_pct": 98.4, "oee_pct": 93.1},
-                {"site": "Detroit", "units": 51320, "yield_pct": 97.1, "oee_pct": 88.7},
-                {"site": "Tokyo", "units": 44800, "yield_pct": 98.5, "oee_pct": 92.4},
-            ],
-        },
-    ],
-
-    # -----------------------------------------------------------------
-    # RISK
-    # -----------------------------------------------------------------
-    "risk": [
-        {
-            "patterns": [r"compliance", r"posture", r"healthy", r"risk"],
-            "answer": (
-                "**Compliance Posture Overview**\n\n"
-                "Overall compliance score: **84/100** (+3.1 from last month)\n\n"
-                "Framework status:\n"
-                "- **GDPR (EU):** Compliant -- 0 violations, last audit Oct 2025\n"
-                "- **SOC 2 Type II (Global):** Compliant -- 0 violations\n"
-                "- **CCPA (California):** Needs Review -- **2 violations** (data retention policy gaps)\n"
-                "- **PCI-DSS (Global):** Needs Review -- **1 violation** (encryption key rotation overdue)\n"
-                "- **HIPAA (US):** **At Risk** -- **14 violations** (unmasked PHI in Silver tables)\n\n"
-                "**Highest risk area:** HIPAA compliance is the most critical concern. "
-                "14 violations were detected in the last scan, primarily related to unmasked "
-                "patient health information found in `risk_iq.silver.rbac_access_logs`. "
-                "Immediate remediation is recommended."
-            ),
-            "sql": (
-                "SELECT framework, status, violation_count, last_audit_date,\n"
-                "       risk_score\n"
-                "FROM risk_iq.gold.compliance_scores\n"
-                "ORDER BY risk_score DESC"
-            ),
-            "data": [
-                {"framework": "HIPAA", "status": "At Risk", "violations": 14, "risk_score": 92},
-                {"framework": "CCPA", "status": "Needs Review", "violations": 2, "risk_score": 45},
-                {"framework": "PCI-DSS", "status": "Needs Review", "violations": 1, "risk_score": 38},
-                {"framework": "GDPR", "status": "Compliant", "violations": 0, "risk_score": 8},
-                {"framework": "SOC 2", "status": "Compliant", "violations": 0, "risk_score": 5},
-            ],
-        },
-        {
-            "patterns": [r"pii", r"exposure", r"root cause", r"personal"],
-            "answer": (
-                "**PII Exposure Root Cause Analysis**\n\n"
-                "In the last 24 hours, **142 PII anomalies** were flagged across **1.2 billion** scanned records.\n\n"
-                "Breakdown by PII type:\n"
-                "- PHONE_NUMBER: 42 detections\n"
-                "- EMAIL_ADDRESS: 38 detections\n"
-                "- US_SSN: 31 detections (CRITICAL)\n"
-                "- CREDIT_CARD: 31 detections (CRITICAL)\n\n"
-                "**Root cause:** A recent ETL pipeline update on March 5th bypassed the PII masking "
-                "step in the Silver layer transformation for the `customer_pii_table`. "
-                "The data engineering team has been notified and a hotfix PR was submitted 2 hours ago.\n\n"
-                "**Current remediation:**\n"
-                "1. Temporary access restriction applied to affected tables\n"
-                "2. Masking job manually triggered -- expected completion in 45 min\n"
-                "3. Audit log generated for affected records"
-            ),
-            "sql": (
-                "SELECT pii_type, COUNT(*) AS detection_count,\n"
-                "       MIN(detected_at) AS first_seen,\n"
-                "       MAX(detected_at) AS last_seen\n"
-                "FROM risk_iq.gold.pii_scan_results\n"
-                "WHERE detected_at >= current_timestamp() - INTERVAL 24 HOURS\n"
-                "GROUP BY pii_type\n"
-                "ORDER BY detection_count DESC"
-            ),
-            "data": [
-                {"pii_type": "PHONE_NUMBER", "detections": 42},
-                {"pii_type": "EMAIL_ADDRESS", "detections": 38},
-                {"pii_type": "US_SSN", "detections": 31},
-                {"pii_type": "CREDIT_CARD", "detections": 31},
-            ],
-        },
-        {
-            "patterns": [r"gdpr", r"warning", r"impact", r"who"],
-            "answer": (
-                "**GDPR Compliance Warning Impact Assessment**\n\n"
-                "Currently, GDPR status is **Compliant** with 0 active violations. "
-                "However, the CCPA and HIPAA findings have cross-regulatory implications:\n\n"
-                "**Potentially impacted:**\n"
-                "- 2,847 EU-resident customer records in the Silver layer\n"
-                "- 3 data processing pipelines that handle cross-border data\n"
-                "- The Finance and Healthcare domains are most exposed\n\n"
-                "**Key personnel:**\n"
-                "- DPO notification sent to compliance@company.com\n"
-                "- Data Engineering lead (j.doe@company.com) assigned to remediation\n"
-                "- Legal review initiated for cross-border transfer assessment\n\n"
-                "**Proactive measures:** The PII exposure in Silver tables could trigger GDPR "
-                "Article 33 notification requirements if EU data is confirmed affected. "
-                "Recommend completing the audit within 72 hours."
-            ),
-            "sql": (
-                "SELECT domain, COUNT(DISTINCT record_id) AS affected_records,\n"
-                "       COUNT(DISTINCT pipeline_id) AS affected_pipelines\n"
-                "FROM risk_iq.silver.anomaly_detections\n"
-                "WHERE region = 'EU'\n"
-                "  AND detection_type = 'PII_EXPOSURE'\n"
-                "GROUP BY domain"
-            ),
-            "data": None,
-        },
-        {
-            "patterns": [r"rbac", r"logging", r"improve", r"future", r"access control"],
-            "answer": (
-                "**RBAC Logging Improvement Recommendations**\n\n"
-                "Current RBAC logging captures 4 users with basic access tracking. "
-                "Analysis of the access patterns reveals several gaps:\n\n"
-                "**Recommended improvements:**\n"
-                "1. **Granular action logging:** Currently tracking SELECT/EXPORT/VIEW/DOWNLOAD. "
-                "Add UPDATE, DELETE, GRANT, REVOKE, and SCHEMA_CHANGE events.\n"
-                "2. **Context enrichment:** Add source IP, session duration, and query hash "
-                "to each log entry for forensic analysis.\n"
-                "3. **Real-time alerting:** Deploy streaming-based anomaly detection on access logs "
-                "using the IsolationForest model (already trained on features: access_frequency, "
-                "data_sensitivity, time_of_day, role_match_score, geo_distance).\n"
-                "4. **Retention policy:** Extend log retention from 90 to 365 days for SOC 2 compliance.\n"
-                "5. **Unity Catalog integration:** Enable system tables for automatic audit logging.\n\n"
-                "Estimated implementation effort: 3-4 sprints with the data engineering team."
-            ),
-            "sql": None,
-            "data": None,
-        },
-        {
-            "patterns": [r"anomalous", r"user", r"top.*five", r"top.*5", r"suspicious.*access"],
-            "answer": (
-                "**Top 5 Users with Anomalous Data Access**\n\n"
-                "Based on the IsolationForest anomaly model scoring access patterns:\n\n"
-                "| Rank | User | Anomaly Score | Flag | Details |\n"
-                "|------|------|--------------|------|---------|\n"
-                "| 1 | j.doe@company.com | 0.94 | Unusual Access Vector | Accessed payroll data from new IP at 2:30 AM |\n"
-                "| 2 | a.smith@company.com | 0.87 | Under Review | Downloaded 14K records from customer_pii_table |\n"
-                "| 3 | ml_service_account | 0.72 | Flagged | Elevated query frequency (4x baseline) |\n"
-                "| 4 | sys_pipeline_01 | 0.58 | Standard | Accessed compliance_docs outside maintenance window |\n"
-                "| 5 | b.jones@company.com | 0.54 | Standard | Cross-domain access (HR -> Finance) |\n\n"
-                "j.doe@company.com is the highest priority -- the combination of off-hours access, "
-                "new IP address, and sensitive payroll data access is highly unusual."
-            ),
-            "sql": (
-                "SELECT user_identity, anomaly_score, risk_level,\n"
-                "       asset_accessed, access_timestamp, source_ip\n"
-                "FROM risk_iq.silver.rbac_access_logs\n"
-                "WHERE anomaly_score > 0.5\n"
-                "ORDER BY anomaly_score DESC LIMIT 5"
-            ),
-            "data": [
-                {"user": "j.doe@company.com", "anomaly_score": 0.94, "flag": "Unusual Access Vector"},
-                {"user": "a.smith@company.com", "anomaly_score": 0.87, "flag": "Under Review"},
-                {"user": "ml_service_account", "anomaly_score": 0.72, "flag": "Flagged"},
-                {"user": "sys_pipeline_01", "anomaly_score": 0.58, "flag": "Standard"},
-                {"user": "b.jones@company.com", "anomaly_score": 0.54, "flag": "Standard"},
-            ],
-        },
-        {
-            "patterns": [r"data domain", r"regulatory", r"most risk"],
-            "answer": (
-                "**Regulatory Risk by Data Domain**\n\n"
-                "| Domain | Risk Score | Open Violations | Frameworks Affected |\n"
-                "|--------|-----------|----------------|--------------------|\n"
-                "| Healthcare | 92 | 14 | HIPAA |\n"
-                "| Customer | 48 | 2 | CCPA, GDPR |\n"
-                "| Finance | 38 | 1 | PCI-DSS |\n"
-                "| HR | 12 | 0 | SOC 2 |\n\n"
-                "The **Healthcare domain** experiences the most regulatory risk by a significant margin, "
-                "driven entirely by the HIPAA violations. The unmasked PHI in Silver tables "
-                "represents a compliance risk score of 92/100.\n\n"
-                "**Recommendation:** Focus remediation efforts on Healthcare domain first. "
-                "The Customer domain's CCPA issues should be addressed within 30 days."
-            ),
-            "sql": (
-                "SELECT domain, risk_score, open_violations,\n"
-                "       frameworks_affected\n"
-                "FROM risk_iq.gold.risk_summary\n"
-                "ORDER BY risk_score DESC"
-            ),
-            "data": [
-                {"domain": "Healthcare", "risk_score": 92, "violations": 14, "frameworks": "HIPAA"},
-                {"domain": "Customer", "risk_score": 48, "violations": 2, "frameworks": "CCPA, GDPR"},
-                {"domain": "Finance", "risk_score": 38, "violations": 1, "frameworks": "PCI-DSS"},
-                {"domain": "HR", "risk_score": 12, "violations": 0, "frameworks": "SOC 2"},
-            ],
-        },
-        {
-            "patterns": [r"soc.*2", r"audit", r"fail"],
-            "answer": (
-                "**SOC 2 Audit Risk Assessment**\n\n"
-                "Systems most likely to fail a SOC 2 Type II audit:\n\n"
-                "1. **RBAC Logging System** (Risk: HIGH)\n"
-                "   - Log retention only 90 days (SOC 2 requires 365)\n"
-                "   - Missing granular action tracking for DELETE/UPDATE\n"
-                "   - No automated alerting on policy violations\n\n"
-                "2. **PII Data Pipeline** (Risk: HIGH)\n"
-                "   - Recent masking bypass incident\n"
-                "   - Insufficient access controls on Silver tables\n\n"
-                "3. **ML Model Serving** (Risk: MEDIUM)\n"
-                "   - Model governance documentation incomplete\n"
-                "   - Input/output logging not enabled for all endpoints\n\n"
-                "4. **Customer Data Lake** (Risk: LOW)\n"
-                "   - Minor encryption key rotation delay (3 days overdue)\n\n"
-                "Overall SOC 2 readiness: **72%**. Recommend addressing RBAC and PII items "
-                "before the next audit cycle."
-            ),
-            "sql": None,
-            "data": None,
-        },
-        {
-            "patterns": [r"financial", r"exposure", r"risk score", r"total"],
-            "answer": (
-                "**Financial Risk Exposure Summary**\n\n"
-                "Total financial risk exposure: **$2.4M** (+12% from last month)\n"
-                "Compliance risk score: **84/100** (+3.1)\n"
-                "Active high-severity alerts: **3** (-2 from last month)\n\n"
-                "The increase in financial risk exposure is primarily driven by:\n"
-                "1. HIPAA violation remediation costs (estimated $1.2M)\n"
-                "2. Potential CCPA penalties ($450K)\n"
-                "3. PCI-DSS remediation and audit costs ($750K)\n\n"
-                "The reduction in high-severity alerts from 5 to 3 shows improvement in "
-                "operational risk management. GDPR and SOC 2 frameworks are well-controlled."
-            ),
-            "sql": (
-                "SELECT financial_risk_exposure, compliance_risk_score,\n"
-                "       active_high_severity_alerts\n"
-                "FROM risk_iq.gold.risk_summary\n"
-                "ORDER BY snapshot_time DESC LIMIT 1"
-            ),
-            "data": None,
-        },
-    ],
-
-    # -----------------------------------------------------------------
-    # HEALTHCARE
-    # -----------------------------------------------------------------
-    "healthcare": [
-        {
-            "patterns": [r"bed", r"utiliz", r"capacity", r"occupancy"],
-            "answer": (
-                "**Bed Utilization Report**\n\n"
-                "Current overall bed utilization: **87.3%**\n\n"
-                "By facility:\n"
-                "- **Metro General Hospital:** 91.2% -- NEAR CAPACITY\n"
-                "  - 142 admissions today, ICU at 96% capacity\n"
-                "- **Westside Medical Center:** 84.1% -- Normal\n"
-                "  - 98 admissions today, trending stable\n"
-                "- **Eastview Community Clinic:** 72.5% -- Normal\n"
-                "  - 45 admissions today, good capacity buffer\n\n"
-                "**Alert:** Metro General is projected to reach 95% capacity within 72 hours "
-                "based on current admission trends. Recommend activating surge protocols "
-                "and diverting non-critical cases to Eastview."
-            ),
-            "sql": (
-                "SELECT facility, bed_utilization_pct, admissions_today,\n"
-                "       icu_utilization_pct\n"
-                "FROM healthcare_iq.gold.patient_flow_metrics\n"
-                "WHERE snapshot_time >= current_date()\n"
-                "ORDER BY bed_utilization_pct DESC"
-            ),
-            "data": [
-                {"facility": "Metro General Hospital", "bed_util_pct": 91.2, "admissions": 142, "status": "Near Capacity"},
-                {"facility": "Westside Medical Center", "bed_util_pct": 84.1, "admissions": 98, "status": "Normal"},
-                {"facility": "Eastview Community Clinic", "bed_util_pct": 72.5, "admissions": 45, "status": "Normal"},
-            ],
-        },
-        {
-            "patterns": [r"wait", r"time", r"department", r"longest", r"ed", r"emergency"],
-            "answer": (
-                "**ED Wait Time Analysis**\n\n"
-                "Average ED wait time across all facilities: **34 minutes**\n\n"
-                "By department (longest first):\n"
-                "| Department | Avg Wait | Volume | Trend |\n"
-                "|-----------|----------|--------|-------|\n"
-                "| Orthopedics | 52 min | 28 patients | Up 15% |\n"
-                "| Cardiology | 45 min | 34 patients | Stable |\n"
-                "| Emergency (General) | 38 min | 89 patients | Up 8% |\n"
-                "| Oncology | 31 min | 12 patients | Down 5% |\n"
-                "| Pediatrics | 24 min | 41 patients | Stable |\n"
-                "| ICU | 18 min | 7 patients | Down 12% |\n\n"
-                "**Orthopedics** has the longest wait at Metro General, driven by a spike in "
-                "sports injury cases this week. Recommend adding a triage nurse during peak hours (10AM-2PM)."
-            ),
-            "sql": (
-                "SELECT department, AVG(wait_time_minutes) AS avg_wait,\n"
-                "       COUNT(*) AS patient_volume\n"
-                "FROM healthcare_iq.silver.ed_encounters\n"
-                "WHERE encounter_date = current_date()\n"
-                "GROUP BY department\n"
-                "ORDER BY avg_wait DESC"
-            ),
-            "data": [
-                {"department": "Orthopedics", "avg_wait_min": 52, "patients": 28},
-                {"department": "Cardiology", "avg_wait_min": 45, "patients": 34},
-                {"department": "Emergency", "avg_wait_min": 38, "patients": 89},
-                {"department": "Oncology", "avg_wait_min": 31, "patients": 12},
-                {"department": "Pediatrics", "avg_wait_min": 24, "patients": 41},
-            ],
-        },
-        {
-            "patterns": [r"readmis", r"predict", r"discharg", r"48.?hour", r"risk"],
-            "answer": (
-                "**Readmission Risk -- Patients Discharged in Last 48 Hours**\n\n"
-                "Model: Readmission_Risk_Predictor (AUC-ROC: 0.89)\n"
-                "Discharges analyzed: **127 patients**\n\n"
-                "Risk distribution:\n"
-                "- High Risk (>70%): **18 patients** -- Immediate follow-up required\n"
-                "- Medium Risk (40-70%): **34 patients** -- Schedule 7-day check-in\n"
-                "- Low Risk (<40%): **75 patients** -- Standard discharge protocol\n\n"
-                "Top high-risk patients:\n"
-                "- PAT-000142: Heart Failure, 82 yr, 3 prior admissions -- Risk: 89%\n"
-                "- PAT-000287: COPD, 71 yr, comorbidity index 4.2 -- Risk: 84%\n"
-                "- PAT-000391: Pneumonia, 68 yr, recent ICU stay -- Risk: 78%\n\n"
-                "Key risk factors: Prior admissions (12mo), comorbidity index, and length of stay "
-                "are the top 3 predictors driving these scores."
-            ),
-            "sql": (
-                "SELECT patient_id, diagnosis, age, risk_score,\n"
-                "       prior_admissions_12m, comorbidity_index\n"
-                "FROM healthcare_iq.gold.readmission_predictions\n"
-                "WHERE discharge_date >= current_timestamp() - INTERVAL 48 HOURS\n"
-                "  AND risk_score > 0.70\n"
-                "ORDER BY risk_score DESC"
-            ),
-            "data": [
-                {"patient_id": "PAT-000142", "diagnosis": "Heart Failure", "age": 82, "risk_score": 0.89},
-                {"patient_id": "PAT-000287", "diagnosis": "COPD", "age": 71, "risk_score": 0.84},
-                {"patient_id": "PAT-000391", "diagnosis": "Pneumonia", "age": 68, "risk_score": 0.78},
-            ],
-        },
-        {
-            "patterns": [r"equipment", r"maintenance", r"critical", r"alert"],
-            "answer": (
-                "**Critical Equipment Maintenance Alerts**\n\n"
-                "Total assets monitored: **1,240**\n"
-                "Maintenance due: **47** | Critical alerts: **3**\n\n"
-                "Critical alerts requiring immediate action:\n"
-                "1. **Ventilator-MGH-14** (Metro General) -- Motor bearing failure predicted in 12 hours. "
-                "Backup unit assigned.\n"
-                "2. **CT-Scanner-MGH-02** (Metro General) -- X-ray tube at 94% lifecycle. "
-                "Replacement ordered, ETA 2 days.\n"
-                "3. **Lab-Analyzer-EVC-08** (Eastview) -- Calibration drift detected. "
-                "Results quarantined pending recalibration.\n\n"
-                "**Recommendation:** Ventilator-MGH-14 is the highest priority given patient safety impact. "
-                "Ensure backup is functional before scheduled maintenance window tonight."
-            ),
-            "sql": (
-                "SELECT equipment_id, facility, alert_type, severity,\n"
-                "       predicted_failure_hours, status\n"
-                "FROM healthcare_iq.gold.equipment_health\n"
-                "WHERE severity = 'Critical'\n"
-                "ORDER BY predicted_failure_hours ASC"
-            ),
-            "data": [
-                {"equipment_id": "Ventilator-MGH-14", "facility": "Metro General", "severity": "Critical", "failure_in_hours": 12},
-                {"equipment_id": "CT-Scanner-MGH-02", "facility": "Metro General", "severity": "Critical", "failure_in_hours": 48},
-                {"equipment_id": "Lab-Analyzer-EVC-08", "facility": "Eastview", "severity": "Critical", "failure_in_hours": 72},
-            ],
-        },
-        {
-            "patterns": [r"bottleneck", r"flow", r"patient flow"],
-            "answer": (
-                "**Patient Flow Bottleneck Analysis -- Emergency Department (This Week)**\n\n"
-                "Key bottlenecks identified:\n\n"
-                "1. **Triage to Bed Assignment:** Average 18 minutes (target: 10 min)\n"
-                "   - Root cause: Bed management system update delays at Metro General\n"
-                "2. **Lab Results Turnaround:** Average 62 minutes (target: 45 min)\n"
-                "   - Root cause: Lab-Analyzer-EVC-08 calibration issues reducing throughput\n"
-                "3. **Discharge Processing:** Average 2.4 hours (target: 1.5 hours)\n"
-                "   - Root cause: Pharmacy verification backlog during PM shift\n\n"
-                "Combined impact: These bottlenecks add ~1.5 hours to average patient journey, "
-                "affecting approximately 89 ED patients per day. Estimated cost: $34K/day in "
-                "extended stay charges."
-            ),
-            "sql": (
-                "SELECT stage, avg_duration_minutes, target_minutes,\n"
-                "       (avg_duration_minutes - target_minutes) AS delay_minutes\n"
-                "FROM healthcare_iq.gold.patient_flow_metrics\n"
-                "WHERE department = 'Emergency'\n"
-                "  AND snapshot_date >= current_date() - INTERVAL 7 DAYS\n"
-                "ORDER BY delay_minutes DESC"
-            ),
-            "data": None,
-        },
-        {
-            "patterns": [r"facility", r"trend", r"capacity.*limit", r"72.*hour", r"project"],
-            "answer": (
-                "**Capacity Trend Forecast (Next 72 Hours)**\n\n"
-                "Based on admission trends and scheduled discharges:\n\n"
-                "- **Metro General Hospital:** Currently at 91.2%. "
-                "Projected to reach **95.8%** in 48 hours. SURGE RISK.\n"
-                "  - Admissions trending up 8% this week\n"
-                "  - 12 scheduled surgeries will require post-op beds\n"
-                "- **Westside Medical Center:** Stable at 84.1%. "
-                "Projected: **82.5%** (slight improvement from planned discharges)\n"
-                "- **Eastview Community Clinic:** Stable at 72.5%. "
-                "Projected: **74.2%** (minor increase)\n\n"
-                "**Action plan:** Begin diverting Metro General non-emergency admissions "
-                "to Westside and Eastview starting tomorrow morning."
-            ),
-            "sql": None,
-            "data": None,
-        },
-        {
-            "patterns": [r"cardiology", r"predictor", r"30.?day", r"readmission.*factor"],
-            "answer": (
-                "**Top Readmission Predictors -- Cardiology (30-Day)**\n\n"
-                "Based on SHAP analysis of the Readmission_Risk_Predictor model:\n\n"
-                "| Rank | Feature | SHAP Value | Direction |\n"
-                "|------|---------|-----------|----------|\n"
-                "| 1 | prior_admissions_12m | 0.28 | Higher = More Risk |\n"
-                "| 2 | comorbidity_index | 0.24 | Higher = More Risk |\n"
-                "| 3 | los_days | 0.19 | Longer = More Risk |\n"
-                "| 4 | age | 0.14 | Older = More Risk |\n"
-                "| 5 | insurance_type | 0.09 | Medicare = Higher Risk |\n"
-                "| 6 | diagnosis_code | 0.06 | Heart Failure = Highest |\n\n"
-                "Key insight: Patients with 3+ prior admissions in 12 months AND comorbidity index >3.5 "
-                "have an 82% readmission rate. This cohort represents 23% of cardiology discharges."
-            ),
-            "sql": (
-                "SELECT feature, shap_importance, direction\n"
-                "FROM healthcare_iq.gold.readmission_predictions\n"
-                "WHERE department = 'Cardiology'\n"
-                "ORDER BY shap_importance DESC"
-            ),
-            "data": None,
-        },
-    ],
-
     # -----------------------------------------------------------------
     # GAMING
     # -----------------------------------------------------------------
     "gaming": [
         {
-            "patterns": [r"dau", r"daily active", r"trend", r"user.*this week"],
+            "patterns": [r"retention", r"churn", r"player", r"d1", r"d7", r"d30"],
             "answer": (
-                "**DAU Trend Analysis (This Week)**\n\n"
-                "Current DAU: **2.4M** across all game titles\n\n"
-                "By title:\n"
-                "| Title | DAU | WoW Change | Peak Concurrent |\n"
-                "|-------|-----|-----------|----------------|\n"
-                "| Stellar Conquest | 1.1M | +5.2% | 412K |\n"
-                "| Shadow Realms | 820K | -2.1% | 298K |\n"
-                "| Velocity Rush | 480K | +12.8% | 137K |\n\n"
-                "Velocity Rush is seeing the strongest growth, driven by the Season 3 launch "
-                "last Tuesday. Shadow Realms DAU dip correlates with the server stability issues "
-                "on NA-West region (resolved yesterday).\n\n"
-                "Concurrent player peak: **847K** (hit at 21:00 UTC Sunday)"
-            ),
-            "sql": (
-                "SELECT game_title, dau, wow_change_pct, concurrent_peak\n"
-                "FROM gaming_iq.gold.live_ops_kpis\n"
-                "WHERE snapshot_date >= current_date() - INTERVAL 7 DAYS\n"
-                "ORDER BY dau DESC"
-            ),
-            "data": [
-                {"title": "Stellar Conquest", "dau": "1.1M", "wow_change": "+5.2%", "concurrent": "412K"},
-                {"title": "Shadow Realms", "dau": "820K", "wow_change": "-2.1%", "concurrent": "298K"},
-                {"title": "Velocity Rush", "dau": "480K", "wow_change": "+12.8%", "concurrent": "137K"},
-            ],
-        },
-        {
-            "patterns": [r"churn", r"segment", r"stellar", r"risk"],
-            "answer": (
-                "**Churn Risk by Segment -- Stellar Conquest**\n\n"
-                "Model: Player_Churn_Predictor (AUC-ROC: 0.91)\n\n"
-                "| Segment | Players | High Churn Risk | D7 Retention | Avg LTV |\n"
-                "|---------|---------|----------------|-------------|--------|\n"
-                "| Whale | 12K | 840 (7%) | 64% | $284.50 |\n"
-                "| Dolphin | 89K | 8,200 (9.2%) | 48% | $68.20 |\n"
-                "| Minnow | 340K | 14,100 (4.1%) | 35% | $12.40 |\n"
-                "| Free-to-Play | 660K | 11,060 (1.7%) | 28% | $2.10 |\n\n"
-                "**Highest churn risk:** The **Dolphin** segment at 9.2% high churn risk. "
-                "These are mid-spending players who haven't made a purchase in 14+ days. "
-                "A targeted 20% discount offer could recover an estimated $560K in at-risk LTV.\n\n"
-                "Top churn predictors: days_since_last_login (0.31), purchase_count_30d (0.24), "
-                "session_frequency_7d (0.21)."
-            ),
-            "sql": (
-                "SELECT segment, COUNT(*) AS players,\n"
-                "       SUM(CASE WHEN churn_risk = 'High' THEN 1 ELSE 0 END) AS high_risk,\n"
-                "       AVG(d7_retention) AS d7_retention\n"
-                "FROM gaming_iq.gold.player_retention_cohorts\n"
-                "WHERE game_title = 'Stellar Conquest'\n"
-                "GROUP BY segment"
-            ),
-            "data": [
-                {"segment": "Whale", "players": "12K", "high_risk": 840, "d7_retention": "64%"},
-                {"segment": "Dolphin", "players": "89K", "high_risk": 8200, "d7_retention": "48%"},
-                {"segment": "Minnow", "players": "340K", "high_risk": 14100, "d7_retention": "35%"},
-                {"segment": "Free-to-Play", "players": "660K", "high_risk": 11060, "d7_retention": "28%"},
-            ],
-        },
-        {
-            "patterns": [r"gold", r"duplic", r"exploit", r"shadow"],
-            "answer": (
-                "**Exploit Investigation: Shadow Realms Gold Duplication**\n\n"
-                "The Economy_Fraud_Detector (IsolationForest) has flagged **23 accounts** "
-                "with suspicious gold generation patterns in Shadow Realms.\n\n"
-                "Evidence:\n"
-                "- 23 accounts generated 4.2M gold in 2 hours (normal rate: ~5K/hour)\n"
-                "- All accounts created within the same 48-hour window\n"
-                "- Common pattern: trade gold to mule accounts, then convert to rare items\n"
-                "- Exploit vector: Crafting recipe bug allowing negative-cost input materials\n\n"
-                "**Impact:** Estimated 2.1B illegitimate gold injected into economy. "
-                "Inflation index spiked to 1.08 in affected market regions.\n\n"
-                "**Actions taken:**\n"
-                "1. 23 accounts suspended pending investigation\n"
-                "2. Crafting recipe hotfix deployed at 04:00 UTC\n"
-                "3. Economic rollback prepared for affected transactions\n"
-                "4. 89 total suspicious transactions flagged for review"
-            ),
-            "sql": (
-                "SELECT account_id, gold_generated_1h, transaction_velocity,\n"
-                "       account_age_days, anomaly_score\n"
-                "FROM gaming_iq.silver.transaction_log\n"
-                "WHERE game_title = 'Shadow Realms'\n"
-                "  AND anomaly_score > 0.85\n"
-                "ORDER BY gold_generated_1h DESC"
-            ),
-            "data": None,
-        },
-        {
-            "patterns": [r"retention", r"d1", r"d7", r"d30", r"cohort", r"latest"],
-            "answer": (
-                "**Retention Cohort Analysis**\n\n"
-                "Latest cohort (installed 30+ days ago):\n"
-                "- D1 Retention: **68%** (industry avg: 40%)\n"
-                "- D7 Retention: **41%** (industry avg: 20%)\n"
-                "- D30 Retention: **22%** (industry avg: 10%)\n\n"
-                "By segment performance:\n"
-                "| Segment | D1 | D7 | D30 | LTV |\n"
-                "|---------|-----|-----|------|-----|\n"
+                "**Player Retention & Churn Analysis**\n\n"
+                "Current retention rates across all titles:\n"
+                "- **D1 Retention:** 68% (industry avg: 40%)\n"
+                "- **D7 Retention:** 41% (industry avg: 20%)\n"
+                "- **D30 Retention:** 22% (industry avg: 10%)\n\n"
+                "**Churn Risk by Segment:**\n"
+                "The Player_Churn_Predictor model (AUC-ROC: 0.91) flags **9.2%** of Dolphin-segment "
+                "players as high churn risk -- these are mid-spending players with no purchase in 14+ days. "
+                "Whales show 7% high churn risk with D7 retention at 64%.\n\n"
+                "**Cohort Breakdown:**\n"
+                "| Segment | D1 | D7 | D30 | Avg LTV |\n"
+                "|---------|-----|-----|------|--------|\n"
                 "| Whale | 82% | 64% | 45% | $284.50 |\n"
                 "| Dolphin | 74% | 48% | 28% | $68.20 |\n"
                 "| Minnow | 65% | 35% | 15% | $12.40 |\n"
                 "| Free-to-Play | 58% | 28% | 8% | $2.10 |\n\n"
-                "Our retention significantly exceeds industry benchmarks across all time horizons. "
-                "The D30 cohort shows Velocity Rush's Season 3 update improved D7 retention by 4 "
-                "percentage points compared to the previous cohort."
+                "**Recommendation:** Target Dolphin-segment churners with a 20% discount offer to "
+                "recover an estimated $560K in at-risk LTV."
             ),
             "sql": (
-                "SELECT segment, d1_retention, d7_retention, d30_retention, avg_ltv\n"
+                "SELECT segment, d1_retention, d7_retention, d30_retention, avg_ltv,\n"
+                "       churn_risk_pct\n"
                 "FROM gaming_iq.gold.player_retention_cohorts\n"
                 "ORDER BY avg_ltv DESC"
             ),
             "data": [
-                {"segment": "Whale", "d1": "82%", "d7": "64%", "d30": "45%", "ltv": "$284.50"},
-                {"segment": "Dolphin", "d1": "74%", "d7": "48%", "d30": "28%", "ltv": "$68.20"},
-                {"segment": "Minnow", "d1": "65%", "d7": "35%", "d30": "15%", "ltv": "$12.40"},
-                {"segment": "Free-to-Play", "d1": "58%", "d7": "28%", "d30": "8%", "ltv": "$2.10"},
+                {"segment": "Whale", "d1": "82%", "d7": "64%", "d30": "45%", "ltv": "$284.50", "churn_risk": "7%"},
+                {"segment": "Dolphin", "d1": "74%", "d7": "48%", "d30": "28%", "ltv": "$68.20", "churn_risk": "9.2%"},
+                {"segment": "Minnow", "d1": "65%", "d7": "35%", "d30": "15%", "ltv": "$12.40", "churn_risk": "4.1%"},
+                {"segment": "Free-to-Play", "d1": "58%", "d7": "28%", "d30": "8%", "ltv": "$2.10", "churn_risk": "1.7%"},
             ],
         },
         {
-            "patterns": [r"matchmaking", r"fairness", r"velocity", r"ranked"],
+            "patterns": [r"revenue", r"arpdau", r"monetiz", r"iap", r"ad"],
             "answer": (
-                "**Matchmaking Fairness -- Velocity Rush Ranked Mode**\n\n"
-                "Average queue time: **12.4 seconds** (target: <15s)\n"
-                "Skill rating spread: **0.15** (lower is fairer, target: <0.20)\n"
-                "Matches in 24h: **4.2M**\n"
-                "Reported unfair matches: **0.8%** (target: <1.0%)\n\n"
-                "Regional breakdown:\n"
-                "- NA-East: 8.2s queue, 0.92 fairness -- Best performing\n"
-                "- EU-West: 14.1s queue, 0.91 fairness -- Slightly long queues\n"
-                "- APAC-JP: 13.6s queue, 0.87 fairness -- Needs attention\n\n"
-                "APAC-JP has the lowest fairness score due to smaller player pool during "
-                "off-peak hours. Recommend enabling cross-region matching during 02:00-10:00 JST."
-            ),
-            "sql": (
-                "SELECT region, avg_queue_time_sec, fairness_score,\n"
-                "       matches_24h\n"
-                "FROM gaming_iq.gold.matchmaking_fairness\n"
-                "WHERE game_title = 'Velocity Rush'\n"
-                "  AND mode = 'ranked'\n"
-                "ORDER BY fairness_score ASC"
-            ),
-            "data": [
-                {"region": "NA-East", "queue": "8.2s", "fairness": 0.92, "matches": "1.1M"},
-                {"region": "EU-West", "queue": "14.1s", "fairness": 0.91, "matches": "720K"},
-                {"region": "APAC-JP", "queue": "13.6s", "fairness": 0.87, "matches": "320K"},
-            ],
-        },
-        {
-            "patterns": [r"arpdau", r"region.*driv", r"revenue", r"highest"],
-            "answer": (
-                "**ARPDAU by Region**\n\n"
-                "Overall ARPDAU: **$0.118**\n\n"
-                "| Region | ARPDAU | DAU | Daily Revenue | Driver |\n"
-                "|--------|--------|-----|-------------|--------|\n"
+                "**Revenue & Monetization Overview**\n\n"
+                "Overall ARPDAU: **$0.118** | Daily Revenue: **$283K**\n\n"
+                "**ARPDAU by Region:**\n"
+                "| Region | ARPDAU | DAU | Daily Revenue | Top Driver |\n"
+                "|--------|--------|-----|-------------|------------|\n"
                 "| APAC-JP | $0.182 | 380K | $69.2K | Gacha mechanics |\n"
                 "| NA-East | $0.142 | 620K | $88.0K | Battle pass |\n"
                 "| EU-West | $0.104 | 540K | $56.2K | Cosmetics |\n"
-                "| NA-West | $0.098 | 420K | $41.2K | Battle pass |\n"
-                "| EU-North | $0.081 | 280K | $22.7K | Cosmetics |\n"
-                "| APAC-SEA | $0.042 | 160K | $6.7K | Limited purchasing |\n\n"
-                "**APAC-JP** has the highest ARPDAU at $0.182, driven primarily by Stellar Conquest's "
-                "gacha-style limited-time event shop. NA-East generates the highest absolute revenue "
-                "due to larger player base."
+                "| NA-West | $0.098 | 420K | $41.2K | Battle pass |\n\n"
+                "**Revenue Mix:**\n"
+                "- In-App Purchases (IAP): 62% of revenue\n"
+                "- Battle Pass subscriptions: 24% of revenue\n"
+                "- Ad monetization: 14% of revenue\n\n"
+                "APAC-JP leads ARPDAU at $0.182, driven by Stellar Conquest's gacha-style limited-time "
+                "event shop. NA-East generates the highest absolute revenue due to larger player base.\n\n"
+                "**Recommendation:** Expand gacha-style events to EU-West where cosmetics dominate -- "
+                "estimated uplift of $8-12K/day."
             ),
             "sql": (
                 "SELECT region, arpdau, dau, daily_revenue,\n"
@@ -1070,32 +321,259 @@ _DEMO_RESPONSES: Dict[str, List[Dict[str, Any]]] = {
                 "FROM gaming_iq.gold.economy_health_metrics\n"
                 "ORDER BY arpdau DESC"
             ),
-            "data": None,
+            "data": [
+                {"region": "APAC-JP", "arpdau": "$0.182", "dau": "380K", "daily_revenue": "$69.2K"},
+                {"region": "NA-East", "arpdau": "$0.142", "dau": "620K", "daily_revenue": "$88.0K"},
+                {"region": "EU-West", "arpdau": "$0.104", "dau": "540K", "daily_revenue": "$56.2K"},
+                {"region": "NA-West", "arpdau": "$0.098", "dau": "420K", "daily_revenue": "$41.2K"},
+            ],
         },
         {
-            "patterns": [r"inflat", r"item", r"economy", r"top.*5", r"caus"],
+            "patterns": [r"server", r"uptime", r"mttr", r"latency", r"infrastructure"],
             "answer": (
-                "**Top 5 Items Causing Economy Inflation (This Week)**\n\n"
-                "Current inflation index: **1.03** (target: <1.05)\n\n"
-                "| Rank | Item | Game | Price Change | Volume | Impact |\n"
-                "|------|------|------|-------------|--------|--------|\n"
-                "| 1 | Dragon Scale Armor | Shadow Realms | +34% | 42K trades | High |\n"
-                "| 2 | Mythic Engine Part | Velocity Rush | +28% | 18K trades | Medium |\n"
-                "| 3 | Starship Blueprint | Stellar Conquest | +22% | 31K trades | Medium |\n"
-                "| 4 | Enchanted Amulet | Shadow Realms | +19% | 55K trades | Medium |\n"
-                "| 5 | Premium Fuel Cell | Velocity Rush | +15% | 24K trades | Low |\n\n"
-                "Dragon Scale Armor's 34% price spike is linked to the gold duplication exploit -- "
-                "exploiters were converting illicit gold into rare items. Price should normalize "
-                "after the economic rollback."
+                "**Server Operations & Infrastructure Health**\n\n"
+                "Overall server uptime: **99.94%** | Avg latency: **28ms**\n"
+                "Total active servers: **2,400** across 6 regions\n\n"
+                "**Regional Performance:**\n"
+                "| Region | Uptime | Latency | Servers | Incidents (7d) |\n"
+                "|--------|--------|---------|---------|----------------|\n"
+                "| NA-East | 99.99% | 22ms | 620 | 0 |\n"
+                "| EU-West | 99.97% | 31ms | 540 | 1 |\n"
+                "| APAC-JP | 99.96% | 34ms | 380 | 1 |\n"
+                "| NA-West | 99.82% | 26ms | 420 | 3 |\n\n"
+                "**Alert:** NA-West experienced 3 incidents this week, with MTTR averaging 14 minutes. "
+                "Root cause traced to a load balancer misconfiguration during the Season 3 launch surge. "
+                "Issue was patched Tuesday and stability has since returned to normal.\n\n"
+                "**Recommendation:** Increase NA-West auto-scaling threshold from 80% to 70% CPU to "
+                "handle future seasonal spikes."
             ),
             "sql": (
-                "SELECT item_name, game_title, price_change_pct,\n"
-                "       trade_volume_7d, inflation_impact\n"
-                "FROM gaming_iq.gold.economy_health_metrics\n"
-                "WHERE metric_type = 'item_inflation'\n"
-                "ORDER BY price_change_pct DESC LIMIT 5"
+                "SELECT region, uptime_pct, avg_latency_ms, server_count,\n"
+                "       incidents_7d, mttr_minutes\n"
+                "FROM gaming_iq.gold.server_health_metrics\n"
+                "ORDER BY uptime_pct DESC"
             ),
-            "data": None,
+            "data": [
+                {"region": "NA-East", "uptime": "99.99%", "latency_ms": 22, "servers": 620, "incidents": 0},
+                {"region": "EU-West", "uptime": "99.97%", "latency_ms": 31, "servers": 540, "incidents": 1},
+                {"region": "APAC-JP", "uptime": "99.96%", "latency_ms": 34, "servers": 380, "incidents": 1},
+                {"region": "NA-West", "uptime": "99.82%", "latency_ms": 26, "servers": 420, "incidents": 3},
+            ],
+        },
+    ],
+
+    # -----------------------------------------------------------------
+    # TELECOM
+    # -----------------------------------------------------------------
+    "telecom": [
+        {
+            "patterns": [r"churn", r"subscriber", r"nps", r"csat", r"customer"],
+            "answer": (
+                "**Subscriber Churn & Satisfaction Metrics**\n\n"
+                "Total subscribers: **14.2M** | Monthly churn rate: **1.8%** (target: <2.0%)\n"
+                "Net Promoter Score (NPS): **+32** | CSAT: **4.1/5.0**\n\n"
+                "**Churn by Segment:**\n"
+                "| Segment | Subscribers | Churn Rate | NPS | ARPU |\n"
+                "|---------|------------|-----------|-----|------|\n"
+                "| Enterprise | 420K | 0.6% | +48 | $142 |\n"
+                "| Family Plans | 3.8M | 1.2% | +38 | $89 |\n"
+                "| Individual | 6.1M | 2.1% | +28 | $62 |\n"
+                "| Prepaid | 3.9M | 3.4% | +18 | $28 |\n\n"
+                "**Key Churn Drivers (Churn Predictor model, AUC: 0.88):**\n"
+                "1. Network quality complaints (SHAP: 0.31)\n"
+                "2. Bill shock events (SHAP: 0.24)\n"
+                "3. Competitor promotion exposure (SHAP: 0.19)\n\n"
+                "**Recommendation:** Prepaid segment churn at 3.4% is above target. Proactive retention "
+                "offers to the 18K subscribers flagged as high-risk could save $4.2M in annual revenue."
+            ),
+            "sql": (
+                "SELECT segment, subscriber_count, churn_rate_pct, nps_score,\n"
+                "       arpu\n"
+                "FROM telecom_iq.gold.subscriber_metrics\n"
+                "ORDER BY churn_rate_pct DESC"
+            ),
+            "data": [
+                {"segment": "Enterprise", "subscribers": "420K", "churn_rate": "0.6%", "nps": "+48", "arpu": "$142"},
+                {"segment": "Family Plans", "subscribers": "3.8M", "churn_rate": "1.2%", "nps": "+38", "arpu": "$89"},
+                {"segment": "Individual", "subscribers": "6.1M", "churn_rate": "2.1%", "nps": "+28", "arpu": "$62"},
+                {"segment": "Prepaid", "subscribers": "3.9M", "churn_rate": "3.4%", "nps": "+18", "arpu": "$28"},
+            ],
+        },
+        {
+            "patterns": [r"network", r"uptime", r"capacity", r"5g", r"outage"],
+            "answer": (
+                "**Network Operations & Capacity Report**\n\n"
+                "Overall network uptime: **99.97%** | 5G coverage: **78%** of service area\n"
+                "Total cell sites: **48,200** | Active outages: **3**\n\n"
+                "**Network Performance by Technology:**\n"
+                "| Technology | Sites | Uptime | Avg Throughput | Utilization |\n"
+                "|-----------|-------|--------|---------------|-------------|\n"
+                "| 5G mmWave | 8,400 | 99.98% | 1.2 Gbps | 42% |\n"
+                "| 5G Sub-6 | 14,800 | 99.97% | 380 Mbps | 61% |\n"
+                "| 4G LTE | 18,600 | 99.96% | 85 Mbps | 78% |\n"
+                "| 3G Legacy | 6,400 | 99.91% | 12 Mbps | 34% |\n\n"
+                "**Active Outages:**\n"
+                "1. Metro-NE cluster: 12 sites down since 06:42 UTC -- fiber cut, ETA 4 hours\n"
+                "2. Rural-SW site #4821: power failure -- generator deployed, ETA 2 hours\n"
+                "3. Urban-Central #1204: RAN software crash -- remote restart in progress\n\n"
+                "**Recommendation:** 4G LTE utilization at 78% is approaching capacity threshold. "
+                "Accelerate 5G migration in the top 20 high-traffic LTE sites to offload 15-20% of traffic."
+            ),
+            "sql": (
+                "SELECT technology, site_count, uptime_pct, avg_throughput_mbps,\n"
+                "       utilization_pct\n"
+                "FROM telecom_iq.gold.network_performance\n"
+                "ORDER BY utilization_pct DESC"
+            ),
+            "data": [
+                {"technology": "5G mmWave", "sites": 8400, "uptime": "99.98%", "throughput": "1.2 Gbps", "utilization": "42%"},
+                {"technology": "5G Sub-6", "sites": 14800, "uptime": "99.97%", "throughput": "380 Mbps", "utilization": "61%"},
+                {"technology": "4G LTE", "sites": 18600, "uptime": "99.96%", "throughput": "85 Mbps", "utilization": "78%"},
+                {"technology": "3G Legacy", "sites": 6400, "uptime": "99.91%", "throughput": "12 Mbps", "utilization": "34%"},
+            ],
+        },
+        {
+            "patterns": [r"fraud", r"sim", r"swap", r"irsf"],
+            "answer": (
+                "**Telecom Fraud Detection Summary**\n\n"
+                "Total fraud events blocked (30d): **4,847** | Estimated savings: **$2.8M**\n"
+                "Fraud detection rate: **97.2%** | False positive rate: **0.8%**\n\n"
+                "**Fraud by Category:**\n"
+                "| Category | Events | Value Blocked | Trend |\n"
+                "|----------|--------|-------------|-------|\n"
+                "| SIM Swap | 1,240 | $980K | Up 14% |\n"
+                "| IRSF (Revenue Share) | 890 | $720K | Down 8% |\n"
+                "| Subscription Fraud | 1,420 | $640K | Stable |\n"
+                "| Wangiri (Callback) | 780 | $310K | Up 22% |\n"
+                "| Account Takeover | 517 | $150K | Down 5% |\n\n"
+                "**Alert:** SIM Swap fraud is up 14% month-over-month, with a new pattern detected: "
+                "coordinated attacks targeting port-out requests during overnight hours (01:00-05:00 local). "
+                "The Fraud Detection model flagged 89% of these before completion.\n\n"
+                "**Recommendation:** Implement mandatory biometric verification for SIM swap requests "
+                "during off-hours. Estimated reduction: 40% of overnight SIM swap fraud."
+            ),
+            "sql": (
+                "SELECT fraud_category, event_count, value_blocked,\n"
+                "       mom_trend_pct\n"
+                "FROM telecom_iq.gold.fraud_detection_metrics\n"
+                "WHERE period = 'last_30d'\n"
+                "ORDER BY value_blocked DESC"
+            ),
+            "data": [
+                {"category": "SIM Swap", "events": 1240, "value_blocked": "$980K", "trend": "+14%"},
+                {"category": "IRSF", "events": 890, "value_blocked": "$720K", "trend": "-8%"},
+                {"category": "Subscription Fraud", "events": 1420, "value_blocked": "$640K", "trend": "0%"},
+                {"category": "Wangiri", "events": 780, "value_blocked": "$310K", "trend": "+22%"},
+            ],
+        },
+    ],
+
+    # -----------------------------------------------------------------
+    # MEDIA
+    # -----------------------------------------------------------------
+    "media": [
+        {
+            "patterns": [r"viewer", r"audience", r"watch", r"engagement"],
+            "answer": (
+                "**Audience & Engagement Metrics**\n\n"
+                "Monthly Active Viewers: **28.4M** (+6.2% MoM)\n"
+                "Avg watch time per session: **42 minutes** | Completion rate: **68%**\n\n"
+                "**Audience by Platform:**\n"
+                "| Platform | MAV | Avg Watch Time | Engagement Rate |\n"
+                "|----------|-----|---------------|----------------|\n"
+                "| Connected TV | 12.8M | 58 min | 74% |\n"
+                "| Mobile | 9.2M | 32 min | 62% |\n"
+                "| Desktop | 4.1M | 41 min | 71% |\n"
+                "| Tablet | 2.3M | 47 min | 69% |\n\n"
+                "**Engagement Trends:**\n"
+                "Connected TV continues to dominate with the highest watch time and engagement rate. "
+                "Mobile viewers are growing fastest (+11% MoM) but have shorter sessions. "
+                "The new recommendation engine improved completion rates by 4.2 percentage points "
+                "across all platforms since launch.\n\n"
+                "**Recommendation:** Invest in mobile-optimized short-form content (5-15 min) to "
+                "increase mobile engagement rate, which trails CTV by 12 percentage points."
+            ),
+            "sql": (
+                "SELECT platform, monthly_active_viewers, avg_watch_time_min,\n"
+                "       engagement_rate_pct, mom_growth_pct\n"
+                "FROM media_iq.gold.audience_metrics\n"
+                "ORDER BY monthly_active_viewers DESC"
+            ),
+            "data": [
+                {"platform": "Connected TV", "mav": "12.8M", "watch_time": "58 min", "engagement": "74%"},
+                {"platform": "Mobile", "mav": "9.2M", "watch_time": "32 min", "engagement": "62%"},
+                {"platform": "Desktop", "mav": "4.1M", "watch_time": "41 min", "engagement": "71%"},
+                {"platform": "Tablet", "mav": "2.3M", "watch_time": "47 min", "engagement": "69%"},
+            ],
+        },
+        {
+            "patterns": [r"content", r"roi", r"catalog", r"recommend"],
+            "answer": (
+                "**Content Performance & ROI Analysis**\n\n"
+                "Total catalog titles: **14,200** | Active this month: **8,400**\n"
+                "Content investment (Q1): **$48M** | Revenue generated: **$127M** | ROI: **2.65x**\n\n"
+                "**Top Performing Content Categories:**\n"
+                "| Category | Titles | Streams | Revenue | ROI |\n"
+                "|----------|--------|---------|---------|-----|\n"
+                "| Original Drama | 42 | 84M | $38M | 3.8x |\n"
+                "| Licensed Film | 1,200 | 62M | $31M | 2.4x |\n"
+                "| Live Sports | 28 | 48M | $28M | 2.1x |\n"
+                "| Docuseries | 86 | 31M | $14M | 4.2x |\n"
+                "| Kids & Family | 340 | 28M | $8M | 3.1x |\n\n"
+                "**Content Recommendation Engine:**\n"
+                "The ML-powered recommendation system drives **34%** of all content starts. "
+                "Personalized recommendations have a 2.8x higher completion rate than browse-initiated views. "
+                "Docuseries have the highest ROI at 4.2x, suggesting increased investment in this category.\n\n"
+                "**Recommendation:** Increase docuseries production budget by 25% -- highest ROI category "
+                "with strong audience demand signals."
+            ),
+            "sql": (
+                "SELECT content_category, title_count, total_streams,\n"
+                "       revenue, roi_multiple\n"
+                "FROM media_iq.gold.content_performance\n"
+                "ORDER BY roi_multiple DESC"
+            ),
+            "data": [
+                {"category": "Original Drama", "titles": 42, "streams": "84M", "revenue": "$38M", "roi": "3.8x"},
+                {"category": "Licensed Film", "titles": 1200, "streams": "62M", "revenue": "$31M", "roi": "2.4x"},
+                {"category": "Live Sports", "titles": 28, "streams": "48M", "revenue": "$28M", "roi": "2.1x"},
+                {"category": "Docuseries", "titles": 86, "streams": "31M", "revenue": "$14M", "roi": "4.2x"},
+            ],
+        },
+        {
+            "patterns": [r"ad", r"cpm", r"fill", r"roas", r"campaign"],
+            "answer": (
+                "**Advertising Performance & Yield**\n\n"
+                "Total ad revenue (MTD): **$8.4M** | Avg CPM: **$24.80** | Fill rate: **94.2%**\n"
+                "Active campaigns: **342** | Avg ROAS: **4.2x**\n\n"
+                "**Ad Performance by Format:**\n"
+                "| Format | Impressions | CPM | Fill Rate | Revenue |\n"
+                "|--------|------------|-----|-----------|--------|\n"
+                "| Pre-roll (15s) | 48M | $28.40 | 96% | $1.36M |\n"
+                "| Mid-roll (30s) | 32M | $34.20 | 92% | $1.09M |\n"
+                "| Display Banner | 120M | $8.60 | 97% | $1.03M |\n"
+                "| Sponsored Content | 8M | $62.00 | 88% | $0.50M |\n"
+                "| Interactive Overlay | 18M | $42.10 | 85% | $0.76M |\n\n"
+                "**Campaign Highlights:**\n"
+                "Top performing campaign: Auto manufacturer Q1 launch -- ROAS of 6.8x with "
+                "interactive overlay format. Mid-roll 30s slots command the highest CPM at $34.20 but "
+                "have the second-lowest fill rate.\n\n"
+                "**Recommendation:** Increase interactive overlay inventory -- highest CPM growth "
+                "(+18% QoQ) with strong advertiser demand. Address mid-roll fill rate gap by offering "
+                "programmatic backfill."
+            ),
+            "sql": (
+                "SELECT ad_format, impressions, cpm, fill_rate_pct,\n"
+                "       revenue\n"
+                "FROM media_iq.gold.ad_performance\n"
+                "ORDER BY cpm DESC"
+            ),
+            "data": [
+                {"format": "Pre-roll (15s)", "impressions": "48M", "cpm": "$28.40", "fill_rate": "96%", "revenue": "$1.36M"},
+                {"format": "Mid-roll (30s)", "impressions": "32M", "cpm": "$34.20", "fill_rate": "92%", "revenue": "$1.09M"},
+                {"format": "Display Banner", "impressions": "120M", "cpm": "$8.60", "fill_rate": "97%", "revenue": "$1.03M"},
+                {"format": "Sponsored Content", "impressions": "8M", "cpm": "$62.00", "fill_rate": "88%", "revenue": "$0.50M"},
+            ],
         },
     ],
 
@@ -1104,154 +582,132 @@ _DEMO_RESPONSES: Dict[str, List[Dict[str, Any]]] = {
     # -----------------------------------------------------------------
     "financial_services": [
         {
-            "patterns": [r"fraud", r"detection", r"rate", r"compare", r"month"],
+            "patterns": [r"fraud", r"transaction", r"aml", r"blocked"],
             "answer": (
-                "**Fraud Detection Performance**\n\n"
+                "**Fraud Detection & AML Screening**\n\n"
                 "Current fraud detection rate: **99.77%** (vs. 99.71% last month)\n"
-                "Transactions today: **12.5M** | Fraud blocked: **847**\n"
-                "False positive rate: **0.40%** (improved from 0.52%)\n"
-                "Average fraud amount: **$3,420**\n\n"
-                "Model: Transaction_Fraud_Detector (XGBClassifier, AUC-ROC: 0.97)\n\n"
-                "Month-over-month improvement:\n"
-                "- Detection rate: +0.06 pp\n"
-                "- False positives: -23% reduction (saved ~$1.2M in manual review costs)\n"
-                "- Average response time: 12ms (real-time blocking)\n\n"
-                "The improvement is attributed to the model retrain on Feb 28 that incorporated "
-                "new device fingerprinting features."
+                "Transactions today: **12.5M** | Fraud blocked: **847** | Value saved: **$2.9M**\n"
+                "False positive rate: **0.40%** (improved from 0.52%)\n\n"
+                "**Fraud by Channel:**\n"
+                "| Channel | Blocked | Value | Detection Rate |\n"
+                "|---------|---------|-------|---------------|\n"
+                "| Digital Banking | 412 | $1.4M | 99.82% |\n"
+                "| Card Present | 198 | $680K | 99.91% |\n"
+                "| Wire/ACH | 142 | $520K | 99.68% |\n"
+                "| Mobile Wallet | 95 | $300K | 99.74% |\n\n"
+                "**AML Screening:**\n"
+                "The model flagged **89 suspicious patterns** for AML investigation, including "
+                "34 structuring cases (deposits just under $10K threshold) and 28 rapid fund movements "
+                "across 3+ accounts within 1 hour. All cases submitted to the SAR workflow.\n\n"
+                "**Recommendation:** The recent model retrain incorporating device fingerprinting features "
+                "reduced false positives by 23%, saving ~$1.2M in manual review costs."
             ),
             "sql": (
-                "SELECT snapshot_date, fraud_detection_rate, false_positive_rate,\n"
-                "       total_blocked, avg_fraud_amount\n"
+                "SELECT channel, blocked_count, value_saved,\n"
+                "       detection_rate_pct\n"
                 "FROM financial_services_iq.gold.fraud_detection_metrics\n"
-                "ORDER BY snapshot_date DESC LIMIT 30"
+                "WHERE snapshot_date = current_date()\n"
+                "ORDER BY value_saved DESC"
             ),
             "data": [
-                {"metric": "Detection Rate", "current": "99.77%", "last_month": "99.71%", "change": "+0.06 pp"},
-                {"metric": "False Positive Rate", "current": "0.40%", "last_month": "0.52%", "change": "-23%"},
-                {"metric": "Fraud Blocked Today", "current": 847, "last_month": 812, "change": "+4.3%"},
+                {"channel": "Digital Banking", "blocked": 412, "value_saved": "$1.4M", "detection_rate": "99.82%"},
+                {"channel": "Card Present", "blocked": 198, "value_saved": "$680K", "detection_rate": "99.91%"},
+                {"channel": "Wire/ACH", "blocked": 142, "value_saved": "$520K", "detection_rate": "99.68%"},
+                {"channel": "Mobile Wallet", "blocked": 95, "value_saved": "$300K", "detection_rate": "99.74%"},
             ],
         },
         {
-            "patterns": [r"merchant", r"category", r"velocity", r"highest.*fraud"],
+            "patterns": [r"portfolio", r"var", r"sharpe", r"alpha", r"market"],
             "answer": (
-                "**Fraud Velocity by Merchant Category**\n\n"
-                "| Category | Fraud Rate | Blocked | Velocity (txn/min) | Risk |\n"
-                "|----------|-----------|---------|-------------------|------|\n"
-                "| Gift Cards & Prepaid | 0.0142% | 312 | 8.4 | Critical |\n"
-                "| Wire Transfers | 0.0098% | 68 | 2.1 | High |\n"
-                "| ATM Withdrawals | 0.0075% | 142 | 4.8 | High |\n"
-                "| Mobile Payments | 0.0074% | 312 | 12.2 | Medium |\n"
-                "| Online Retail | 0.0052% | 198 | 6.1 | Medium |\n"
-                "| In-Branch | 0.0018% | 87 | 1.4 | Low |\n\n"
-                "**Gift Cards & Prepaid** has the highest fraud rate at 0.0142%, "
-                "driven by organized fraud rings purchasing high-value gift cards with stolen credentials. "
-                "Recommend implementing mandatory 2FA for gift card purchases over $500."
-            ),
-            "sql": (
-                "SELECT merchant_category, fraud_rate, blocked_count,\n"
-                "       fraud_velocity_per_min, risk_level\n"
-                "FROM financial_services_iq.gold.fraud_detection_metrics\n"
-                "WHERE metric_type = 'by_category'\n"
-                "ORDER BY fraud_rate DESC"
-            ),
-            "data": None,
-        },
-        {
-            "patterns": [r"credit", r"default", r"distribution", r"commercial", r"lending"],
-            "answer": (
-                "**Credit Default Probability Distribution -- Commercial Lending**\n\n"
-                "Portfolio value: **$3.4B** | Avg credit score: **698** | Delinquency rate: **4.1%**\n\n"
-                "Default probability distribution:\n"
-                "| PD Range | Accounts | Exposure | Expected Loss |\n"
-                "|----------|----------|----------|---------------|\n"
-                "| 0-1% (Prime) | 4,200 | $1.8B | $9.0M |\n"
-                "| 1-5% (Standard) | 2,800 | $1.1B | $27.5M |\n"
-                "| 5-15% (Subprime) | 680 | $380M | $28.5M |\n"
-                "| >15% (High Risk) | 120 | $120M | $24.0M |\n\n"
-                "Model: Credit_Default_Predictor (GradientBoosting, AUC-ROC: 0.88)\n\n"
-                "The subprime and high-risk segments represent only 10% of accounts but "
-                "59% of expected losses. Recommend tightening origination criteria for "
-                "DTI ratios above 45%."
-            ),
-            "sql": (
-                "SELECT pd_range, account_count, total_exposure,\n"
-                "       expected_loss\n"
-                "FROM financial_services_iq.gold.credit_risk_portfolio\n"
-                "WHERE business_line = 'Commercial Lending'\n"
-                "ORDER BY pd_range"
-            ),
-            "data": [
-                {"pd_range": "0-1%", "accounts": 4200, "exposure": "$1.8B", "expected_loss": "$9.0M"},
-                {"pd_range": "1-5%", "accounts": 2800, "exposure": "$1.1B", "expected_loss": "$27.5M"},
-                {"pd_range": "5-15%", "accounts": 680, "exposure": "$380M", "expected_loss": "$28.5M"},
-                {"pd_range": ">15%", "accounts": 120, "exposure": "$120M", "expected_loss": "$24.0M"},
-            ],
-        },
-        {
-            "patterns": [r"money laundering", r"aml", r"suspicious", r"pattern"],
-            "answer": (
-                "**Suspicious Transaction Patterns -- AML Screening**\n\n"
-                "The fraud model has flagged **89 suspicious transaction patterns** in the last 24 hours "
-                "that warrant AML investigation:\n\n"
-                "Pattern types detected:\n"
-                "1. **Structuring (smurfing):** 34 cases -- Multiple deposits just under $10K threshold\n"
-                "2. **Rapid movement:** 28 cases -- Funds moved through 3+ accounts within 1 hour\n"
-                "3. **Unusual geography:** 18 cases -- Transactions from sanctioned or high-risk jurisdictions\n"
-                "4. **Dormant account activation:** 9 cases -- Previously inactive accounts suddenly active\n\n"
-                "Priority investigations:\n"
-                "- Account #TXN-8847: $487K moved through 5 accounts in 45 minutes\n"
-                "- Account #TXN-9912: 12 deposits of $9,500 each over 3 days\n\n"
-                "All flagged cases have been submitted to the compliance team via the SAR workflow."
-            ),
-            "sql": (
-                "SELECT transaction_id, pattern_type, amount, account_count,\n"
-                "       anomaly_score, flagged_at\n"
-                "FROM financial_services_iq.silver.transaction_anomalies\n"
-                "WHERE pattern_type IN ('structuring', 'rapid_movement', 'unusual_geography')\n"
-                "  AND flagged_at >= current_timestamp() - INTERVAL 24 HOURS\n"
-                "ORDER BY anomaly_score DESC"
-            ),
-            "data": None,
-        },
-        {
-            "patterns": [r"var", r"value at risk", r"stress", r"market"],
-            "answer": (
-                "**Portfolio Value at Risk -- Stressed Conditions**\n\n"
-                "AUM Total: **$24.5B** | Active Positions: **8,450**\n\n"
+                "**Portfolio & Capital Markets Analysis**\n\n"
+                "Total AUM: **$24.5B** | Active Positions: **8,450**\n"
+                "Sharpe Ratio: **1.42** | Portfolio Beta: **0.94** | Alpha: **+2.1%** YTD\n\n"
+                "**Value at Risk (VaR):**\n"
                 "| Scenario | VaR (95%) | VaR (99%) | Expected Shortfall |\n"
                 "|----------|----------|----------|-------------------|\n"
                 "| Normal | $47M | $72M | $89M |\n"
                 "| Moderate Stress | $94M | $144M | $178M |\n"
-                "| Severe Stress (2008-like) | $235M | $361M | $445M |\n"
-                "| Black Swan | $470M | $722M | $891M |\n\n"
-                "Current portfolio metrics:\n"
-                "- Sharpe Ratio: **1.42** | Beta: **0.94**\n"
-                "- Under severe stress, the maximum drawdown is estimated at **1.47%** of AUM\n"
-                "- Concentration risk: Top 5 positions represent 12% of AUM\n\n"
-                "The portfolio is well-diversified with a beta below 1.0, indicating lower "
-                "market sensitivity. Current VaR levels are within risk appetite."
+                "| Severe Stress | $235M | $361M | $445M |\n\n"
+                "**Asset Class Performance:**\n"
+                "| Asset Class | AUM | YTD Return | Sharpe |\n"
+                "|-----------|-----|-----------|--------|\n"
+                "| US Equities | $9.8B | +8.4% | 1.62 |\n"
+                "| Fixed Income | $7.2B | +3.1% | 1.18 |\n"
+                "| Alternatives | $4.1B | +12.2% | 1.84 |\n"
+                "| International | $3.4B | +5.7% | 1.21 |\n\n"
+                "The portfolio is well-diversified with a beta below 1.0. Under severe stress, maximum "
+                "drawdown is estimated at 1.47% of AUM. Current VaR levels are within risk appetite."
             ),
             "sql": (
-                "SELECT scenario, var_95, var_99, expected_shortfall\n"
+                "SELECT asset_class, aum, ytd_return_pct, sharpe_ratio,\n"
+                "       var_95, var_99\n"
                 "FROM financial_services_iq.gold.portfolio_market_risk\n"
-                "WHERE snapshot_date = current_date()"
+                "WHERE snapshot_date = current_date()\n"
+                "ORDER BY aum DESC"
             ),
-            "data": None,
+            "data": [
+                {"asset_class": "US Equities", "aum": "$9.8B", "ytd_return": "+8.4%", "sharpe": 1.62},
+                {"asset_class": "Fixed Income", "aum": "$7.2B", "ytd_return": "+3.1%", "sharpe": 1.18},
+                {"asset_class": "Alternatives", "aum": "$4.1B", "ytd_return": "+12.2%", "sharpe": 1.84},
+                {"asset_class": "International", "aum": "$3.4B", "ytd_return": "+5.7%", "sharpe": 1.21},
+            ],
         },
         {
-            "patterns": [r"delinquency", r"segment", r"customer", r"fastest.*growing"],
+            "patterns": [r"insurance", r"claims", r"combined", r"loss", r"underwriting"],
             "answer": (
-                "**Delinquency Rate by Customer Segment**\n\n"
+                "**Insurance Analytics Overview**\n\n"
+                "Combined ratio: **94.2%** (target: <96%) | Loss ratio: **62.8%** | Expense ratio: **31.4%**\n"
+                "Gross written premium (YTD): **$3.8B** | Claims paid: **$2.4B**\n\n"
+                "**Claims Analysis by Line of Business:**\n"
+                "| Line of Business | GWP | Loss Ratio | Claims Freq | Avg Severity |\n"
+                "|-----------------|-----|-----------|------------|-------------|\n"
+                "| Auto | $1.4B | 68.2% | 8.4% | $12,400 |\n"
+                "| Property | $1.1B | 58.4% | 3.2% | $34,200 |\n"
+                "| Commercial Lines | $820M | 61.7% | 2.1% | $87,600 |\n"
+                "| Workers Comp | $480M | 64.1% | 5.8% | $18,900 |\n\n"
+                "**Underwriting Insights:**\n"
+                "Auto loss ratio at 68.2% is above target of 65%. The Claims Severity Predictor "
+                "model identifies distracted driving claims as the fastest-growing category (+18% YoY). "
+                "Property claims are well-controlled with catastrophe reserves adequate for the season.\n\n"
+                "**Recommendation:** Tighten auto underwriting in the top 5 loss-producing states "
+                "and increase telematics discount to incentivize safer driving behavior."
+            ),
+            "sql": (
+                "SELECT line_of_business, gwp, loss_ratio_pct, claims_frequency,\n"
+                "       avg_severity\n"
+                "FROM financial_services_iq.gold.insurance_analytics\n"
+                "ORDER BY gwp DESC"
+            ),
+            "data": [
+                {"lob": "Auto", "gwp": "$1.4B", "loss_ratio": "68.2%", "claims_freq": "8.4%", "avg_severity": "$12,400"},
+                {"lob": "Property", "gwp": "$1.1B", "loss_ratio": "58.4%", "claims_freq": "3.2%", "avg_severity": "$34,200"},
+                {"lob": "Commercial Lines", "gwp": "$820M", "loss_ratio": "61.7%", "claims_freq": "2.1%", "avg_severity": "$87,600"},
+                {"lob": "Workers Comp", "gwp": "$480M", "loss_ratio": "64.1%", "claims_freq": "5.8%", "avg_severity": "$18,900"},
+            ],
+        },
+        {
+            "patterns": [r"credit", r"delinquency", r"loan", r"default", r"risk"],
+            "answer": (
+                "**Credit Risk & Delinquency Report**\n\n"
+                "Portfolio value: **$3.4B** | Avg credit score: **698** | Overall delinquency: **4.1%**\n"
+                "Model: Credit_Default_Predictor (GradientBoosting, AUC-ROC: 0.88)\n\n"
+                "**Delinquency by Segment:**\n"
                 "| Segment | 30d Delinquency | Trend (90d) | Accounts | Exposure |\n"
                 "|---------|----------------|-------------|----------|----------|\n"
                 "| Small Business | 5.8% | +1.2 pp | 3,400 | $890M |\n"
                 "| Young Professionals | 4.2% | +0.8 pp | 8,900 | $1.2B |\n"
                 "| Retail Banking | 3.2% | +0.3 pp | 42,000 | $4.8B |\n"
                 "| Wealth Management | 0.8% | -0.1 pp | 2,100 | $6.2B |\n\n"
-                "**Small Business** has the fastest growing delinquency rate (+1.2 pp over 90 days), "
-                "driven by seasonal cash flow challenges and rising interest rates. "
-                "Recommend proactive outreach to the 340 accounts showing early warning signs "
-                "(1-15 days past due)."
+                "**Default Probability Distribution:**\n"
+                "| PD Range | Accounts | Exposure | Expected Loss |\n"
+                "|----------|----------|----------|---------------|\n"
+                "| 0-1% (Prime) | 4,200 | $1.8B | $9.0M |\n"
+                "| 1-5% (Standard) | 2,800 | $1.1B | $27.5M |\n"
+                "| 5-15% (Subprime) | 680 | $380M | $28.5M |\n"
+                "| >15% (High Risk) | 120 | $120M | $24.0M |\n\n"
+                "Small Business has the fastest growing delinquency (+1.2 pp over 90 days). "
+                "The subprime and high-risk segments represent 10% of accounts but 59% of expected losses. "
+                "Recommend tightening origination criteria for DTI ratios above 45%."
             ),
             "sql": (
                 "SELECT customer_segment, delinquency_rate_30d,\n"
@@ -1260,38 +716,132 @@ _DEMO_RESPONSES: Dict[str, List[Dict[str, Any]]] = {
                 "ORDER BY delinquency_trend_90d DESC"
             ),
             "data": [
-                {"segment": "Small Business", "delinquency": "5.8%", "trend": "+1.2 pp", "accounts": 3400},
-                {"segment": "Young Professionals", "delinquency": "4.2%", "trend": "+0.8 pp", "accounts": 8900},
-                {"segment": "Retail Banking", "delinquency": "3.2%", "trend": "+0.3 pp", "accounts": 42000},
-                {"segment": "Wealth Management", "delinquency": "0.8%", "trend": "-0.1 pp", "accounts": 2100},
+                {"segment": "Small Business", "delinquency": "5.8%", "trend": "+1.2 pp", "accounts": 3400, "exposure": "$890M"},
+                {"segment": "Young Professionals", "delinquency": "4.2%", "trend": "+0.8 pp", "accounts": 8900, "exposure": "$1.2B"},
+                {"segment": "Retail Banking", "delinquency": "3.2%", "trend": "+0.3 pp", "accounts": 42000, "exposure": "$4.8B"},
+                {"segment": "Wealth Management", "delinquency": "0.8%", "trend": "-0.1 pp", "accounts": 2100, "exposure": "$6.2B"},
+            ],
+        },
+    ],
+
+    # -----------------------------------------------------------------
+    # HLS (Health & Life Sciences)
+    # -----------------------------------------------------------------
+    "hls": [
+        {
+            "patterns": [r"bed", r"utilization", r"admission", r"ed", r"wait", r"capacity"],
+            "answer": (
+                "**Provider Operations & Capacity Report**\n\n"
+                "Current overall bed utilization: **87.3%** | ED avg wait: **34 min**\n"
+                "Total admissions today: **285** | ED volume: **89 patients**\n\n"
+                "**Facility Utilization:**\n"
+                "| Facility | Bed Util | ED Wait | Admissions | Status |\n"
+                "|----------|---------|---------|-----------|--------|\n"
+                "| Metro General Hospital | 91.2% | 42 min | 142 | Near Capacity |\n"
+                "| Westside Medical Center | 84.1% | 28 min | 98 | Normal |\n"
+                "| Eastview Community Clinic | 72.5% | 22 min | 45 | Normal |\n\n"
+                "**ED Wait Time by Department:**\n"
+                "| Department | Avg Wait | Volume | Trend |\n"
+                "|-----------|----------|--------|-------|\n"
+                "| Orthopedics | 52 min | 28 | Up 15% |\n"
+                "| Cardiology | 45 min | 34 | Stable |\n"
+                "| Emergency | 38 min | 89 | Up 8% |\n"
+                "| Pediatrics | 24 min | 41 | Stable |\n\n"
+                "**Alert:** Metro General is projected to reach 95.8% capacity within 48 hours based on "
+                "current admission trends. Recommend activating surge protocols and diverting non-critical "
+                "cases to Eastview."
+            ),
+            "sql": (
+                "SELECT facility, bed_utilization_pct, ed_avg_wait_min,\n"
+                "       admissions_today, capacity_status\n"
+                "FROM hls_iq.gold.patient_flow_metrics\n"
+                "WHERE snapshot_time >= current_date()\n"
+                "ORDER BY bed_utilization_pct DESC"
+            ),
+            "data": [
+                {"facility": "Metro General Hospital", "bed_util": "91.2%", "ed_wait": "42 min", "admissions": 142, "status": "Near Capacity"},
+                {"facility": "Westside Medical Center", "bed_util": "84.1%", "ed_wait": "28 min", "admissions": 98, "status": "Normal"},
+                {"facility": "Eastview Community Clinic", "bed_util": "72.5%", "ed_wait": "22 min", "admissions": 45, "status": "Normal"},
             ],
         },
         {
-            "patterns": [r"q2", r"expected.*credit.*loss", r"origination", r"predict"],
+            "patterns": [r"readmission", r"quality", r"sepsis", r"hcahps", r"clinical"],
             "answer": (
-                "**Expected Credit Loss Prediction -- Q2 Loan Originations**\n\n"
-                "Based on the Credit_Default_Predictor model applied to the current pipeline:\n\n"
-                "Projected Q2 originations: **$1.8B** across 4,200 new loans\n"
-                "Expected loss rate: **1.8%** | Expected loss: **$32.4M**\n\n"
-                "By business line:\n"
-                "| Business Line | Originations | ECL Rate | ECL Amount |\n"
-                "|-------------|-------------|---------|------------|\n"
-                "| Retail Banking | $680M | 1.4% | $9.5M |\n"
-                "| Commercial Lending | $520M | 2.8% | $14.6M |\n"
-                "| Wealth Management | $380M | 0.6% | $2.3M |\n"
-                "| Insurance | $220M | 2.7% | $5.9M |\n\n"
-                "The Q2 ECL is 8% higher than Q1 due to the rising delinquency trend in "
-                "Small Business and tightening credit conditions. Recommend increasing "
-                "loan loss provisions by $2.6M."
+                "**Clinical Quality & Readmission Metrics**\n\n"
+                "30-day readmission rate: **11.8%** (national avg: 13.9%)\n"
+                "HCAHPS overall score: **4.2/5.0** | Sepsis bundle compliance: **94%**\n\n"
+                "**Readmission Risk Analysis:**\n"
+                "Model: Readmission_Risk_Predictor (AUC-ROC: 0.89)\n"
+                "Discharges analyzed (last 48h): **127 patients**\n\n"
+                "| Risk Level | Patients | Action Required |\n"
+                "|-----------|----------|----------------|\n"
+                "| High (>70%) | 18 | Immediate follow-up |\n"
+                "| Medium (40-70%) | 34 | 7-day check-in |\n"
+                "| Low (<40%) | 75 | Standard protocol |\n\n"
+                "**Top Quality Metrics:**\n"
+                "| Metric | Score | Target | Status |\n"
+                "|--------|-------|--------|--------|\n"
+                "| Sepsis Bundle Compliance | 94% | 90% | Exceeding |\n"
+                "| CLABSI Rate | 0.42 | <0.50 | On Target |\n"
+                "| Falls per 1000 pt-days | 2.1 | <2.5 | On Target |\n"
+                "| HCAHPS Communication | 4.4 | 4.0 | Exceeding |\n\n"
+                "**Key Insight:** Patients with 3+ prior admissions in 12 months and comorbidity index >3.5 "
+                "have an 82% readmission rate. This cohort represents 23% of cardiology discharges. "
+                "Targeted transitional care programs for this group could reduce readmissions by 15-20%."
             ),
             "sql": (
-                "SELECT business_line, projected_originations,\n"
-                "       ecl_rate, ecl_amount\n"
-                "FROM financial_services_iq.silver.credit_default_predictions\n"
-                "WHERE quarter = 'Q2-2026'\n"
-                "ORDER BY ecl_amount DESC"
+                "SELECT quality_metric, current_score, target, status,\n"
+                "       trend_30d\n"
+                "FROM hls_iq.gold.clinical_quality_metrics\n"
+                "ORDER BY status DESC"
             ),
-            "data": None,
+            "data": [
+                {"metric": "Readmission Rate (30d)", "score": "11.8%", "target": "<13.9%", "status": "Exceeding"},
+                {"metric": "Sepsis Bundle Compliance", "score": "94%", "target": "90%", "status": "Exceeding"},
+                {"metric": "CLABSI Rate", "score": "0.42", "target": "<0.50", "status": "On Target"},
+                {"metric": "HCAHPS Overall", "score": "4.2/5.0", "target": "4.0", "status": "Exceeding"},
+            ],
+        },
+        {
+            "patterns": [r"claims", r"mlr", r"prior", r"auth", r"fwa", r"plan"],
+            "answer": (
+                "**Health Plan Analytics & Claims Intelligence**\n\n"
+                "Medical Loss Ratio (MLR): **84.2%** (target: 80-85%)\n"
+                "Claims processed (MTD): **2.4M** | Avg turnaround: **4.2 days**\n"
+                "Prior authorization volume: **128K** | Auto-approval rate: **62%**\n\n"
+                "**Claims Performance:**\n"
+                "| Metric | Value | Target | Status |\n"
+                "|--------|-------|--------|--------|\n"
+                "| Clean claims rate | 94.8% | 95% | Near Target |\n"
+                "| First-pass resolution | 87.2% | 85% | Exceeding |\n"
+                "| Denial rate | 8.4% | <10% | On Target |\n"
+                "| Avg days to payment | 18.2 | <21 | On Target |\n\n"
+                "**FWA (Fraud, Waste & Abuse) Detection:**\n"
+                "The FWA model flagged **342 suspicious claims** this month, totaling $4.8M in "
+                "potential savings. Top patterns:\n"
+                "- Upcoding: 142 claims ($2.1M)\n"
+                "- Unbundling: 98 claims ($1.4M)\n"
+                "- Duplicate billing: 67 claims ($820K)\n"
+                "- Phantom billing: 35 claims ($480K)\n\n"
+                "**Prior Auth Optimization:** The AI-powered prior auth system auto-approves 62% of "
+                "requests in <2 hours, up from 41% last quarter. This has reduced provider abrasion "
+                "scores by 28% and saved 4,200 staff hours per month.\n\n"
+                "**Recommendation:** Increase auto-approval threshold for low-risk procedure codes "
+                "to target 70% auto-approval rate by Q3."
+            ),
+            "sql": (
+                "SELECT metric_name, current_value, target_value, status,\n"
+                "       trend\n"
+                "FROM hls_iq.gold.claims_analytics\n"
+                "WHERE report_period = current_date()\n"
+                "ORDER BY metric_name"
+            ),
+            "data": [
+                {"metric": "Medical Loss Ratio", "value": "84.2%", "target": "80-85%", "status": "On Target"},
+                {"metric": "Clean Claims Rate", "value": "94.8%", "target": "95%", "status": "Near Target"},
+                {"metric": "Prior Auth Auto-Approval", "value": "62%", "target": "60%", "status": "Exceeding"},
+                {"metric": "FWA Savings (MTD)", "value": "$4.8M", "target": "$4M", "status": "Exceeding"},
+            ],
         },
     ],
 }
@@ -1324,11 +874,11 @@ def _ask_demo(question: str, use_case: str) -> Dict[str, Any]:
 
     # Fallback: generic response based on the vertical
     vertical_names = {
-        "manufacturing": "manufacturing operations",
-        "risk": "risk and compliance",
-        "healthcare": "clinical operations",
-        "gaming": "player analytics and live ops",
-        "financial_services": "financial risk and portfolio management",
+        "gaming": "player analytics and live game operations",
+        "telecom": "network operations and subscriber management",
+        "media": "audience intelligence and content analytics",
+        "financial_services": "banking, capital markets, and insurance analytics",
+        "hls": "healthcare providers, health plans, and biopharma analytics",
     }
     vertical_desc = vertical_names.get(use_case, "your data")
 
@@ -1372,36 +922,26 @@ def _ask_demo(question: str, use_case: str) -> Dict[str, Any]:
 def ask_genie(question: str, use_case: str) -> Dict[str, Any]:
     """Route a question to the best available backend.
 
-    Tries backends in order:
-      1. Databricks Genie API  (if GENIE_SPACE_ID is set)
-      2. Databricks Foundation Model  (if DATABRICKS_FM_ENDPOINT is set)
-      3. Demo mode  (always available)
+    Always tries the Foundation Model first (databricks-claude-sonnet-4-6),
+    falling back to demo mode if the FM call fails (e.g. no Databricks auth).
 
     Parameters
     ----------
     question : str
         The user's natural-language question.
     use_case : str
-        The vertical identifier (e.g. 'manufacturing', 'risk').
+        The vertical identifier (e.g. 'gaming', 'hls').
 
     Returns
     -------
     dict
         {"answer": str, "sql": str|None, "source": str, "data": list|None}
     """
-    # Backend 1: Genie API
-    if _get_genie_space_id():
-        try:
-            return _ask_genie_api(question, use_case)
-        except Exception as e:
-            logger.warning("Genie API failed, falling back: %s", e)
+    # Always try the FM first
+    try:
+        return _ask_fm(question, use_case)
+    except Exception as e:
+        logger.warning("FM endpoint failed, falling back to demo mode: %s", e)
 
-    # Backend 2: Foundation Model
-    if _get_fm_endpoint():
-        try:
-            return _ask_fm(question, use_case)
-        except Exception as e:
-            logger.warning("FM endpoint failed, falling back: %s", e)
-
-    # Backend 3: Demo mode (always available)
+    # Fallback: Demo mode (always available)
     return _ask_demo(question, use_case)

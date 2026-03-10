@@ -4,3 +4,5 @@ command:
 env:
   - name: USE_DEMO_DATA
     value: "true"
+  - name: DATABRICKS_FM_ENDPOINT
+    value: "databricks-claude-sonnet-4-6"
