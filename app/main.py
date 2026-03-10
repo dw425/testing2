@@ -21,32 +21,39 @@ from app.data_access import (  # noqa: E402
     get_anomaly_scatter_data,
     get_build_tracking,
     get_config,
+    get_config_for,
     get_inventory_status,
     get_live_inference_feed,
     get_production_kpis,
     get_quality_summary,
     get_shap_importance,
+    set_active_vertical,
 )
 from app.genie_backend import ask_genie  # noqa: E402
-from app.layout import build_layout  # noqa: E402
+from app.layout import build_layout, build_sidebar, build_genie_panel  # noqa: E402
 from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS, get_base_stylesheet  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# Read config to drive app title and page structure
+# All supported verticals
 # ---------------------------------------------------------------------------
+ALL_VERTICALS = ["manufacturing", "risk", "healthcare", "gaming", "financial_services"]
 
-cfg = get_config()
-use_case = os.environ.get("USE_CASE", "manufacturing")
-APP_NAME = cfg["app"]["name"]
+_VERTICAL_META = {
+    "manufacturing": {"title": "ManufacturingIQ", "subtitle": "Predictive Quality & Anomaly Detection", "icon": "fa-industry", "color": "#233ED8", "stats": [("Assets", "12"), ("Models", "3"), ("Sites", "3")]},
+    "risk": {"title": "RiskIQ", "subtitle": "Data Governance & Compliance", "icon": "fa-shield-halved", "color": "#8B5CF6", "stats": [("Domains", "4"), ("Policies", "24"), ("Scans", "1.2K")]},
+    "healthcare": {"title": "HealthcareIQ", "subtitle": "Clinical Operations Analytics", "icon": "fa-heart-pulse", "color": "#22C55E", "stats": [("Facilities", "3"), ("Departments", "6"), ("Patients", "5K")]},
+    "gaming": {"title": "GamingIQ", "subtitle": "Player Analytics & Live Ops", "icon": "fa-gamepad", "color": "#EAB308", "stats": [("Titles", "3"), ("DAU", "847K"), ("Regions", "6")]},
+    "financial_services": {"title": "FinServIQ", "subtitle": "Risk, Fraud & Portfolio Analytics", "icon": "fa-building-columns", "color": "#EF4444", "stats": [("Lines", "5"), ("Accounts", "12.4K"), ("AUM", "$47M")]},
+}
 
 # ---------------------------------------------------------------------------
-# Create Dash app  --  title is config-driven
+# Create Dash app
 # ---------------------------------------------------------------------------
 
 app = dash.Dash(
     __name__,
     suppress_callback_exceptions=True,
-    title=APP_NAME,
+    title="Blueprint IQ",
     update_title=None,
     external_stylesheets=[
         "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
@@ -80,7 +87,7 @@ app.index_string = """<!DOCTYPE html>
 # Layout
 # ---------------------------------------------------------------------------
 
-app.layout = build_layout(use_case)
+app.layout = build_layout()
 
 
 # ===================================================================
@@ -204,6 +211,61 @@ def _detail_row(label, value):
 
 
 # ===================================================================
+#  Landing & Hub renderers
+# ===================================================================
+
+
+def _render_landing():
+    """Full-screen splash overlay with Blueprint IQ branding."""
+    return html.Div(className="landing-overlay", children=[
+        html.Div(
+            style={"width": "56px", "height": "56px", "borderRadius": "16px",
+                   "backgroundColor": COLORS["blue"], "display": "flex",
+                   "alignItems": "center", "justifyContent": "center", "marginBottom": "24px"},
+            children=html.I(className="fa-solid fa-cube", style={"color": "white", "fontSize": "24px"}),
+        ),
+        html.Div("Blueprint IQ", className="landing-title"),
+        html.Div("AI-Powered Industry Analytics on Databricks", className="landing-subtitle"),
+        dcc.Link("Explore Demos", href="/hub", className="landing-enter-btn"),
+    ])
+
+
+def _render_hub():
+    """Demo hub grid with a card for each vertical."""
+    cards = []
+    for vk, vm in _VERTICAL_META.items():
+        stat_divs = [
+            html.Div(className="vertical-card-stat", children=[
+                html.Strong(s[1]), s[0],
+            ]) for s in vm["stats"]
+        ]
+        cards.append(
+            dcc.Link(
+                href=f"/{vk}/dashboard",
+                className="vertical-card",
+                children=[
+                    html.Div(
+                        className="vertical-card-icon",
+                        style={"backgroundColor": f"{vm['color']}20"},
+                        children=html.I(className=f"fa-solid {vm['icon']}", style={"color": vm["color"]}),
+                    ),
+                    html.Div(vm["title"], className="vertical-card-title"),
+                    html.Div(vm["subtitle"], className="vertical-card-subtitle"),
+                    html.Div(className="vertical-card-stats", children=stat_divs),
+                ],
+            )
+        )
+
+    return html.Div(style={"backgroundColor": COLORS["dark"], "minHeight": "100vh"}, children=[
+        html.Div(className="hub-header", children=[
+            html.Div("Blueprint IQ Demo Hub", className="hub-title"),
+            html.Div("Choose an industry vertical to explore", className="hub-subtitle"),
+        ]),
+        html.Div(className="hub-grid", children=cards),
+    ])
+
+
+# ===================================================================
 #  Dashboard renderer  --  config-driven KPIs for all verticals
 # ===================================================================
 
@@ -212,9 +274,11 @@ def _render_dashboard():
     """Config-driven dashboard with KPI cards and charts."""
     import plotly.graph_objects as go
 
+    from app.data_access import _current_use_case
+    current_uc = _current_use_case()
     cfg = get_config()
     kpi_configs = cfg.get("dashboard", {}).get("kpis", [])
-    demo_values = _DEMO_KPI_VALUES.get(use_case, [])
+    demo_values = _DEMO_KPI_VALUES.get(current_uc, [])
 
     # Build KPI cards from config
     kpi_cards = []
@@ -243,7 +307,7 @@ def _render_dashboard():
 
     # Charts section -- manufacturing gets scatter + SHAP; others get bar chart
     chart_section = []
-    if use_case == "manufacturing":
+    if current_uc == "manufacturing":
         scatter_data = get_anomaly_scatter_data(hours=1)
         shap_data = get_shap_importance()
         feed = get_live_inference_feed(limit=20)
@@ -1472,15 +1536,11 @@ _SPECIFIC_RENDERERS = {
     "dashboard": _render_dashboard,
 }
 
-# Build PAGE_RENDERERS dynamically from the active config's pages
-PAGE_RENDERERS = {}
-for page in cfg.get("pages", []):
-    pid = page["id"]
-    if pid in _SPECIFIC_RENDERERS:
-        PAGE_RENDERERS[pid] = _SPECIFIC_RENDERERS[pid]
-    else:
-        # Use a closure to capture the page_id for the generic renderer
-        PAGE_RENDERERS[pid] = (lambda p: lambda: _render_generic_page(p))(pid)
+def _get_renderer(page_id):
+    """Look up the renderer for a page id, falling back to generic."""
+    if page_id in _SPECIFIC_RENDERERS:
+        return _SPECIFIC_RENDERERS[page_id]
+    return lambda: _render_generic_page(page_id)
 
 
 # ===================================================================
@@ -1490,22 +1550,48 @@ for page in cfg.get("pages", []):
 
 @app.callback(
     Output("page-content", "children"),
+    Output("sidebar-container", "children"),
+    Output("sidebar-container", "style"),
+    Output("genie-panel-container", "children"),
+    Output("genie-panel-container", "style"),
+    Output("active-vertical", "data"),
     Input("url", "pathname"),
     Input("interval-refresh", "n_intervals"),
 )
 def route_page(pathname, n_intervals):
-    """Route URL to the correct page renderer and refresh on interval."""
-    if pathname is None or pathname == "/":
-        page_id = "dashboard"
-    else:
-        page_id = pathname.strip("/").split("/")[0]
+    """Route URL to the correct page, updating sidebar and genie panel per vertical.
 
-    renderer = PAGE_RENDERERS.get(page_id, _render_dashboard)
+    URL patterns:
+      /              -> landing splash
+      /hub           -> demo hub grid
+      /<vertical>/<page> -> vertical page (e.g. /manufacturing/dashboard)
+    """
+    if pathname is None or pathname == "/":
+        # Landing page - no sidebar or genie
+        return (_render_landing(), [], {"display": "none"}, [], {"display": "none"}, None)
+
+    parts = pathname.strip("/").split("/")
+
+    if parts[0] == "hub":
+        return (_render_hub(), [], {"display": "none"}, [], {"display": "none"}, None)
+
+    vertical = parts[0]
+    page_id = parts[1] if len(parts) > 1 else "dashboard"
+
+    if vertical not in ALL_VERTICALS:
+        # Try treating the whole path as a page id for backward compat
+        page_id = vertical
+        vertical = os.environ.get("USE_CASE", "manufacturing")
+
+    # Set the active vertical so get_config() returns the right config
+    set_active_vertical(vertical)
+
+    renderer = _get_renderer(page_id)
 
     try:
-        return renderer()
+        content = renderer()
     except Exception as e:
-        return html.Div(
+        content = html.Div(
             className="content-area",
             children=[
                 html.Div(className="card", children=[
@@ -1514,6 +1600,19 @@ def route_page(pathname, n_intervals):
                 ]),
             ],
         )
+
+    # Build sidebar and genie panel for this vertical
+    sidebar_children = build_sidebar(vertical, page_id)
+    genie_children = build_genie_panel(vertical)
+
+    return (
+        content,
+        sidebar_children,
+        {"display": "block"},
+        genie_children,
+        {"display": "block"},
+        vertical,
+    )
 
 
 @app.callback(
@@ -1558,7 +1657,9 @@ def update_active_nav(pathname, nav_ids):
     if pathname is None or pathname == "/":
         active_id = "dashboard"
     else:
-        active_id = pathname.strip("/").split("/")[0]
+        parts = pathname.strip("/").split("/")
+        # URL is /<vertical>/<page_id>; the page_id is the nav target
+        active_id = parts[1] if len(parts) > 1 else parts[0]
 
     classes = []
     for nav_id in nav_ids:
@@ -1725,7 +1826,8 @@ def handle_genie_query(send_clicks, n_submit, q_clicks, input_value, q_labels, c
 
     # Call the genie backend
     try:
-        result = ask_genie(question, use_case)
+        from app.data_access import _current_use_case
+        result = ask_genie(question, _current_use_case())
     except Exception as e:
         result = {
             "answer": f"Sorry, I encountered an error processing your question: {str(e)}",

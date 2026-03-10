@@ -2,7 +2,5 @@ command:
   - python
   - app/main.py
 env:
-  - name: USE_CASE
-    value: manufacturing
-  - name: CATALOG
-    value: manufacturing_iq
+  - name: USE_DEMO_DATA
+    value: "true"

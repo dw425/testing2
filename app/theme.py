@@ -373,6 +373,49 @@ def get_base_stylesheet() -> str:
         margin: 16px 0;
     }}
 
+    /* ---------- landing overlay ---------- */
+    .landing-overlay {{
+        height: 100vh; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #0F1115 0%, #1a1d28 50%, #0F1115 100%);
+    }}
+    .landing-title {{ font-size: 48px; font-weight: 700; color: white; margin-bottom: 8px; }}
+    .landing-subtitle {{ font-size: 18px; color: #A0A4B0; margin-bottom: 40px; }}
+    .landing-enter-btn {{
+        background: #233ED8; color: white; border: none; padding: 16px 48px;
+        border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+        transition: background 0.2s; text-decoration: none;
+    }}
+    .landing-enter-btn:hover {{ background: #1D35BB; color: white; }}
+
+    /* ---------- hub grid ---------- */
+    .hub-header {{ text-align: center; padding: 48px 32px 32px; }}
+    .hub-title {{ font-size: 32px; font-weight: 700; color: white; }}
+    .hub-subtitle {{ font-size: 16px; color: #A0A4B0; margin-top: 8px; }}
+    .hub-grid {{
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 24px; padding: 0 48px 48px; max-width: 1400px; margin: 0 auto;
+    }}
+    .vertical-card {{
+        background: #16181D; border: 1px solid #272A31; border-radius: 16px;
+        padding: 32px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: block;
+    }}
+    .vertical-card:hover {{ border-color: #233ED8; transform: translateY(-4px); box-shadow: 0 8px 32px rgba(35,62,216,0.15); }}
+    .vertical-card-icon {{ width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px; }}
+    .vertical-card-title {{ font-size: 20px; font-weight: 700; color: white; margin-bottom: 4px; }}
+    .vertical-card-subtitle {{ font-size: 14px; color: #A0A4B0; margin-bottom: 16px; }}
+    .vertical-card-stats {{ display: flex; gap: 24px; }}
+    .vertical-card-stat {{ font-size: 12px; color: #A0A4B0; }}
+    .vertical-card-stat strong {{ color: white; font-size: 14px; display: block; }}
+
+    /* ---------- back to hub link ---------- */
+    .back-to-hub {{
+        display: flex; align-items: center; gap: 8px; padding: 12px 20px; margin-bottom: 8px;
+        color: #A0A4B0; text-decoration: none; font-size: 13px; font-weight: 500;
+        border-bottom: 1px solid #272A31; transition: color 0.15s;
+    }}
+    .back-to-hub:hover {{ color: #233ED8; }}
+
     /* ---------- utilities ---------- */
     .text-muted {{ color: {COLORS["text_muted"]}; }}
     .text-white {{ color: {COLORS["white"]}; }}

@@ -9,6 +9,7 @@ Supports two modes:
     authentication against the Unity Catalog tables.
 """
 
+import contextvars
 import os
 import random
 from datetime import datetime, timedelta
@@ -21,8 +22,9 @@ import yaml
 # Configuration
 # ---------------------------------------------------------------------------
 
-_config_cache: Optional[dict] = None
-_config_use_case: Optional[str] = None
+_active_vertical = contextvars.ContextVar("active_vertical", default="manufacturing")
+
+_config_cache: Dict[str, dict] = {}
 
 
 def _reset_config() -> None:
@@ -30,43 +32,54 @@ def _reset_config() -> None:
 
     Useful when the ``USE_CASE`` environment variable has changed at runtime.
     """
-    global _config_cache, _config_use_case
-    _config_cache = None
-    _config_use_case = None
+    global _config_cache
+    _config_cache = {}
 
 
 def _current_use_case() -> str:
-    """Return the active use-case identifier (e.g. 'manufacturing')."""
+    """Return the active use-case identifier (e.g. 'manufacturing').
+
+    Checks the ``_active_vertical`` context var first, falling back to the
+    ``USE_CASE`` environment variable.
+    """
+    try:
+        vertical = _active_vertical.get()
+    except LookupError:
+        vertical = None
+    if vertical is not None:
+        return vertical
     return os.environ.get("USE_CASE", "manufacturing")
+
+
+def set_active_vertical(vertical: str) -> None:
+    """Set the active vertical via the context var."""
+    _active_vertical.set(vertical)
+
+
+def get_config_for(vertical: str) -> dict:
+    """Load and cache the YAML config for *vertical*.
+
+    Config files live in ``config/<vertical>.yaml``.
+    """
+    if vertical in _config_cache:
+        return _config_cache[vertical]
+
+    config_dir = os.path.join(os.path.dirname(__file__), "..", "config")
+    config_path = os.path.join(config_dir, f"{vertical}.yaml")
+
+    with open(config_path, "r") as fh:
+        _config_cache[vertical] = yaml.safe_load(fh)
+    return _config_cache[vertical]
 
 
 def get_config() -> dict:
     """Load the YAML config for the active use case.
 
-    The use case is determined by the ``USE_CASE`` environment variable
-    (default: ``manufacturing``).  Config files live in ``config/<use_case>.yaml``.
-
-    The cache is automatically invalidated if ``USE_CASE`` has changed since
-    the last call.
+    The use case is determined by the ``_active_vertical`` context var first,
+    then the ``USE_CASE`` environment variable (default: ``manufacturing``).
+    Config files live in ``config/<use_case>.yaml``.
     """
-    global _config_cache, _config_use_case
-
-    use_case = _current_use_case()
-
-    # Invalidate cache when the vertical changes
-    if _config_use_case is not None and _config_use_case != use_case:
-        _config_cache = None
-
-    if _config_cache is not None:
-        return _config_cache
-
-    config_dir = os.path.join(os.path.dirname(__file__), "..", "config")
-    config_path = os.path.join(config_dir, f"{use_case}.yaml")
-
-    with open(config_path, "r") as fh:
-        _config_cache = yaml.safe_load(fh)
-    _config_use_case = use_case
-    return _config_cache
+    return get_config_for(_current_use_case())
 
 
 def is_demo_mode() -> bool:

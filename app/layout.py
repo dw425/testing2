@@ -6,12 +6,15 @@ Creates the outer shell of the application:
   - Middle: sidebar navigation
   - Right: routed page content area
 
-The layout is built once at startup via ``build_layout(use_case)``.
+The layout is built once at startup via ``build_layout()`` which creates a
+dynamic skeleton with placeholder containers.  The genie panel and sidebar
+content are populated at runtime by callbacks in ``main.py`` using the
+public helpers ``build_genie_panel()`` and ``build_sidebar()``.
 """
 
 from dash import dcc, html
 
-from app.data_access import get_config
+from app.data_access import get_config_for
 from app.theme import COLORS, FONT_FAMILY
 
 
@@ -36,12 +39,30 @@ _USE_CASE_GENIE_DESC = {
 }
 
 
-def _build_genie_panel(questions: list, use_case: str = "manufacturing") -> html.Div:
-    """Genie AI chat panel styled to match the HTML mockup.
+# ---------------------------------------------------------------------------
+# Public helpers -- called by main.py callbacks to build panel content
+# ---------------------------------------------------------------------------
+
+
+def build_genie_panel(use_case: str = "manufacturing") -> html.Div:
+    """Build the Genie AI chat panel content for the given vertical.
 
     White background, blue header text, bordered question cards,
     scrollable chat area, and pill-shaped input bar with send button.
+
+    Parameters
+    ----------
+    use_case:
+        The vertical identifier (e.g. ``"manufacturing"``).
+
+    Returns
+    -------
+    html.Div
+        The fully-styled genie panel with that vertical's suggested questions.
     """
+    cfg = get_config_for(use_case)
+    questions = cfg.get("genie", {}).get("sample_questions", [])
+
     # Question cards -- styled like the HTML mockup: blue border, uppercase, bold
     question_cards = []
     for q in questions:
@@ -210,15 +231,34 @@ def _build_genie_panel(questions: list, use_case: str = "manufacturing") -> html
                     ),
                 ],
             ),
-
-            # ---- Store for chat history ----
-            dcc.Store(id="genie-chat-history", data=[]),
         ],
     )
 
 
-def _build_sidebar(pages: list, app_title: str, app_subtitle: str, use_case: str = "manufacturing") -> html.Div:
-    """Vertical sidebar with brand header and navigation links."""
+def build_sidebar(vertical: str, active_page: str = "") -> html.Div:
+    """Build the sidebar navigation for the given *vertical*.
+
+    Includes a "Back to Demo Hub" link at the top when inside a vertical,
+    the vertical's app name, icon, pages from its config, and the standard
+    footer branding.
+
+    Parameters
+    ----------
+    vertical:
+        The vertical identifier (e.g. ``"manufacturing"``).
+    active_page:
+        The currently active page id, used for highlighting.
+
+    Returns
+    -------
+    html.Div
+        Sidebar content ready to be placed inside ``sidebar-container``.
+    """
+    cfg = get_config_for(vertical)
+    app_title = cfg["app"].get("title", "Blueprint IQ")
+    app_subtitle = cfg["app"].get("subtitle", "")
+    pages = cfg.get("pages", [])
+
     nav_links = []
     for page in pages:
         if not page.get("enabled", True):
@@ -230,7 +270,7 @@ def _build_sidebar(pages: list, app_title: str, app_subtitle: str, use_case: str
                     html.I(className=icon_class),
                     html.Span(page["label"]),
                 ],
-                href=f"/{page['id']}",
+                href=f"/{vertical}/{page['id']}",
                 className="nav-link",
                 id={"type": "nav-link", "index": page["id"]},
             )
@@ -240,6 +280,27 @@ def _build_sidebar(pages: list, app_title: str, app_subtitle: str, use_case: str
         className="sidebar",
         style={"width": "220px", "minWidth": "220px", "flexShrink": "0"},
         children=[
+            # Back to Demo Hub link
+            dcc.Link(
+                [
+                    html.I(
+                        className="fa-solid fa-arrow-left",
+                        style={"marginRight": "6px", "fontSize": "11px"},
+                    ),
+                    html.Span("Back to Demo Hub"),
+                ],
+                href="/hub",
+                style={
+                    "display": "flex",
+                    "alignItems": "center",
+                    "padding": "10px 20px",
+                    "fontSize": "12px",
+                    "color": COLORS.get("text_muted", "#9CA3AF"),
+                    "textDecoration": "none",
+                    "borderBottom": f"1px solid {COLORS.get('border', '#374151')}",
+                    "fontFamily": FONT_FAMILY,
+                },
+            ),
             # Brand header
             html.Div(
                 className="sidebar-brand",
@@ -258,7 +319,7 @@ def _build_sidebar(pages: list, app_title: str, app_subtitle: str, use_case: str
                                     "justifyContent": "center",
                                 },
                                 children=html.I(
-                                    className=f"fa-solid {_USE_CASE_ICONS.get(use_case, 'fa-cube')}",
+                                    className=f"fa-solid {_USE_CASE_ICONS.get(vertical, 'fa-cube')}",
                                     style={"color": COLORS["white"], "fontSize": "13px"},
                                 ),
                             ),
@@ -316,27 +377,20 @@ def _build_sidebar(pages: list, app_title: str, app_subtitle: str, use_case: str
 # ---------------------------------------------------------------------------
 
 
-def build_layout(use_case: str = "manufacturing") -> html.Div:
-    """Construct the full application layout.
+def build_layout() -> html.Div:
+    """Construct the full application layout as a dynamic skeleton.
 
-    Parameters
-    ----------
-    use_case:
-        Name of the YAML config to load from ``config/<use_case>.yaml``.
-        Defaults to ``"manufacturing"``.
+    The skeleton contains placeholder containers (``genie-panel-container``,
+    ``sidebar-container``, ``page-content``) that are populated at runtime by
+    callbacks in ``main.py``.  A ``dcc.Store(id="active-vertical")`` tracks
+    the currently selected vertical.
 
     Returns
     -------
     html.Div
-        Root Div wrapping URL routing, interval timer, and the 3-panel shell.
+        Root Div wrapping URL routing, interval timer, stores, and the
+        3-panel shell with placeholder containers.
     """
-    cfg = get_config()
-
-    app_title = cfg["app"].get("title", "ManufacturingIQ")
-    app_subtitle = cfg["app"].get("subtitle", "Production Analysis")
-    pages = cfg.get("pages", [])
-    genie_questions = cfg.get("genie", {}).get("sample_questions", [])
-
     return html.Div(
         style={"fontFamily": FONT_FAMILY},
         children=[
@@ -346,6 +400,10 @@ def build_layout(use_case: str = "manufacturing") -> html.Div:
             dcc.Interval(id="interval-refresh", interval=5_000, n_intervals=0),
             # Store for genie panel visibility
             dcc.Store(id="genie-visible", data=True),
+            # Store for tracking the active vertical
+            dcc.Store(id="active-vertical", data=None),
+            # Store for genie chat history
+            dcc.Store(id="genie-chat-history", data=[]),
             # Outer flex container
             html.Div(
                 style={
@@ -355,10 +413,10 @@ def build_layout(use_case: str = "manufacturing") -> html.Div:
                     "backgroundColor": COLORS["dark"],
                 },
                 children=[
-                    # Genie panel (left)
-                    _build_genie_panel(genie_questions, use_case),
-                    # Sidebar (middle)
-                    _build_sidebar(pages, app_title, app_subtitle, use_case),
+                    # Genie panel placeholder (left) -- populated by callback
+                    html.Div(id="genie-panel-container"),
+                    # Sidebar placeholder (middle) -- populated by callback
+                    html.Div(id="sidebar-container"),
                     # Content area (right)
                     html.Div(
                         id="page-content",
