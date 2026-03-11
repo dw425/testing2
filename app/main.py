@@ -376,7 +376,16 @@ def _render_hub():
             html.Div(
                 className="hub-header",
                 children=[
-                    html.Div("Blueprint Demo Hub", className="hub-title"),
+                    html.Div(
+                        className="hub-title",
+                        style={"display": "flex", "alignItems": "center",
+                               "justifyContent": "center", "gap": "16px"},
+                        children=[
+                            html.Img(src="/assets/blueprint-logo.jpg",
+                                     style={"height": "40px"}),
+                            html.Span("Demo Hub"),
+                        ],
+                    ),
                     html.Div(
                         "Strategic Command Centers — Select a vertical to explore executive intelligence",
                         className="hub-subtitle",
