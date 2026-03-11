@@ -12,10 +12,13 @@ The app serves three kinds of pages:
   - Vertical (/<vertical>/<page_id>) -- per-vertical pages
 """
 
-import os
-import sys
 import json
+import logging
+import os
 import re
+import sys
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Ensure the project root is on sys.path so `from app.xxx` imports work
@@ -43,7 +46,7 @@ from app.data_access import (  # noqa: E402
 )
 from app.genie_backend import ask_genie  # noqa: E402
 from app.layout import build_layout, build_sidebar  # noqa: E402
-from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS, get_base_stylesheet  # noqa: E402
+from app.theme import COLORS, get_base_stylesheet  # noqa: E402
 
 # Per-vertical page renderers
 from app.pages import gaming as pages_gaming  # noqa: E402
@@ -118,8 +121,10 @@ ALL_VERTICALS = [v["key"] for v in _VERTICALS]
 for _v in ALL_VERTICALS:
     try:
         get_config_for(_v)
-    except Exception:
-        pass  # Config file may not exist yet during development
+    except FileNotFoundError:
+        logger.warning("Config file not found for vertical: %s", _v)
+    except Exception as _e:
+        logger.warning("Failed to load config for %s: %s", _v, _e)
 
 # ---------------------------------------------------------------------------
 # Create Dash app

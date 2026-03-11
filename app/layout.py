@@ -247,6 +247,7 @@ def build_layout() -> html.Div:
                 html.I(className="fa-solid fa-comment-dots", style={"fontSize": "22px"}),
                 id="chat-fab",
                 n_clicks=0,
+                title="Ask Genie AI",
                 style={
                     "position": "fixed",
                     "bottom": "24px",

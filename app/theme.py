@@ -215,7 +215,6 @@ def get_base_stylesheet() -> str:
     .nav-link.active {{
         background-color: rgba(75, 123, 245, 0.15);
         color: {COLORS["blue"]};
-        border-left: 3px solid {COLORS["blue"]};
     }}
 
     .nav-link i {{
