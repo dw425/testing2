@@ -386,7 +386,9 @@ def _render_hub():
                             html.Span("Demo Hub", style={"fontSize": "0.7em",
                                                           "fontWeight": "400",
                                                           "opacity": "0.85",
-                                                          "paddingLeft": "4px"}),
+                                                          "paddingLeft": "4px",
+                                                          "position": "relative",
+                                                          "top": "4px"}),
                         ],
                     ),
                     html.Div(
