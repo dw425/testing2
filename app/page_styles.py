@@ -796,25 +796,33 @@ def _card(children, **style_overrides):
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def layout_executive(title, subtitle, heroes, main_chart, panels):
+def layout_executive(title, subtitle, heroes, main_chart, panels,
+                     briefing=None):
     """Style A: Executive Dashboard.
 
+    briefing: optional morning_briefing() component (rendered full-width above heroes)
     heroes: list of hero_metric() components
     main_chart: dcc.Graph or html component
     panels: list of (title_str, component) or (title_str, component, href) tuples
     """
+    content = []
+
+    if briefing:
+        content.append(html.Div(
+            style={"marginBottom": "16px"},
+            children=[briefing],
+        ))
+
     hero_count = len(heroes)
     hero_cols = min(hero_count, 4)
-
-    content = [
-        html.Div(
-            style={"display": "grid",
-                   "gridTemplateColumns": f"repeat({hero_cols}, 1fr)",
-                   "gap": "16px", "marginBottom": "20px"},
-            children=heroes,
-        ),
-        _card([main_chart], padding="20px"),
-    ]
+    content.append(html.Div(
+        style={"display": "grid",
+               "gridTemplateColumns": f"repeat({hero_cols}, 1fr)",
+               "gap": "16px", "marginBottom": "20px",
+               "alignItems": "start"},
+        children=heroes,
+    ))
+    content.append(_card([main_chart], padding="20px"))
 
     if panels:
         panel_divs = []

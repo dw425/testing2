@@ -188,10 +188,14 @@ def render_dashboard(cfg):
             ("Output by Product Line", donut_chart, "/manufacturing/production_analytics"),
             ("Downtime Trend", downtime_chart, "/manufacturing/predictive_maintenance"),
         ],
+        briefing=briefing,
     )
 
-    # Wrap with briefing and insight card at the top
-    return html.Div([briefing, insight, dashboard])
+    # Append insight into the content area
+    content_area = dashboard.children[1]  # the content-area div
+    content_area.children.append(insight)
+
+    return dashboard
 
 
 # ═══════════════════════════════════════════════════════════════════════════

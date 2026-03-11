@@ -158,9 +158,10 @@ def render_dashboard(cfg):
     return layout_executive(
         title="Telecom Outcome Hub",
         subtitle="Enterprise-wide KPIs and performance trends",
-        heroes=[briefing] + heroes,
+        heroes=heroes,
         main_chart=main_chart,
         panels=panels,
+        briefing=briefing,
     )
 
 

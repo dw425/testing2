@@ -171,7 +171,8 @@ def render_dashboard(cfg):
     return layout_executive(
         title="Risk Dashboard",
         subtitle="Enterprise-wide risk exposure and capital adequacy overview",
-        heroes=[briefing] + heroes,
+        heroes=heroes,
+        briefing=briefing,
         main_chart=main_chart,
         panels=panels,
     )

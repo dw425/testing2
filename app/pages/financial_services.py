@@ -180,11 +180,11 @@ def render_dashboard(cfg):
         heroes=heroes,
         main_chart=main_chart,
         panels=panels,
+        briefing=briefing,
     )
 
-    # Prepend briefing and append insight into the content area
+    # Append insight into the content area
     content_area = dashboard.children[1]  # the content-area div
-    content_area.children.insert(0, briefing)
     content_area.children.append(risk_insight)
 
     return dashboard

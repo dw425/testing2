@@ -169,9 +169,10 @@ def render_dashboard(cfg):
     return layout_executive(
         title=cfg.get("title", "Player Experience Hub"),
         subtitle=cfg.get("subtitle", "Strategic Command Center — Gaming Economics"),
-        heroes=[briefing] + heroes,
+        heroes=heroes,
         main_chart=main_chart,
         panels=panels,
+        briefing=briefing,
     )
 
 

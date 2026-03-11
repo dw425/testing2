@@ -167,8 +167,9 @@ def render_dashboard(cfg):
     return layout_executive(
         title="Media Outcome Hub",
         subtitle="Streaming performance at a glance",
-        heroes=[briefing] + heroes,
+        heroes=heroes,
         main_chart=main_chart,
+        briefing=briefing,
         panels=[
             ("Genre Distribution", genre_donut, "/media/content_strategy"),
             ("Platform Split", plat_chart, "/media/platform_delivery"),
