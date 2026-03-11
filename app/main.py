@@ -46,7 +46,7 @@ from app.data_access import (  # noqa: E402
 )
 from app.genie_backend import ask_genie  # noqa: E402
 from app.layout import build_layout, build_sidebar  # noqa: E402
-from app.page_styles import _hex_to_rgb  # noqa: E402
+from app.page_styles import _hex_to_rgb, _data_table_counter  # noqa: E402
 from app.theme import COLORS, get_base_stylesheet  # noqa: E402
 
 # Per-vertical page renderers
@@ -907,6 +907,9 @@ def _get_renderer(vertical, page_id):
 )
 def route_page(pathname):
     """Route URL to the correct page and update sidebar per vertical."""
+    # Reset the DataTable counter so IDs are consistent per page
+    _data_table_counter["n"] = 0
+
     if pathname is None or pathname == "/" or pathname == "":
         return (_render_hub(), [], {"display": "none"}, None)
 
@@ -1038,6 +1041,95 @@ def update_active_nav(pathname, nav_ids):
         else:
             classes.append("nav-link")
     return classes
+
+
+# ===================================================================
+#  Table Row Drill-Down Callback
+# ===================================================================
+
+
+@app.callback(
+    Output({"type": "row-detail-panel", "index": ALL}, "children"),
+    Output({"type": "row-detail-panel", "index": ALL}, "style"),
+    Input({"type": "interactive-table", "index": ALL}, "selected_rows"),
+    State({"type": "interactive-table", "index": ALL}, "data"),
+    State({"type": "interactive-table", "index": ALL}, "columns"),
+    prevent_initial_call=True,
+)
+def show_row_detail(all_selected, all_data, all_columns):
+    """When a table row is clicked, show its details in a slide-out panel."""
+    n = len(all_selected)
+    children_out = [[] for _ in range(n)]
+    styles_out = [{"display": "none"} for _ in range(n)]
+
+    for i in range(n):
+        selected = all_selected[i]
+        if not selected:
+            continue
+
+        data = all_data[i]
+        cols = all_columns[i]
+        if not data or not cols:
+            continue
+
+        row_idx = selected[0]
+        if row_idx >= len(data):
+            continue
+
+        row = data[row_idx]
+        col_map = {c["id"]: c["name"] for c in cols}
+
+        detail_rows = []
+        for col_id, display_name in col_map.items():
+            val = row.get(col_id, "")
+            detail_rows.append(
+                html.Div(
+                    style={"display": "flex", "padding": "8px 0",
+                           "borderBottom": f"1px solid {COLORS['border']}"},
+                    children=[
+                        html.Div(display_name,
+                                 style={"width": "40%", "fontSize": "12px",
+                                        "fontWeight": "600", "color": COLORS["text_muted"],
+                                        "textTransform": "uppercase", "letterSpacing": "0.3px"}),
+                        html.Div(str(val),
+                                 style={"width": "60%", "fontSize": "13px",
+                                        "color": COLORS["white"], "fontWeight": "500"}),
+                    ],
+                )
+            )
+
+        children_out[i] = [
+            html.Div(
+                style={"display": "flex", "justifyContent": "space-between",
+                       "alignItems": "center", "marginBottom": "12px"},
+                children=[
+                    html.Div(
+                        style={"display": "flex", "alignItems": "center", "gap": "8px"},
+                        children=[
+                            html.I(className="fa-solid fa-magnifying-glass-plus",
+                                   style={"color": COLORS["blue"], "fontSize": "14px"}),
+                            html.Span("Row Details",
+                                      style={"fontSize": "14px", "fontWeight": "700",
+                                             "color": COLORS["white"]}),
+                        ],
+                    ),
+                    html.Div(f"Row {row_idx + 1}",
+                             style={"fontSize": "11px", "color": COLORS["text_muted"],
+                                    "backgroundColor": COLORS["dark"],
+                                    "padding": "4px 10px", "borderRadius": "12px"}),
+                ],
+            ),
+        ] + detail_rows
+
+        styles_out[i] = {
+            "display": "block",
+            "padding": "16px 20px",
+            "backgroundColor": f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.04)",
+            "borderTop": f"2px solid {COLORS['blue']}",
+            "animation": "pageFadeIn 0.2s ease-out",
+        }
+
+    return children_out, styles_out
 
 
 # ===================================================================

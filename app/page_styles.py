@@ -299,12 +299,16 @@ def stat_card(label, value, accent="blue"):
     )
 
 
+_data_table_counter = {"n": 0}
+
+
 def data_table(columns, data, page_size=10, style_conditions=None):
     """Interactive DataTable with native sort/filter/pagination.
     columns: list of {"name": "Display Name", "id": "col_id"} dicts
     data: list of row dicts
 
     Auto-applies color coding to status, severity, and risk_grade columns.
+    Each table gets a unique pattern-matching ID for row-click callbacks.
     """
     if not data or not columns:
         return html.Div(
@@ -371,10 +375,15 @@ def data_table(columns, data, page_size=10, style_conditions=None):
     if style_conditions:
         conditions.extend(style_conditions)
 
+    _data_table_counter["n"] += 1
+    table_id = {"type": "interactive-table", "index": _data_table_counter["n"]}
+
     return html.Div(
         className="card",
         style={"padding": "0", "overflow": "hidden"},
-        children=[dash_table.DataTable(
+        children=[
+            dash_table.DataTable(
+            id=table_id,
             columns=columns,
             data=data,
             sort_action="native",
@@ -415,8 +424,13 @@ def data_table(columns, data, page_size=10, style_conditions=None):
             },
             style_data_conditional=conditions,
             style_as_list_view=True,
-        )],
-    )
+        ),
+        # Row detail panel (hidden by default, populated by callback)
+        html.Div(
+            id={"type": "row-detail-panel", "index": _data_table_counter["n"]},
+            style={"display": "none"},
+        ),
+    ])
 
 
 # Keep old rich_table for backward compat
