@@ -1,6 +1,6 @@
 app:
-  name: FinancialServicesIQ
-  title: "Blueprint FinancialServicesIQ"
+  name: FinServIQ
+  title: "Blueprint FinServIQ"
   subtitle: "Banking · Capital Markets · Insurance"
   catalog: financial_services_iq
   warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
@@ -166,7 +166,7 @@ pages:
   group: "Drive Efficiency"
   enabled: true
 genie:
-  space_name: FinancialServicesIQ Genie
+  space_name: FinServIQ Genie
   tables:
   - financial_services_iq.gold.transactions
   - financial_services_iq.gold.customer_profiles

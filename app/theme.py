@@ -146,7 +146,7 @@ STATUS_COLORS = {
 # Typography
 # ---------------------------------------------------------------------------
 
-FONT_FAMILY = "'Inter', 'Segoe UI', system-ui, sans-serif"
+FONT_FAMILY = "'DM Sans', 'Inter', 'Segoe UI', system-ui, sans-serif"
 
 # ---------------------------------------------------------------------------
 # Base stylesheet

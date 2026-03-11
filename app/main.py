@@ -1,5 +1,5 @@
 """
-Multi-vertical Dash application entry point -- Blueprint IQ Demo Hub (v3).
+Multi-vertical Dash application entry point -- Blueprint Demo Hub (v4).
 
 Creates the Dash server, loads the layout, registers page callbacks,
 and wires up URL routing plus the Genie panel toggle.
@@ -62,7 +62,7 @@ from app.pages import risk as pages_risk  # noqa: E402
 # App-level constants
 # ---------------------------------------------------------------------------
 
-APP_NAME = "Blueprint AI Demo Hub"
+APP_NAME = "Blueprint Demo Hub"
 
 # ---------------------------------------------------------------------------
 # Vertical metadata for the hub page
@@ -159,7 +159,7 @@ app = dash.Dash(
     update_title=None,
     external_stylesheets=[
         "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
-        "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap",
+        "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap",
     ],
 )
 
@@ -274,12 +274,13 @@ def _render_landing():
     return html.Div(
         className="landing-overlay",
         children=[
+            html.Img(
+                src="/assets/blueprint-logo.svg",
+                style={"height": "52px", "marginBottom": "12px"},
+            ),
             html.Div(
                 className="landing-title",
-                children=[
-                    html.Span("Blueprint", style={"color": COLORS["blue"]}),
-                    " AI Demo Hub",
-                ],
+                children="Demo Hub",
             ),
             html.Div(
                 "Powered by Databricks Lakehouse | Built by Blueprint Technologies",
@@ -375,7 +376,7 @@ def _render_hub():
             html.Div(
                 className="hub-header",
                 children=[
-                    html.Div("Blueprint AI Demo Hub", className="hub-title"),
+                    html.Div("Blueprint Demo Hub", className="hub-title"),
                     html.Div(
                         "Strategic Command Centers — Select a vertical to explore executive intelligence",
                         className="hub-subtitle",

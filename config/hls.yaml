@@ -1,6 +1,6 @@
 app:
   name: HLSIQ
-  title: "Blueprint Health & Life Sciences IQ"
+  title: "Blueprint HLSIQ"
   subtitle: "Providers · Health Plans · BioPharma · MedTech"
   catalog: hls_iq
   warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>

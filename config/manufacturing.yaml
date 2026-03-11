@@ -1,6 +1,6 @@
 app:
-  name: ManufacturingIQ
-  title: Blueprint ManufacturingIQ
+  name: MakerIQ
+  title: Blueprint MakerIQ
   subtitle: "Production Analytics, Quality Control & Supply Chain"
   catalog: manufacturing_iq
   warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
@@ -165,7 +165,7 @@ pages:
   group: "Operations"
   enabled: true
 genie:
-  space_name: ManufacturingIQ Genie
+  space_name: MakerIQ Genie
   tables:
   - manufacturing_iq.gold.production_line_kpis
   - manufacturing_iq.gold.quality_inspection_results
