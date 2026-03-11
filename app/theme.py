@@ -294,6 +294,11 @@ def get_base_stylesheet() -> str:
         animation: pageFadeIn 0.25s ease-out;
     }}
 
+    /* Dark loading overlay for page transitions */
+    .dash-loading .dash-spinner-container {{
+        background-color: rgba(19, 22, 32, 0.7) !important;
+    }}
+
     /* ---------- data table ---------- */
     .dash-table {{
         font-family: {FONT_FAMILY};

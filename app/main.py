@@ -593,8 +593,15 @@ _SHARED_PAGES = {
 }
 
 
+_page_render_cache: dict = {}  # (vertical, page_id) -> rendered component
+_USE_RENDER_CACHE = os.environ.get("USE_DEMO_DATA", "true").lower() == "true"
+
+
 def _get_renderer(vertical, page_id):
-    """Look up the renderer for a vertical + page id."""
+    """Look up the renderer for a vertical + page id.
+
+    In demo mode, caches rendered pages to avoid re-creating static charts.
+    """
     # Check shared pages first
     if page_id in _SHARED_PAGES:
         return lambda: _SHARED_PAGES[page_id]()
@@ -602,9 +609,19 @@ def _get_renderer(vertical, page_id):
     # Check vertical-specific pages
     vertical_pages = _VERTICAL_PAGES.get(vertical, {})
     if page_id in vertical_pages:
+        cache_key = (vertical, page_id)
+        if _USE_RENDER_CACHE and cache_key in _page_render_cache:
+            return lambda: _page_render_cache[cache_key]
+
         render_fn = vertical_pages[page_id]
         cfg = get_config_for(vertical)
-        return lambda: render_fn(cfg)
+
+        def _cached_render():
+            result = render_fn(cfg)
+            if _USE_RENDER_CACHE:
+                _page_render_cache[cache_key] = result
+            return result
+        return _cached_render
 
     # Fallback to generic
     return lambda: _render_generic_page(page_id)
