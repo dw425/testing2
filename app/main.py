@@ -384,11 +384,11 @@ def _render_hub():
                             html.Img(src="/assets/blueprint-logo.jpg",
                                      style={"height": "38px", "alignSelf": "center"}),
                             html.Span("Demo Hub", style={"fontSize": "0.7em",
-                                                          "fontWeight": "400",
+                                                          "fontWeight": "700",
                                                           "opacity": "0.85",
                                                           "paddingLeft": "4px",
                                                           "position": "relative",
-                                                          "top": "4px"}),
+                                                          "top": "5px"}),
                         ],
                     ),
                     html.Div(
