@@ -844,7 +844,9 @@ def _render_details():
         ]),
         html.Div(className="content-area", children=[
             html.Div(
-                style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+                style={"display": "grid",
+                        "gridTemplateColumns": "repeat(auto-fill, minmax(480px, 1fr))",
+                        "gap": "16px", "alignItems": "start"},
                 children=all_cards,
             ),
         ]),

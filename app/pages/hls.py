@@ -130,9 +130,8 @@ def render_dashboard(cfg):
                      9.8, 9.4, 9.1, 8.7, 8.5, 8.2]
     readmit_fig.add_trace(go.Scatter(
         x=months, y=readmit_rates, name="Readmission %",
-        mode="lines", line=dict(color=COLORS["red"], width=2),
-        fill="tozeroy",
-        fillcolor=f"rgba({_hex_to_rgb(COLORS['red'])}, 0.08)",
+        mode="lines+markers", line=dict(color=COLORS["red"], width=2),
+        marker=dict(size=5),
     ))
     target_line = [10.0] * 12
     readmit_fig.add_trace(go.Scatter(

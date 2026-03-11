@@ -76,33 +76,37 @@ def render_dashboard(cfg):
         x=months,
         y=[31.2, 33.5, 35.1, 34.8, 37.4, 40.2,
            42.1, 44.6, 43.8, 45.9, 47.1, 48.2],
-        mode="lines",
+        mode="lines+markers",
         name="Total Viewers (M)",
         line=dict(color=COLORS["blue"], width=2.5),
-        fill="tozeroy",
-        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.10)",
+        marker=dict(size=5),
     ))
     fig_main.add_trace(go.Scatter(
         x=months,
         y=[18.4, 19.1, 20.5, 21.0, 22.8, 24.3,
            25.7, 27.1, 26.9, 28.4, 29.2, 30.5],
-        mode="lines",
+        mode="lines+markers",
         name="Premium Viewers (M)",
         line=dict(color=COLORS["purple"], width=2, dash="dash"),
+        marker=dict(size=4),
     ))
     fig_main.add_trace(go.Scatter(
         x=months,
         y=[12.8, 14.4, 14.6, 13.8, 14.6, 15.9,
            16.4, 17.5, 16.9, 17.5, 17.9, 17.7],
-        mode="lines",
+        mode="lines+markers",
         name="Ad-Supported (M)",
         line=dict(color=COLORS["green"], width=2, dash="dot"),
+        marker=dict(size=4),
     ))
     fig_main.update_layout(**dark_chart_layout(
         vertical="media",
         height=340,
         title=dict(text="Monthly Viewership Trends", font=dict(size=14,
                    color=COLORS["white"]), x=0.0),
+        yaxis=dict(title="Viewers (M)", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"],
+                   range=[10, 52]),
         legend=dict(orientation="h", y=-0.18, x=0.5, xanchor="center"),
     ))
     main_chart = dcc.Graph(figure=fig_main, config=CHART_CONFIG)
@@ -912,8 +916,6 @@ def render_personalization_ai(cfg):
         name="Overall CTR %", mode="lines+markers",
         line=dict(color=COLORS["blue"], width=2),
         marker=dict(size=5),
-        fill="tozeroy",
-        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
     ))
     fig_ctr.add_trace(go.Scatter(
         x=weeks, y=[45, 48, 50, 52, 55, 58, 60, 62, 64, 66, 68, 70],

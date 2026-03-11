@@ -113,8 +113,6 @@ def render_dashboard(cfg):
         mode="lines+markers",
         line=dict(color=COLORS["blue"], width=2),
         marker=dict(size=5),
-        fill="tozeroy",
-        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
     ))
     perf_fig.add_trace(go.Scatter(
         x=months, y=benchmark_vals, name="S&P 500 Benchmark",

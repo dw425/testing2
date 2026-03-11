@@ -89,16 +89,15 @@ def render_dashboard(cfg):
         x=months, y=subs, mode="lines+markers",
         name="Subscribers (M)",
         line=dict(color=COLORS["blue"], width=3),
-        marker=dict(size=5, color=COLORS["blue"]),
-        fill="tozeroy",
-        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
+        marker=dict(size=6, color=COLORS["blue"]),
     ))
     fig_growth.update_layout(**dark_chart_layout(
         vertical="telecom",
         height=320,
         title=dict(text="Subscriber Growth", font=dict(size=14, color=COLORS["white"])),
         yaxis=dict(title="Subscribers (M)", showgrid=True,
-                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"],
+                   range=[42, 50]),
     ))
 
     main_chart = dcc.Graph(figure=fig_growth, config=CHART_CONFIG,

@@ -1102,7 +1102,6 @@ def sparkline_figure(values, color=None, height=60):
     color = color or COLORS["blue"]
     fig = go.Figure(go.Scatter(
         y=values, mode="lines", line=dict(color=color, width=2),
-        fill="tozeroy", fillcolor=f"rgba({_hex_to_rgb(color)}, 0.1)",
     ))
     fig.update_layout(**dark_chart_layout(
         height=height, margin=dict(l=0, r=0, t=0, b=0),

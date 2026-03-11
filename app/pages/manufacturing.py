@@ -376,8 +376,6 @@ def render_quality_control(cfg):
         x=weeks, y=cpk_vals, name="Cpk",
         mode="lines+markers", line=dict(color=COLORS["purple"], width=2),
         marker=dict(size=5),
-        fill="tozeroy",
-        fillcolor=f"rgba({_hex_to_rgb(COLORS['purple'])}, 0.08)",
     ))
     fig_cpk.add_hline(y=1.33, line_dash="dash", line_color=COLORS["yellow"],
                       opacity=0.6, annotation_text="Min Cpk (1.33)",

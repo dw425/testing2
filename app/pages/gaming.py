@@ -346,8 +346,6 @@ def render_grow_playerbase(cfg):
         mode="lines+markers",
         line=dict(color=COLORS["green"], width=2),
         marker=dict(size=6),
-        fill="tozeroy",
-        fillcolor=f"rgba({_hex_to_rgb(COLORS['green'])}, 0.10)",
     ))
     fig_kfactor.add_trace(go.Scatter(
         x=viral_weeks, y=[1.0] * len(viral_weeks), name="Viral Threshold",
