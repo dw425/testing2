@@ -547,24 +547,9 @@ def get_base_stylesheet() -> str:
         color: {COLORS["white"]} !important;
         background-color: {COLORS["dark"]} !important;
     }}
-    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner .dash-filter input {{
-        color: {COLORS["white"]} !important;
-        background-color: {COLORS["dark"]} !important;
-        border: 1px solid {COLORS["border"]} !important;
-        border-radius: 4px !important;
-        padding: 6px 10px !important;
-        font-size: 12px !important;
-        cursor: text !important;
-        min-height: 28px !important;
-    }}
-    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner .dash-filter input:focus {{
-        border-color: {COLORS["blue"]} !important;
-        outline: none !important;
-        box-shadow: 0 0 0 1px rgba(75, 123, 245, 0.3) !important;
-    }}
-    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner .dash-filter input::placeholder {{
-        color: {COLORS["text_muted"]} !important;
-        opacity: 0.6 !important;
+    /* Hide native filter row -- replaced by dropdown filters above table */
+    .dash-table-container .dash-spreadsheet-container .dash-filter {{
+        display: none !important;
     }}
     .dash-table-container .previous-next-container {{
         background-color: {COLORS["panel"]} !important;

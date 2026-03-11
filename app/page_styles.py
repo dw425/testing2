@@ -301,14 +301,34 @@ def stat_card(label, value, accent="blue"):
 
 _data_table_counter = {"n": 0}
 
+# Column IDs that are always treated as categorical (dropdown filter)
+_CATEGORICAL_COL_IDS = {
+    "status", "segment", "region", "priority", "channel", "severity",
+    "risk_grade", "health", "risk_status", "type", "category",
+    "department", "platform", "grade", "rating", "tier", "plan_type",
+    "risk_level", "compliance_status", "wo_id",
+}
+
+
+def _is_numeric_string(s):
+    """Check if a string looks numeric (including $, %, commas)."""
+    cleaned = str(s).replace(",", "").replace("$", "").replace("%", "").replace("+", "").replace("-", "").strip()
+    try:
+        float(cleaned)
+        return True
+    except (ValueError, TypeError):
+        return False
+
 
 def data_table(columns, data, page_size=10, style_conditions=None):
-    """Interactive DataTable with native sort/filter/pagination.
+    """Interactive DataTable with dropdown filters for categorical columns,
+    sort-only for value columns.
+
     columns: list of {"name": "Display Name", "id": "col_id"} dicts
     data: list of row dicts
 
-    Auto-applies color coding to status, severity, and risk_grade columns.
-    Each table gets a unique pattern-matching ID for row-click callbacks.
+    Auto-detects categorical columns (status, segment, region, etc.) and
+    builds dropdown filters above the table.  All other columns are sort-only.
     """
     if not data or not columns:
         return html.Div(
@@ -328,14 +348,11 @@ def data_table(columns, data, page_size=10, style_conditions=None):
         {"if": {"row_index": "odd"}, "backgroundColor": "rgba(255,255,255,0.03)"},
     ]
 
-    # Auto-style status-like columns (status, risk_status, health)
+    # Auto-style status-like columns
     _STATUS_MAP = {
-        "Healthy": COLORS["green"],
-        "Nominal": COLORS["blue"],
-        "Warning": COLORS["yellow"],
-        "Critical": COLORS["red"],
-        "Low": COLORS["text_muted"],
-        "Info": COLORS["blue"],
+        "Healthy": COLORS["green"], "Nominal": COLORS["blue"],
+        "Warning": COLORS["yellow"], "Critical": COLORS["red"],
+        "Low": COLORS["text_muted"], "Info": COLORS["blue"],
     }
     for col in ("status", "risk_status", "health"):
         if col in col_ids:
@@ -344,13 +361,11 @@ def data_table(columns, data, page_size=10, style_conditions=None):
                     "if": {"filter_query": f'{{{col}}} = "{val}"', "column_id": col},
                     "color": color, "fontWeight": "600",
                 })
-            # Subtle row tint for Critical rows
             conditions.append({
                 "if": {"filter_query": f'{{{col}}} = "Critical"'},
                 "backgroundColor": "rgba(248, 113, 113, 0.06)",
             })
 
-    # Auto-style severity columns
     _SEVERITY_MAP = {
         "Critical": COLORS["red"], "High": COLORS["red"],
         "Medium": COLORS["yellow"], "Low": COLORS["green"],
@@ -362,7 +377,6 @@ def data_table(columns, data, page_size=10, style_conditions=None):
                 "color": color, "fontWeight": "600",
             })
 
-    # Auto-style risk_grade columns
     _GRADE_MAP = {"A": COLORS["green"], "B": COLORS["blue"],
                   "C": COLORS["yellow"], "D": COLORS["red"]}
     if "risk_grade" in col_ids:
@@ -376,18 +390,69 @@ def data_table(columns, data, page_size=10, style_conditions=None):
         conditions.extend(style_conditions)
 
     _data_table_counter["n"] += 1
-    table_id = {"type": "interactive-table", "index": _data_table_counter["n"]}
+    tbl_idx = _data_table_counter["n"]
+    table_id = {"type": "interactive-table", "index": tbl_idx}
+    store_id = {"type": "table-store", "index": tbl_idx}
 
-    return html.Div(
-        className="card",
-        style={"padding": "0", "overflow": "hidden"},
-        children=[
-            dash_table.DataTable(
+    # ── Auto-detect categorical columns for dropdown filters ───────────
+    cat_cols = []
+    for col in columns:
+        cid = col["id"]
+        unique_vals = sorted({str(row.get(cid, "")) for row in data if row.get(cid, "") != ""})
+        if not unique_vals:
+            continue
+        # Explicitly categorical by name
+        if cid in _CATEGORICAL_COL_IDS:
+            cat_cols.append((cid, col["name"], unique_vals))
+        # Or if few unique non-numeric values (2-12)
+        elif 2 <= len(unique_vals) <= 12 and not all(_is_numeric_string(v) for v in unique_vals):
+            cat_cols.append((cid, col["name"], unique_vals))
+
+    # ── Build dropdown filter bar ──────────────────────────────────────
+    filter_bar = None
+    if cat_cols:
+        dd_children = []
+        for cid, cname, vals in cat_cols:
+            dd_children.append(
+                html.Div(
+                    style={"minWidth": "130px", "flex": "1", "maxWidth": "220px"},
+                    children=[
+                        dcc.Dropdown(
+                            id={"type": "table-col-filter",
+                                "index": f"{tbl_idx}__{cid}"},
+                            options=[{"label": v, "value": v} for v in vals],
+                            placeholder=f"{cname}",
+                            clearable=True,
+                            multi=True,
+                            style={"fontSize": "12px"},
+                        ),
+                    ],
+                )
+            )
+        filter_bar = html.Div(
+            style={
+                "display": "flex", "gap": "10px", "padding": "12px 16px",
+                "backgroundColor": COLORS["dark"],
+                "borderBottom": f"1px solid {COLORS['border']}",
+                "flexWrap": "wrap", "alignItems": "center",
+            },
+            children=[
+                html.I(className="fa-solid fa-filter",
+                       style={"color": COLORS["text_muted"], "fontSize": "12px",
+                              "marginRight": "2px"}),
+            ] + dd_children,
+        )
+
+    # ── Assemble ───────────────────────────────────────────────────────
+    children = [dcc.Store(id=store_id, data=data)]
+    if filter_bar:
+        children.append(filter_bar)
+    children.append(
+        dash_table.DataTable(
             id=table_id,
             columns=columns,
             data=data,
             sort_action="native",
-            filter_action="native",
             page_action="native",
             page_size=page_size,
             row_selectable="single",
@@ -416,21 +481,22 @@ def data_table(columns, data, page_size=10, style_conditions=None):
                 "border": f"1px solid {COLORS['border']}",
                 "padding": "12px 14px",
             },
-            style_filter={
-                "backgroundColor": COLORS["dark"],
-                "color": COLORS["white"],
-                "border": f"1px solid {COLORS['border']}",
-                "padding": "4px 8px",
-            },
             style_data_conditional=conditions,
             style_as_list_view=True,
-        ),
-        # Row detail panel (hidden by default, populated by callback)
+        )
+    )
+    children.append(
         html.Div(
-            id={"type": "row-detail-panel", "index": _data_table_counter["n"]},
+            id={"type": "row-detail-panel", "index": tbl_idx},
             style={"display": "none"},
-        ),
-    ])
+        )
+    )
+
+    return html.Div(
+        className="card",
+        style={"padding": "0", "overflow": "hidden"},
+        children=children,
+    )
 
 
 # Keep old rich_table for backward compat
@@ -680,23 +746,12 @@ def layout_table(title, subtitle, filters, kpi_items, table_columns=None, table_
         table_component: pre-built html component (e.g. rich_table)
     """
     content = []
-    # filters parameter is accepted for backward compatibility but no longer rendered;
-    # the DataTable's native filter_action="native" provides real filtering.
     if kpi_items:
         content.append(kpi_strip(kpi_items))
 
-    # Hint text directing users to the DataTable's built-in column filtering
-    _hint = html.Div(
-        "Use column headers to sort and filter",
-        style={"fontSize": "12px", "color": COLORS["text_muted"],
-               "marginBottom": "8px", "fontStyle": "italic"},
-    )
-
     if table_component is not None:
-        content.append(_hint)
         content.append(table_component)
     elif table_columns and table_data is not None:
-        content.append(_hint)
         content.append(data_table(table_columns, table_data, page_size, style_conditions))
 
     return html.Div([page_header(title, subtitle),

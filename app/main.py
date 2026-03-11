@@ -1133,6 +1133,66 @@ def show_row_detail(all_selected, all_data, all_columns):
 
 
 # ===================================================================
+#  Table Dropdown Filter Callback
+# ===================================================================
+
+
+@app.callback(
+    Output({"type": "interactive-table", "index": ALL}, "data"),
+    Input({"type": "table-col-filter", "index": ALL}, "value"),
+    State({"type": "table-col-filter", "index": ALL}, "id"),
+    State({"type": "table-store", "index": ALL}, "data"),
+    State({"type": "interactive-table", "index": ALL}, "id"),
+    prevent_initial_call=True,
+)
+def filter_table_by_dropdowns(filter_values, filter_ids, all_store_data, table_ids):
+    """Filter table data based on dropdown selections.
+
+    Each dropdown ID has index "N__col_id" where N is the table index.
+    We parse these, group filters by table, and apply them to the
+    original data stored in dcc.Store.
+    """
+    # Build a map: table_index -> {col_id: selected_values}
+    table_filters = {}
+    for fval, fid in zip(filter_values, filter_ids):
+        parts = fid["index"].split("__", 1)
+        if len(parts) != 2:
+            continue
+        tbl_idx = int(parts[0])
+        col_id = parts[1]
+        if fval:  # non-empty selection
+            table_filters.setdefault(tbl_idx, {})[col_id] = set(fval)
+
+    # Build table_index -> store_data map
+    store_map = {}
+    for i, tid in enumerate(table_ids):
+        store_map[tid["index"]] = all_store_data[i] if i < len(all_store_data) else []
+
+    # For each table, apply filters to its original store data
+    result = []
+    for tid in table_ids:
+        idx = tid["index"]
+        original = store_map.get(idx, [])
+        active_filters = table_filters.get(idx, {})
+
+        if not active_filters:
+            result.append(original)
+        else:
+            filtered = []
+            for row in original:
+                match = True
+                for col_id, allowed in active_filters.items():
+                    if str(row.get(col_id, "")) not in allowed:
+                        match = False
+                        break
+                if match:
+                    filtered.append(row)
+            result.append(filtered)
+
+    return result
+
+
+# ===================================================================
 #  Genie AI Chat Callbacks
 # ===================================================================
 
