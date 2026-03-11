@@ -275,7 +275,7 @@ def _render_landing():
         className="landing-overlay",
         children=[
             html.Img(
-                src="/assets/blueprint-logo.svg",
+                src="/assets/blueprint-logo.jpg",
                 style={"height": "52px", "marginBottom": "12px"},
             ),
             html.Div(
