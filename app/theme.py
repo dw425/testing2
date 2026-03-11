@@ -285,6 +285,15 @@ def get_base_stylesheet() -> str:
         height: calc(100vh - 80px);
     }}
 
+    /* ---------- page transition ---------- */
+    @keyframes pageFadeIn {{
+        from {{ opacity: 0; transform: translateY(6px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    #page-content > * {{
+        animation: pageFadeIn 0.25s ease-out;
+    }}
+
     /* ---------- data table ---------- */
     .dash-table {{
         font-family: {FONT_FAMILY};
@@ -434,6 +443,25 @@ def get_base_stylesheet() -> str:
         border-bottom: 1px solid {COLORS["border"]}; transition: color 0.15s;
     }}
     .back-to-hub:hover {{ color: {COLORS["blue"]}; }}
+
+    /* smooth sidebar transitions */
+    .sidebar {{
+        transition: width 0.2s ease;
+    }}
+    .nav-link {{
+        position: relative;
+        overflow: hidden;
+    }}
+    .nav-link.active::before {{
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: {COLORS["blue"]};
+        border-radius: 0 2px 2px 0;
+    }}
 
     /* ---------- utilities ---------- */
     .text-muted {{ color: {COLORS["text_muted"]}; }}

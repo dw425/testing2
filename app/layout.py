@@ -44,6 +44,7 @@ def build_sidebar(vertical: str, active_page: str = "") -> html.Div:
     app_title = cfg["app"].get("title", "Blueprint IQ")
     app_subtitle = cfg["app"].get("subtitle", "")
     pages = cfg.get("pages", [])
+    brand_color = cfg.get("brand", {}).get("primary_color", COLORS["blue"])
 
     nav_links = []
     current_group = None
@@ -117,7 +118,7 @@ def build_sidebar(vertical: str, active_page: str = "") -> html.Div:
                                     "width": "28px",
                                     "height": "28px",
                                     "borderRadius": "6px",
-                                    "backgroundColor": COLORS["blue"],
+                                    "backgroundColor": brand_color,
                                     "display": "flex",
                                     "alignItems": "center",
                                     "justifyContent": "center",
@@ -133,8 +134,32 @@ def build_sidebar(vertical: str, active_page: str = "") -> html.Div:
                     html.P(app_subtitle),
                 ],
             ),
-            # Nav links
-            html.Nav(nav_links, style={"marginTop": "4px"}),
+            # Nav links + shared reference pages
+            html.Nav(nav_links + [
+                html.Div(
+                    "REFERENCE",
+                    style={
+                        "fontSize": "9px", "fontWeight": "700",
+                        "color": COLORS.get("text_muted", "#9CA3AF"),
+                        "textTransform": "uppercase", "letterSpacing": "1.2px",
+                        "padding": "14px 20px 4px 20px", "opacity": "0.7",
+                    },
+                ),
+                dcc.Link(
+                    [html.I(className="fa-solid fa-layer-group"),
+                     html.Span("Architecture")],
+                    href=f"/{vertical}/architecture",
+                    className="nav-link",
+                    id={"type": "nav-link", "index": "architecture"},
+                ),
+                dcc.Link(
+                    [html.I(className="fa-solid fa-circle-info"),
+                     html.Span("Details")],
+                    href=f"/{vertical}/details",
+                    className="nav-link",
+                    id={"type": "nav-link", "index": "details"},
+                ),
+            ], style={"marginTop": "4px"}),
             # Footer
             html.Div(
                 style={
