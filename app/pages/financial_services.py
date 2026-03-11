@@ -12,7 +12,7 @@ from app.page_styles import (
     dark_chart_layout, CHART_CONFIG, ACCENT_ICONS,
     page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
     tab_bar, info_banner, alert_card, progress_row, stat_card,
-    rich_table, td, status_td, progress_td, breakdown_list,
+    breakdown_list,
     trend_indicator, use_case_badges, donut_figure,
     layout_executive, layout_table, layout_split, layout_alerts,
     layout_forecast, layout_grid,
@@ -243,9 +243,16 @@ def render_trading_advisory(cfg):
     ]
 
     # ── Trade table data ──────────────────────────────────────────────
-    headers = ["Trade ID", "Desk", "Instrument", "Side", "Notional",
-               "PnL", "PnL %", "Status"]
-    col_widths = ["10%", "10%", "16%", "8%", "14%", "14%", "16%", "12%"]
+    table_columns = [
+        {"name": "Trade ID", "id": "trade_id"},
+        {"name": "Desk", "id": "desk"},
+        {"name": "Instrument", "id": "instrument"},
+        {"name": "Side", "id": "side"},
+        {"name": "Notional", "id": "notional"},
+        {"name": "PnL", "id": "pnl"},
+        {"name": "PnL %", "id": "pnl_pct"},
+        {"name": "Status", "id": "status"},
+    ]
 
     trade_rows = [
         ("TRD-90124", "Equities", "AAPL 250C 03/21", "Buy",
@@ -270,24 +277,18 @@ def render_trading_advisory(cfg):
          "$320.0M", "-$780K", 22, "Warning"),
     ]
 
-    rows = []
+    table_data = []
     for tid, desk, instr, side, notional, pnl, pnl_pct, status in trade_rows:
-        pnl_color = COLORS["green"] if pnl.startswith("+") else COLORS["red"]
-        bar_color = COLORS["green"] if pnl_pct >= 50 else (
-            COLORS["yellow"] if pnl_pct >= 30 else COLORS["red"])
-        rows.append(html.Tr([
-            td(tid, mono=True),
-            td(desk),
-            td(instr, bold=True),
-            td(side, color=COLORS["green"] if side == "Buy"
-               else COLORS["red"]),
-            td(notional, mono=True),
-            td(pnl, mono=True, color=pnl_color),
-            progress_td(pnl_pct, bar_color),
-            status_td(status),
-        ]))
-
-    table = rich_table(headers, rows, col_widths)
+        table_data.append({
+            "trade_id": tid,
+            "desk": desk,
+            "instrument": instr,
+            "side": side,
+            "notional": notional,
+            "pnl": pnl,
+            "pnl_pct": f"{pnl_pct}%",
+            "status": status,
+        })
 
     return layout_table(
         title="Trading & Advisory",
@@ -295,7 +296,8 @@ def render_trading_advisory(cfg):
                  "and execution quality metrics",
         filters=filters,
         kpi_items=kpis,
-        table_component=table,
+        table_columns=table_columns,
+        table_data=table_data,
     )
 
 
@@ -676,9 +678,16 @@ def render_operations(cfg):
     ]
 
     # ── Operations table data ─────────────────────────────────────────
-    headers = ["System", "Region", "Health", "STP %", "Uptime",
-               "Incidents", "Last Incident", "Status"]
-    col_widths = ["16%", "10%", "14%", "10%", "10%", "10%", "16%", "14%"]
+    table_columns = [
+        {"name": "System", "id": "system"},
+        {"name": "Region", "id": "region"},
+        {"name": "Health", "id": "health"},
+        {"name": "STP %", "id": "stp"},
+        {"name": "Uptime", "id": "uptime"},
+        {"name": "Incidents", "id": "incidents"},
+        {"name": "Last Incident", "id": "last_incident"},
+        {"name": "Status", "id": "status"},
+    ]
 
     systems = [
         ("Core Banking Engine", "Americas", 98, "99.4%", "99.99%",
@@ -707,30 +716,19 @@ def render_operations(cfg):
          "3", "45 min ago", "Warning"),
     ]
 
-    rows = []
+    table_data = []
     for (sys_name, region, health, stp, uptime,
          incidents, last_inc, status) in systems:
-        if health >= 90:
-            health_color = COLORS["green"]
-        elif health >= 75:
-            health_color = COLORS["yellow"]
-        else:
-            health_color = COLORS["red"]
-
-        rows.append(html.Tr([
-            td(sys_name, bold=True),
-            td(region),
-            progress_td(health, health_color),
-            td(stp, mono=True),
-            td(uptime, mono=True, color=COLORS["green"]),
-            td(incidents, mono=True,
-               color=COLORS["red"] if int(incidents) > 2
-               else COLORS["white"]),
-            td(last_inc, color=COLORS["text_muted"]),
-            status_td(status),
-        ]))
-
-    table = rich_table(headers, rows, col_widths)
+        table_data.append({
+            "system": sys_name,
+            "region": region,
+            "health": f"{health}%",
+            "stp": stp,
+            "uptime": uptime,
+            "incidents": incidents,
+            "last_incident": last_inc,
+            "status": status,
+        })
 
     return layout_table(
         title="Operations & Infrastructure",
@@ -738,5 +736,6 @@ def render_operations(cfg):
                  "management across all regions and platforms",
         filters=filters,
         kpi_items=kpis,
-        table_component=table,
+        table_columns=table_columns,
+        table_data=table_data,
     )

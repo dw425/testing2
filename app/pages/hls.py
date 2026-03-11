@@ -11,8 +11,7 @@ from app.page_styles import (
     dark_chart_layout, CHART_CONFIG, ACCENT_ICONS,
     page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
     tab_bar, info_banner, alert_card, progress_row, stat_card,
-    rich_table, td, status_td, progress_td, breakdown_list,
-    trend_indicator, use_case_badges, donut_figure,
+    breakdown_list, donut_figure,
     layout_executive, layout_table, layout_split, layout_alerts,
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
@@ -287,9 +286,15 @@ def render_network_quality(cfg):
     ]
 
     # ── Provider table ────────────────────────────────────────────────
-    headers = ["Provider Network", "Region", "Providers", "Star Rating",
-               "HEDIS", "Quality Score", "Status"]
-    col_widths = ["22%", "12%", "10%", "12%", "10%", "20%", "14%"]
+    columns = [
+        {"name": "Provider Network", "id": "provider_network"},
+        {"name": "Region", "id": "region"},
+        {"name": "Providers", "id": "providers"},
+        {"name": "Star Rating", "id": "star_rating"},
+        {"name": "HEDIS", "id": "hedis"},
+        {"name": "Quality Score", "id": "quality_score"},
+        {"name": "Status", "id": "status"},
+    ]
 
     network_data = [
         ("Northeast Health Alliance", "Northeast", "412",
@@ -310,29 +315,25 @@ def render_network_quality(cfg):
          "4.6", "92.4%", 89, "Healthy"),
     ]
 
-    rows = []
+    data = []
     for name, region, provs, star, hedis, q_pct, status in network_data:
-        q_color = (COLORS["green"] if q_pct >= 85
-                   else COLORS["yellow"] if q_pct >= 70
-                   else COLORS["red"])
-        rows.append(html.Tr([
-            td(name, bold=True),
-            td(region),
-            td(provs, mono=True),
-            td(star, mono=True, color=COLORS["blue"]),
-            td(hedis, mono=True),
-            progress_td(q_pct, q_color),
-            status_td(status),
-        ]))
-
-    table = rich_table(headers, rows, col_widths=col_widths)
+        data.append({
+            "provider_network": name,
+            "region": region,
+            "providers": provs,
+            "star_rating": star,
+            "hedis": hedis,
+            "quality_score": f"{q_pct}%",
+            "status": status,
+        })
 
     return layout_table(
         title="Network & Quality",
         subtitle="Provider network performance, HEDIS compliance, and quality metrics",
         filters=filters,
         kpi_items=kpi_items,
-        table_component=table,
+        table_columns=columns,
+        table_data=data,
     )
 
 
@@ -628,9 +629,15 @@ def render_patient_outcomes(cfg):
     ]
 
     # ── Outcomes table ────────────────────────────────────────────────
-    headers = ["Condition", "Cases", "Mortality", "Readmit %",
-               "Avg LOS", "Recovery Score", "Trend"]
-    col_widths = ["20%", "10%", "10%", "12%", "10%", "22%", "16%"]
+    columns = [
+        {"name": "Condition", "id": "condition"},
+        {"name": "Cases", "id": "cases"},
+        {"name": "Mortality", "id": "mortality"},
+        {"name": "Readmit %", "id": "readmit_pct"},
+        {"name": "Avg LOS", "id": "avg_los"},
+        {"name": "Recovery Score", "id": "recovery_score"},
+        {"name": "Trend", "id": "trend"},
+    ]
 
     condition_data = [
         ("Acute MI", "1,842", "2.1%", "9.4%", "5.2 days", 91,
@@ -655,41 +662,25 @@ def render_patient_outcomes(cfg):
          "up", "+0.4%"),
     ]
 
-    rows = []
+    data = []
     for (cond, cases, mort, readmit, los,
          recovery, trend_dir, trend_pct) in condition_data:
-        rec_color = (COLORS["green"] if recovery >= 85
-                     else COLORS["yellow"] if recovery >= 70
-                     else COLORS["red"])
-        rows.append(html.Tr([
-            td(cond, bold=True),
-            td(cases, mono=True),
-            td(mort, mono=True,
-               color=COLORS["green"] if float(mort.strip("%")) < 2.0
-               else COLORS["yellow"] if float(mort.strip("%")) < 5.0
-               else COLORS["red"]),
-            td(readmit, mono=True,
-               color=COLORS["green"] if float(readmit.strip("%")) < 8.0
-               else COLORS["yellow"] if float(readmit.strip("%")) < 12.0
-               else COLORS["red"]),
-            td(los, mono=True),
-            progress_td(recovery, rec_color),
-            html.Td(
-                html.Div(
-                    style={"display": "flex", "alignItems": "center"},
-                    children=[trend_indicator(trend_dir, trend_pct)],
-                ),
-                style={"padding": "12px 14px",
-                        "borderBottom": f"1px solid {COLORS['border']}"},
-            ),
-        ]))
-
-    table = rich_table(headers, rows, col_widths=col_widths)
+        trend_arrow = "\u2191" if trend_dir == "up" else "\u2193"
+        data.append({
+            "condition": cond,
+            "cases": cases,
+            "mortality": mort,
+            "readmit_pct": readmit,
+            "avg_los": los,
+            "recovery_score": f"{recovery}%",
+            "trend": f"{trend_arrow} {trend_pct}",
+        })
 
     return layout_table(
         title="Patient Outcomes",
         subtitle="Condition-level outcome analysis with recovery scoring and trend tracking",
         filters=filters,
         kpi_items=kpi_items,
-        table_component=table,
+        table_columns=columns,
+        table_data=data,
     )

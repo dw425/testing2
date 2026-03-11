@@ -165,51 +165,38 @@ def render_production_analytics(cfg):
     ]
 
     # ── Production line table ─────────────────────────────────────────────
-    headers = ["Line", "Facility", "Shift", "Units", "Cycle Time", "Utilization", "Status"]
-    col_widths = ["14%", "12%", "10%", "12%", "12%", "22%", "12%"]
-
-    lines_data = [
-        ("CNC-A1", "Berlin", "Morning", "1,842", "2.8 min", 94, "Healthy"),
-        ("CNC-A2", "Berlin", "Morning", "1,690", "3.1 min", 88, "Healthy"),
-        ("Assembly-B1", "Detroit", "Afternoon", "2,105", "2.4 min", 92, "Healthy"),
-        ("Assembly-B2", "Detroit", "Afternoon", "1,956", "2.6 min", 86, "Nominal"),
-        ("Welding-C1", "Tokyo", "Night", "1,425", "3.8 min", 78, "Warning"),
-        ("Welding-C2", "Tokyo", "Night", "1,380", "4.0 min", 72, "Warning"),
-        ("Stamping-D1", "Shanghai", "Morning", "2,540", "1.9 min", 96, "Healthy"),
-        ("Stamping-D2", "Shanghai", "Morning", "2,410", "2.1 min", 91, "Healthy"),
-        ("Paint-E1", "Berlin", "Afternoon", "1,150", "4.5 min", 68, "Critical"),
-        ("Paint-E2", "Detroit", "Night", "1,280", "4.2 min", 74, "Warning"),
-        ("Assembly-F1", "Shanghai", "Afternoon", "2,320", "2.3 min", 93, "Healthy"),
-        ("CNC-G1", "Tokyo", "Morning", "1,752", "3.0 min", 85, "Nominal"),
+    columns = [
+        {"name": "Line", "id": "line"},
+        {"name": "Facility", "id": "facility"},
+        {"name": "Shift", "id": "shift"},
+        {"name": "Units", "id": "units"},
+        {"name": "Cycle Time", "id": "cycle_time"},
+        {"name": "Utilization", "id": "utilization"},
+        {"name": "Status", "id": "status"},
     ]
 
-    def _utilization_color(pct):
-        if pct >= 90:
-            return COLORS["green"]
-        if pct >= 75:
-            return COLORS["yellow"]
-        return COLORS["red"]
-
-    rows = []
-    for name, facility, shift, units, cycle, util_pct, status in lines_data:
-        rows.append(html.Tr([
-            td(name, bold=True),
-            td(facility),
-            td(shift),
-            td(units, mono=True),
-            td(cycle, mono=True),
-            progress_td(util_pct, _utilization_color(util_pct)),
-            status_td(status),
-        ]))
-
-    table = rich_table(headers, rows, col_widths=col_widths)
+    data = [
+        {"line": "CNC-A1", "facility": "Berlin", "shift": "Morning", "units": "1,842", "cycle_time": "2.8 min", "utilization": "94%", "status": "Healthy"},
+        {"line": "CNC-A2", "facility": "Berlin", "shift": "Morning", "units": "1,690", "cycle_time": "3.1 min", "utilization": "88%", "status": "Healthy"},
+        {"line": "Assembly-B1", "facility": "Detroit", "shift": "Afternoon", "units": "2,105", "cycle_time": "2.4 min", "utilization": "92%", "status": "Healthy"},
+        {"line": "Assembly-B2", "facility": "Detroit", "shift": "Afternoon", "units": "1,956", "cycle_time": "2.6 min", "utilization": "86%", "status": "Nominal"},
+        {"line": "Welding-C1", "facility": "Tokyo", "shift": "Night", "units": "1,425", "cycle_time": "3.8 min", "utilization": "78%", "status": "Warning"},
+        {"line": "Welding-C2", "facility": "Tokyo", "shift": "Night", "units": "1,380", "cycle_time": "4.0 min", "utilization": "72%", "status": "Warning"},
+        {"line": "Stamping-D1", "facility": "Shanghai", "shift": "Morning", "units": "2,540", "cycle_time": "1.9 min", "utilization": "96%", "status": "Healthy"},
+        {"line": "Stamping-D2", "facility": "Shanghai", "shift": "Morning", "units": "2,410", "cycle_time": "2.1 min", "utilization": "91%", "status": "Healthy"},
+        {"line": "Paint-E1", "facility": "Berlin", "shift": "Afternoon", "units": "1,150", "cycle_time": "4.5 min", "utilization": "68%", "status": "Critical"},
+        {"line": "Paint-E2", "facility": "Detroit", "shift": "Night", "units": "1,280", "cycle_time": "4.2 min", "utilization": "74%", "status": "Warning"},
+        {"line": "Assembly-F1", "facility": "Shanghai", "shift": "Afternoon", "units": "2,320", "cycle_time": "2.3 min", "utilization": "93%", "status": "Healthy"},
+        {"line": "CNC-G1", "facility": "Tokyo", "shift": "Morning", "units": "1,752", "cycle_time": "3.0 min", "utilization": "85%", "status": "Nominal"},
+    ]
 
     return layout_table(
         title="Production Analytics",
         subtitle="Line-level production performance and utilization metrics",
         filters=filters,
         kpi_items=kpi_items,
-        table_component=table,
+        table_columns=columns,
+        table_data=data,
     )
 
 
@@ -691,70 +678,44 @@ def render_workforce_ops(cfg):
     ]
 
     # ── Workforce table by department ─────────────────────────────────────
-    headers = [
-        "Department", "Facility", "Headcount", "Overtime %",
-        "Safety Score", "Training", "Status",
-    ]
-    col_widths = ["16%", "12%", "12%", "12%", "16%", "16%", "12%"]
-
-    dept_data = [
-        ("Production", "Berlin", "342", "14.2%", 97, 92, "Healthy"),
-        ("Production", "Detroit", "318", "16.8%", 94, 86, "Nominal"),
-        ("Production", "Tokyo", "286", "11.5%", 98, 94, "Healthy"),
-        ("Production", "Shanghai", "410", "18.3%", 91, 82, "Warning"),
-        ("Quality", "Berlin", "84", "8.1%", 99, 96, "Healthy"),
-        ("Quality", "Detroit", "76", "9.4%", 97, 90, "Healthy"),
-        ("Quality", "Tokyo", "68", "6.2%", 99, 97, "Healthy"),
-        ("Quality", "Shanghai", "92", "10.5%", 95, 84, "Nominal"),
-        ("Maintenance", "Berlin", "56", "22.4%", 93, 88, "Warning"),
-        ("Maintenance", "Detroit", "52", "24.1%", 90, 78, "Warning"),
-        ("Maintenance", "Tokyo", "44", "15.8%", 96, 91, "Healthy"),
-        ("Maintenance", "Shanghai", "62", "26.5%", 88, 72, "Critical"),
-        ("Logistics", "Berlin", "68", "10.2%", 96, 90, "Healthy"),
-        ("Logistics", "Detroit", "72", "12.6%", 94, 85, "Nominal"),
-        ("Logistics", "Tokyo", "58", "8.4%", 97, 93, "Healthy"),
-        ("Logistics", "Shanghai", "86", "14.8%", 92, 80, "Warning"),
-        ("Engineering", "Berlin", "124", "6.5%", 98, 95, "Healthy"),
-        ("Engineering", "Detroit", "110", "7.8%", 97, 92, "Healthy"),
-        ("Engineering", "Tokyo", "96", "5.2%", 99, 96, "Healthy"),
-        ("Engineering", "Shanghai", "143", "8.9%", 96, 88, "Nominal"),
+    columns = [
+        {"name": "Department", "id": "department"},
+        {"name": "Facility", "id": "facility"},
+        {"name": "Headcount", "id": "headcount"},
+        {"name": "Overtime %", "id": "overtime"},
+        {"name": "Safety Score", "id": "safety_score"},
+        {"name": "Training", "id": "training"},
+        {"name": "Status", "id": "status"},
     ]
 
-    def _safety_color(score):
-        if score >= 95:
-            return COLORS["green"]
-        if score >= 90:
-            return COLORS["yellow"]
-        return COLORS["red"]
-
-    def _training_color(pct):
-        if pct >= 90:
-            return COLORS["green"]
-        if pct >= 80:
-            return COLORS["yellow"]
-        return COLORS["red"]
-
-    rows = []
-    for dept, facility, headcount, overtime, safety, training, status in dept_data:
-        rows.append(html.Tr([
-            td(dept, bold=True),
-            td(facility),
-            td(headcount, mono=True),
-            td(overtime, mono=True,
-               color=COLORS["red"] if float(overtime.rstrip("%")) > 20
-               else COLORS["yellow"] if float(overtime.rstrip("%")) > 15
-               else COLORS["text_muted"]),
-            progress_td(safety, _safety_color(safety)),
-            progress_td(training, _training_color(training)),
-            status_td(status),
-        ]))
-
-    table = rich_table(headers, rows, col_widths=col_widths)
+    data = [
+        {"department": "Production", "facility": "Berlin", "headcount": "342", "overtime": "14.2%", "safety_score": "97%", "training": "92%", "status": "Healthy"},
+        {"department": "Production", "facility": "Detroit", "headcount": "318", "overtime": "16.8%", "safety_score": "94%", "training": "86%", "status": "Nominal"},
+        {"department": "Production", "facility": "Tokyo", "headcount": "286", "overtime": "11.5%", "safety_score": "98%", "training": "94%", "status": "Healthy"},
+        {"department": "Production", "facility": "Shanghai", "headcount": "410", "overtime": "18.3%", "safety_score": "91%", "training": "82%", "status": "Warning"},
+        {"department": "Quality", "facility": "Berlin", "headcount": "84", "overtime": "8.1%", "safety_score": "99%", "training": "96%", "status": "Healthy"},
+        {"department": "Quality", "facility": "Detroit", "headcount": "76", "overtime": "9.4%", "safety_score": "97%", "training": "90%", "status": "Healthy"},
+        {"department": "Quality", "facility": "Tokyo", "headcount": "68", "overtime": "6.2%", "safety_score": "99%", "training": "97%", "status": "Healthy"},
+        {"department": "Quality", "facility": "Shanghai", "headcount": "92", "overtime": "10.5%", "safety_score": "95%", "training": "84%", "status": "Nominal"},
+        {"department": "Maintenance", "facility": "Berlin", "headcount": "56", "overtime": "22.4%", "safety_score": "93%", "training": "88%", "status": "Warning"},
+        {"department": "Maintenance", "facility": "Detroit", "headcount": "52", "overtime": "24.1%", "safety_score": "90%", "training": "78%", "status": "Warning"},
+        {"department": "Maintenance", "facility": "Tokyo", "headcount": "44", "overtime": "15.8%", "safety_score": "96%", "training": "91%", "status": "Healthy"},
+        {"department": "Maintenance", "facility": "Shanghai", "headcount": "62", "overtime": "26.5%", "safety_score": "88%", "training": "72%", "status": "Critical"},
+        {"department": "Logistics", "facility": "Berlin", "headcount": "68", "overtime": "10.2%", "safety_score": "96%", "training": "90%", "status": "Healthy"},
+        {"department": "Logistics", "facility": "Detroit", "headcount": "72", "overtime": "12.6%", "safety_score": "94%", "training": "85%", "status": "Nominal"},
+        {"department": "Logistics", "facility": "Tokyo", "headcount": "58", "overtime": "8.4%", "safety_score": "97%", "training": "93%", "status": "Healthy"},
+        {"department": "Logistics", "facility": "Shanghai", "headcount": "86", "overtime": "14.8%", "safety_score": "92%", "training": "80%", "status": "Warning"},
+        {"department": "Engineering", "facility": "Berlin", "headcount": "124", "overtime": "6.5%", "safety_score": "98%", "training": "95%", "status": "Healthy"},
+        {"department": "Engineering", "facility": "Detroit", "headcount": "110", "overtime": "7.8%", "safety_score": "97%", "training": "92%", "status": "Healthy"},
+        {"department": "Engineering", "facility": "Tokyo", "headcount": "96", "overtime": "5.2%", "safety_score": "99%", "training": "96%", "status": "Healthy"},
+        {"department": "Engineering", "facility": "Shanghai", "headcount": "143", "overtime": "8.9%", "safety_score": "96%", "training": "88%", "status": "Nominal"},
+    ]
 
     return layout_table(
         title="Workforce Operations",
         subtitle="Staffing, safety, and training metrics by facility and department",
         filters=filters,
         kpi_items=kpi_items,
-        table_component=table,
+        table_columns=columns,
+        table_data=data,
     )

@@ -229,9 +229,15 @@ def render_audience_intel(cfg):
     ]
 
     # -- audience segment table ---------------------------------------------
-    headers = ["Segment", "Users", "Watch Time", "Engagement",
-               "Top Genre", "Retention", "Status"]
-    col_widths = ["18%", "10%", "12%", "14%", "14%", "18%", "14%"]
+    columns = [
+        {"name": "Segment", "id": "segment"},
+        {"name": "Users", "id": "users"},
+        {"name": "Watch Time", "id": "watch_time"},
+        {"name": "Engagement", "id": "engagement"},
+        {"name": "Top Genre", "id": "top_genre"},
+        {"name": "Retention", "id": "retention"},
+        {"name": "Status", "id": "status"},
+    ]
 
     segments = [
         ("Binge Watchers", "8.4M", "4h 32m",  91, "Drama",    94, "Healthy"),
@@ -243,30 +249,26 @@ def render_audience_intel(cfg):
         ("Late-Night",      "1.5M", "1h 48m",  58, "Reality",  53, "Critical"),
     ]
 
-    rows = []
-    for seg, users, wt, eng, genre, ret, status in segments:
-        rows.append(html.Tr([
-            td(seg, bold=True),
-            td(users, mono=True),
-            td(wt),
-            progress_td(eng, COLORS["blue"] if eng >= 70
-                         else COLORS["yellow"] if eng >= 55
-                         else COLORS["red"]),
-            td(genre),
-            progress_td(ret, COLORS["green"] if ret >= 75
-                         else COLORS["yellow"] if ret >= 60
-                         else COLORS["red"]),
-            status_td(status),
-        ]))
-
-    table = rich_table(headers, rows, col_widths)
+    data = [
+        {
+            "segment": seg,
+            "users": users,
+            "watch_time": wt,
+            "engagement": f"{eng}%",
+            "top_genre": genre,
+            "retention": f"{ret}%",
+            "status": status,
+        }
+        for seg, users, wt, eng, genre, ret, status in segments
+    ]
 
     return layout_table(
         title="Audience Intelligence",
         subtitle="Segment behavior, demographics, and retention analysis",
         filters=filters,
         kpi_items=kpis,
-        table_component=table,
+        table_columns=columns,
+        table_data=data,
     )
 
 

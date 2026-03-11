@@ -164,7 +164,6 @@ def render_know_player(cfg):
     # ── Player segment table ──────────────────────────────────────────────
     headers = ["Segment", "Players", "Avg LTV", "ARPDAU", "Sessions/Day",
                "Engagement", "Churn", "Status"]
-    col_widths = ["14%", "10%", "10%", "10%", "10%", "20%", "10%", "10%"]
 
     segment_data = [
         ("Whales", "12,400", "$312.00", "$4.85", "6.2", 94, "1.1%", "Healthy"),
@@ -176,31 +175,28 @@ def render_know_player(cfg):
         ("New Users (7d)", "156,000", "$3.60", "$0.45", "2.9", 55, "N/A", "Info"),
     ]
 
-    rows = []
-    for seg, players, ltv, arpdau, sessions, engagement, churn, status in segment_data:
-        eng_color = (COLORS["green"] if engagement >= 70
-                     else COLORS["yellow"] if engagement >= 50
-                     else COLORS["red"])
-        rows.append(html.Tr([
-            td(seg, bold=True),
-            td(players, mono=True),
-            td(ltv, mono=True, color=COLORS["green"]),
-            td(arpdau, mono=True),
-            td(sessions, mono=True),
-            progress_td(engagement, eng_color),
-            td(churn, mono=True, color=COLORS["red"] if churn not in ("N/A",) and
-               float(churn.rstrip("%")) > 5 else COLORS["text_muted"]),
-            status_td(status),
-        ]))
-
-    table = rich_table(headers, rows, col_widths)
+    table_columns = [{"name": h, "id": h.lower().replace(" ", "_").replace("/", "_")} for h in headers]
+    table_data = [
+        {
+            "segment": seg,
+            "players": players,
+            "avg_ltv": ltv,
+            "arpdau": arpdau,
+            "sessions_day": sessions,
+            "engagement": str(engagement),
+            "churn": churn,
+            "status": status,
+        }
+        for seg, players, ltv, arpdau, sessions, engagement, churn, status in segment_data
+    ]
 
     return layout_table(
         title=cfg.get("title", "Know Your Player"),
         subtitle=cfg.get("subtitle", "Player segmentation, LTV analysis, and engagement tracking"),
         filters=filters,
         kpi_items=kpi_items,
-        table_component=table,
+        table_columns=table_columns,
+        table_data=table_data,
     )
 
 
@@ -650,7 +646,6 @@ def render_efficient_ops(cfg):
     # ── Server region table ───────────────────────────────────────────────
     headers = ["Region", "Status", "Uptime", "Capacity", "P99 Latency",
                "Cost/hr", "Utilization", "Instances"]
-    col_widths = ["14%", "10%", "10%", "10%", "10%", "10%", "22%", "8%"]
 
     region_data = [
         ("US-East-1", "Healthy", "99.98%", "82K CCU", "28ms", "$142/hr", 78, "48"),
@@ -663,32 +658,26 @@ def render_efficient_ops(cfg):
         ("ME-South-1", "Healthy", "99.91%", "18K CCU", "46ms", "$42/hr", 62, "12"),
     ]
 
-    rows = []
-    for region, status, uptime, capacity, latency, cost, util_pct, instances in region_data:
-        util_color = (COLORS["green"] if util_pct < 75
-                      else COLORS["yellow"] if util_pct < 85
-                      else COLORS["red"])
-        lat_val = int(latency.rstrip("ms"))
-        lat_color = (COLORS["green"] if lat_val < 35
-                     else COLORS["yellow"] if lat_val < 50
-                     else COLORS["red"])
-        rows.append(html.Tr([
-            td(region, bold=True),
-            status_td(status),
-            td(uptime, mono=True, color=COLORS["green"]),
-            td(capacity, mono=True),
-            td(latency, mono=True, color=lat_color),
-            td(cost, mono=True, color=COLORS["text_muted"]),
-            progress_td(util_pct, util_color),
-            td(instances, mono=True),
-        ]))
-
-    table = rich_table(headers, rows, col_widths)
+    table_columns = [{"name": h, "id": h.lower().replace(" ", "_").replace("/", "_")} for h in headers]
+    table_data = [
+        {
+            "region": region,
+            "status": status,
+            "uptime": uptime,
+            "capacity": capacity,
+            "p99_latency": latency,
+            "cost_hr": cost,
+            "utilization": str(util_pct),
+            "instances": instances,
+        }
+        for region, status, uptime, capacity, latency, cost, util_pct, instances in region_data
+    ]
 
     return layout_table(
         title=cfg.get("title", "Efficient Ops"),
         subtitle=cfg.get("subtitle", "Infrastructure health, cost efficiency, and regional performance"),
         filters=filters,
         kpi_items=kpi_items,
-        table_component=table,
+        table_columns=table_columns,
+        table_data=table_data,
     )

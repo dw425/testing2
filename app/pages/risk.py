@@ -14,7 +14,7 @@ from app.page_styles import (
     dark_chart_layout, CHART_CONFIG, ACCENT_ICONS,
     page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
     tab_bar, info_banner, alert_card, progress_row, stat_card,
-    rich_table, td, status_td, progress_td, breakdown_list,
+    breakdown_list,
     trend_indicator, use_case_badges, donut_figure,
     layout_executive, layout_table, layout_split, layout_alerts,
     layout_forecast, layout_grid,
@@ -250,29 +250,37 @@ def render_credit_risk(cfg):
          "A", 85, "Healthy"),
     ]
 
-    rows = []
-    for name, exp, pd_val, lgd, el, rating, rw, status in portfolios:
-        rw_color = COLORS["green"] if rw >= 80 else (COLORS["yellow"] if rw >= 60 else COLORS["red"])
-        rows.append(html.Tr([
-            td(name, bold=True),
-            td(exp, mono=True),
-            td(pd_val, mono=True),
-            td(lgd, mono=True),
-            td(el, mono=True, color=COLORS["red"] if float(el.replace("$", "").replace("M", "")) > 50 else COLORS["white"]),
-            td(rating),
-            progress_td(rw, rw_color),
-            status_td(status),
-        ]))
+    columns = [
+        {"name": "Portfolio", "id": "portfolio"},
+        {"name": "Exposure", "id": "exposure"},
+        {"name": "PD", "id": "pd"},
+        {"name": "LGD", "id": "lgd"},
+        {"name": "EL", "id": "el"},
+        {"name": "Rating", "id": "rating"},
+        {"name": "Risk Weight", "id": "risk_weight"},
+        {"name": "Status", "id": "status"},
+    ]
 
-    table = rich_table(headers, rows,
-                       col_widths=["16%", "10%", "8%", "8%", "10%", "8%", "22%", "12%"])
+    data = []
+    for name, exp, pd_val, lgd, el, rating, rw, status in portfolios:
+        data.append({
+            "portfolio": name,
+            "exposure": exp,
+            "pd": pd_val,
+            "lgd": lgd,
+            "el": el,
+            "rating": rating,
+            "risk_weight": f"{rw}%",
+            "status": status,
+        })
 
     return layout_table(
         title="Credit Risk",
         subtitle="Portfolio credit quality, default probabilities, and loss estimates",
         filters=filters,
         kpi_items=kpis,
-        table_component=table,
+        table_columns=columns,
+        table_data=data,
     )
 
 
@@ -520,29 +528,33 @@ def render_compliance(cfg):
          "ESG Office", "2024-06-30", 72, "Warning"),
     ]
 
-    rows = []
-    for reg, req, owner, due, comp_pct, status in requirements:
-        comp_color = (COLORS["green"] if comp_pct >= 80
-                      else COLORS["yellow"] if comp_pct >= 50
-                      else COLORS["red"])
-        rows.append(html.Tr([
-            td(reg, bold=True),
-            td(req),
-            td(owner),
-            td(due, mono=True),
-            progress_td(comp_pct, comp_color),
-            status_td(status),
-        ]))
+    columns = [
+        {"name": "Regulation", "id": "regulation"},
+        {"name": "Requirement", "id": "requirement"},
+        {"name": "Owner", "id": "owner"},
+        {"name": "Due Date", "id": "due_date"},
+        {"name": "Compliance", "id": "compliance"},
+        {"name": "Status", "id": "status"},
+    ]
 
-    table = rich_table(headers, rows,
-                       col_widths=["14%", "26%", "12%", "10%", "22%", "12%"])
+    data = []
+    for reg, req, owner, due, comp_pct, status in requirements:
+        data.append({
+            "regulation": reg,
+            "requirement": req,
+            "owner": owner,
+            "due_date": due,
+            "compliance": f"{comp_pct}%",
+            "status": status,
+        })
 
     return layout_table(
         title="Regulatory Compliance",
         subtitle="Compliance status, audit findings, and regulatory change management",
         filters=filters,
         kpi_items=kpis,
-        table_component=table,
+        table_columns=columns,
+        table_data=data,
     )
 
 

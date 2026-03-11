@@ -422,36 +422,30 @@ def render_field_energy(cfg):
          "In Progress", 60, COLORS["purple"]),
     ]
 
-    rows = []
-    for wo_id, desc, region, priority, status, pct, color in orders:
-        status_key = {
-            "In Progress": "Info",
-            "Dispatched": "Warning",
-            "Scheduled": "Nominal",
-            "Completed": "Healthy",
-        }.get(status, "Info")
-        rows.append(html.Tr([
-            td(wo_id, mono=True),
-            td(desc, bold=True),
-            td(region),
-            td(priority, bold=True, color=color),
-            status_td(status, status_key),
-            progress_td(pct, color),
-        ]))
-
-    table = rich_table(
-        headers=["WO ID", "Description", "Region", "Priority",
-                 "Status", "SLA Progress"],
-        rows=rows,
-        col_widths=["12%", "24%", "12%", "8%", "14%", "20%"],
-    )
+    table_columns = [
+        {"name": h, "id": h.lower().replace(" ", "_")}
+        for h in ["WO ID", "Description", "Region", "Priority",
+                   "Status", "SLA Progress"]
+    ]
+    table_data = [
+        {
+            "wo_id": wo_id,
+            "description": desc,
+            "region": region,
+            "priority": priority,
+            "status": status,
+            "sla_progress": f"{pct}%",
+        }
+        for wo_id, desc, region, priority, status, pct, color in orders
+    ]
 
     return layout_table(
         title="Field Ops & Energy",
         subtitle="Work order management, SLA tracking, and technician dispatch",
         filters=filters,
         kpi_items=kpis,
-        table_component=table,
+        table_columns=table_columns,
+        table_data=table_data,
     )
 
 
