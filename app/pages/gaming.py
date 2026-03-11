@@ -24,8 +24,9 @@ from app.page_styles import (
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
     _card, _hex_to_rgb, data_table,
+    insight_card, morning_briefing,
 )
-from app.theme import COLORS, FONT_FAMILY
+from app.theme import COLORS, FONT_FAMILY, get_vertical_theme
 from dash import dcc, html
 import plotly.graph_objects as go
 
@@ -35,16 +36,37 @@ import plotly.graph_objects as go
 # ═══════════════════════════════════════════════════════════════════════════
 
 def render_dashboard(cfg):
-    """Executive gaming dashboard: DAU, Revenue, Retention heroes + charts."""
+    """Executive gaming dashboard: Strategic North Stars + AI briefing."""
+    vt = get_vertical_theme("gaming")
 
-    # ── Hero metrics ──────────────────────────────────────────────────────
+    # ── Morning Briefing (AI Narrative Center) ───────────────────────────
+    briefing = morning_briefing(
+        title="Morning Briefing",
+        summary_text=(
+            "Player retention is 5% above target with APAC driving growth at 32%. "
+            "Contribution margin held steady at 68.4% despite increased UA spend. "
+            "Meta channel CAC rising — recommend reallocation to TikTok which shows "
+            "2.1x better ROAS this quarter. Churn risk flagged in Minnow segment."
+        ),
+        signals=[
+            {"label": "Retention", "status": "green", "detail": "D7 at 38.2% — above 36% target"},
+            {"label": "Revenue", "status": "green", "detail": "$284K daily — +11.7% WoW"},
+            {"label": "CAC Efficiency", "status": "amber", "detail": "LTV:CAC at 3.1x — watch Meta channel"},
+            {"label": "Churn Risk", "status": "red", "detail": "34.2K high-risk players — Minnow segment"},
+        ],
+    )
+
+    # ── Hero metrics — Strategic North Stars ──────────────────────────────
     heroes = [
+        hero_metric("Contribution Margin", "68.4%",
+                     trend_text="+2.1% vs last quarter", trend_dir="up",
+                     accent="green", href="/gaming/grow_revenue"),
+        hero_metric("LTV : CAC Ratio", "3.1x",
+                     trend_text="-0.2x vs last month", trend_dir="down",
+                     accent="purple", href="/gaming/grow_playerbase"),
         hero_metric("Daily Active Users", "1.24M",
                      trend_text="+6.3% vs last week", trend_dir="up",
                      accent="blue", href="/gaming/know_player"),
-        hero_metric("Daily Revenue", "$284K",
-                     trend_text="+11.7% vs last week", trend_dir="up",
-                     accent="green", href="/gaming/grow_revenue"),
         hero_metric("D7 Retention", "38.2%",
                      trend_text="-1.4% vs last week", trend_dir="down",
                      accent="purple", href="/gaming/grow_playerbase"),
@@ -79,6 +101,7 @@ def render_dashboard(cfg):
         yaxis="y2",
     ))
     fig_main.update_layout(**dark_chart_layout(
+        vertical="gaming",
         height=340,
         title=dict(text="Player Trends  —  Last 30 Days",
                    font=dict(size=14, color=COLORS["white"])),
@@ -124,15 +147,28 @@ def render_dashboard(cfg):
     ))
     panel_cohort = dcc.Graph(figure=fig_cohort, config=CHART_CONFIG)
 
+    # ── Insight card: top anomaly ────────────────────────────────────────
+    anomaly_card = insight_card(
+        headline="Churn Spike Detected",
+        metric_value="34.2K",
+        direction="up",
+        narrative="High-risk players increased 18% this week, concentrated in the Minnow segment. "
+                  "Correlates with reduced event participation after Season 4 end.",
+        action_text="Review retention strategy for Minnow segment",
+        severity="warning",
+        sparkline_values=[28, 29, 27, 30, 31, 29, 32, 34, 33, 34],
+    )
+
     # ── Assemble ──────────────────────────────────────────────────────────
     panels = [
         ("Revenue Breakdown", panel_donut, "/gaming/grow_revenue"),
         ("Retention Cohorts", panel_cohort, "/gaming/grow_playerbase"),
+        ("AI Insight", anomaly_card),
     ]
     return layout_executive(
-        title=cfg.get("title", "Gaming Dashboard"),
-        subtitle=cfg.get("subtitle", "Real-time player and revenue overview"),
-        heroes=heroes,
+        title=cfg.get("title", "Player Experience Hub"),
+        subtitle=cfg.get("subtitle", "Strategic Command Center — Gaming Economics"),
+        heroes=[briefing] + heroes,
         main_chart=main_chart,
         panels=panels,
     )
@@ -190,6 +226,19 @@ def render_know_player(cfg):
         for seg, players, ltv, arpdau, sessions, engagement, churn, status in segment_data
     ]
 
+    # ── Insight card ──────────────────────────────────────────────────────
+    player_insight = insight_card(
+        headline="3 of 7 Segments Show Declining LTV",
+        metric_value="-8.2%",
+        direction="down",
+        narrative="Minnows, Free Riders, and Lapsed Whales are trending downward in lifetime value "
+                  "over the past 30 days. Minnow LTV dropped from $19.80 to $18.20, suggesting "
+                  "monetization friction in mid-tier engagement loops.",
+        action_text="Review monetization touchpoints for mid-tier segments",
+        severity="warning",
+        sparkline_values=[21, 20, 20, 19, 19, 19, 18, 18, 18, 18],
+    )
+
     return layout_table(
         title=cfg.get("title", "Know Your Player"),
         subtitle=cfg.get("subtitle", "Player segmentation, LTV analysis, and engagement tracking"),
@@ -197,6 +246,7 @@ def render_know_player(cfg):
         kpi_items=kpi_items,
         table_columns=table_columns,
         table_data=table_data,
+        insight=player_insight,
     )
 
 
@@ -380,6 +430,19 @@ def render_grow_playerbase(cfg):
         ], padding="20px"),
     ])
 
+    # ── Insight card ──────────────────────────────────────────────────────
+    playerbase_insight = insight_card(
+        headline="TikTok Channel Showing 2.1x Better ROAS",
+        metric_value="2.1x",
+        direction="up",
+        narrative="TikTok campaigns are outperforming Google UAC by 2.1x on ROAS while CPI dropped "
+                  "to $1.82 — the lowest across all paid channels. Install volume surged 34% WoW. "
+                  "Consider reallocating 15% of Google UAC budget to TikTok.",
+        action_text="Shift UA budget from Google UAC to TikTok",
+        severity="success",
+        sparkline_values=[18, 22, 26, 28, 31, 34, 36, 38, 40, 42],
+    )
+
     # ── Assemble with new tab_contents API ────────────────────────────────
     return layout_split(
         title=cfg.get("title", "Grow Your Playerbase"),
@@ -391,6 +454,7 @@ def render_grow_playerbase(cfg):
         ],
         banner_text=banner_text,
         bottom_stats=bottom_stats,
+        insight=playerbase_insight,
     )
 
 
@@ -455,6 +519,19 @@ def render_grow_revenue(cfg):
         {"label": "Season Pass", "value": "$26K", "pct": 9, "color": COLORS["purple"]},
     ])
 
+    # ── Insight card ──────────────────────────────────────────────────────
+    revenue_insight = insight_card(
+        headline="IAP Revenue Growing While Ad Revenue Declining",
+        metric_value="+14.2%",
+        direction="up",
+        narrative="In-app purchase revenue has grown 14.2% over the past 4 weeks, driven by Gem Pack "
+                  "and Battle Pass sales. Meanwhile, ad revenue is down 6.8% as rewarded ad engagement "
+                  "drops post-Season 4. The revenue mix is shifting favorably toward higher-margin IAP.",
+        action_text="Optimize rewarded ad placements to recover ad revenue",
+        severity="info",
+        sparkline_values=[128, 132, 135, 134, 138, 140, 139, 142, 148, 142],
+    )
+
     return layout_forecast(
         title=cfg.get("title", "Grow Revenue"),
         subtitle=cfg.get("subtitle", "Revenue optimization, ARPDAU trends, and monetization mix"),
@@ -470,6 +547,7 @@ def render_grow_revenue(cfg):
             }),
             side,
         ]),
+        insight=revenue_insight,
     )
 
 
@@ -634,6 +712,19 @@ def render_build_games(cfg):
         card_asset_bundle, card_auth_timeout, card_localization,
     ])
 
+    # ── Insight card ──────────────────────────────────────────────────────
+    build_insight = insight_card(
+        headline="Build Stability Improving — Crash Rate Down 12%",
+        metric_value="-12%",
+        direction="down",
+        narrative="Overall crash rate dropped from 0.48% to 0.42% this week as hotfixes landed for "
+                  "Clash Arena and Space Drift. Build success rate climbed to 94.1%. However, the "
+                  "Farm Empire iOS 18.3 crash spike remains an outlier requiring immediate attention.",
+        action_text="Prioritize Farm Empire iOS 18.3 Metal shader fix",
+        severity="success",
+        sparkline_values=[0.62, 0.58, 0.55, 0.52, 0.50, 0.48, 0.47, 0.45, 0.43, 0.42],
+    )
+
     return layout_alerts(
         title=cfg.get("title", "Build Games"),
         subtitle=cfg.get("subtitle", "Build health, crash reports, and QA pipeline status"),
@@ -643,6 +734,7 @@ def render_build_games(cfg):
             ("All", tab_all),
         ],
         summary_kpis=summary_kpis,
+        insight=build_insight,
     )
 
 
@@ -784,10 +876,24 @@ def render_live_ops(cfg):
         {"col_span": 1, "row_span": 1, "content": uptime_panel},
     ]
 
+    # ── Insight card ──────────────────────────────────────────────────────
+    liveops_insight = insight_card(
+        headline="Season 4 Event Driving 32% Engagement Lift",
+        metric_value="+32%",
+        direction="up",
+        narrative="The Spring Festival event pushed event participation to 73.4%, up from 55.6% "
+                  "pre-season. Live event revenue hit $224K — a 32% lift over Season 3's equivalent "
+                  "window. Battle Pass premium conversion is tracking at 28%, above the 25% target.",
+        action_text="Extend Spring Festival by 48 hours to capture remaining engagement",
+        severity="success",
+        sparkline_values=[56, 58, 61, 63, 65, 67, 69, 71, 72, 73],
+    )
+
     return layout_grid(
         title=cfg.get("title", "Live Ops"),
         subtitle=cfg.get("subtitle", "Live events, battle pass, content ROI, and server health"),
         grid_items=grid_items,
+        insight=liveops_insight,
     )
 
 
@@ -845,6 +951,19 @@ def render_efficient_ops(cfg):
         for region, status, uptime, capacity, latency, cost, util_pct, instances in region_data
     ]
 
+    # ── Insight card ──────────────────────────────────────────────────────
+    ops_insight = insight_card(
+        headline="APAC-SEA Region Showing Highest Cost Efficiency",
+        metric_value="$0.0025",
+        direction="down",
+        narrative="APAC-SE-1 serves 124K CCU at only 68% utilization with a cost-per-user of $0.0025 "
+                  "— 19% below the global average. Its auto-scaling configuration could be replicated "
+                  "to EU-North-1 and SA-East-1, which are running at 91% and 88% utilization.",
+        action_text="Apply APAC-SE scaling config to high-utilization regions",
+        severity="success",
+        sparkline_values=[0.0038, 0.0036, 0.0034, 0.0032, 0.0031, 0.0029, 0.0028, 0.0027, 0.0026, 0.0025],
+    )
+
     return layout_table(
         title=cfg.get("title", "Efficient Ops"),
         subtitle=cfg.get("subtitle", "Infrastructure health, cost efficiency, and regional performance"),
@@ -852,4 +971,5 @@ def render_efficient_ops(cfg):
         kpi_items=kpi_items,
         table_columns=table_columns,
         table_data=table_data,
+        insight=ops_insight,
     )

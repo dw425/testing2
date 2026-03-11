@@ -11,7 +11,7 @@ Six distinct page styles inspired by the Lakehouse Optimizer app:
 
 from dash import dcc, html, dash_table
 import plotly.graph_objects as go
-from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS
+from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS, VERTICAL_THEMES, get_vertical_theme
 
 # ── Chart helpers ───────────────────────────────────────────────────────────
 
@@ -30,8 +30,12 @@ ACCENT_ICONS = {
 }
 
 
-def dark_chart_layout(**overrides):
-    """Plotly layout dict for dark-themed charts."""
+def dark_chart_layout(vertical=None, **overrides):
+    """Plotly layout dict for dark-themed charts.
+
+    When *vertical* is supplied, the chart colorway is set to match
+    the vertical's identity palette.
+    """
     base = dict(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -42,6 +46,9 @@ def dark_chart_layout(**overrides):
         yaxis=dict(showgrid=True, gridcolor=COLORS["border"], color=COLORS["text_muted"]),
         legend=dict(font=dict(color=COLORS["text_muted"], size=11)),
     )
+    if vertical:
+        vt = get_vertical_theme(vertical)
+        base["colorway"] = vt.get("chart_colorway", [])
     base.update(overrides)
     return base
 
@@ -617,6 +624,116 @@ def trend_indicator(direction, pct_text):
     )
 
 
+# ── Insight & Narrative Components ─────────────────────────────────────────
+
+def insight_card(headline, metric_value, direction="up", narrative="",
+                 action_text="", sparkline_values=None, severity="info",
+                 accent_color=None):
+    """AI-generated insight card with metric, narrative, and optional action.
+
+    severity: 'healthy'|'warning'|'critical'|'info' — controls left border color
+    """
+    sev_colors = {"critical": COLORS["red"], "warning": COLORS["yellow"],
+                  "info": COLORS["blue"], "healthy": COLORS["green"]}
+    border_color = accent_color or sev_colors.get(severity, COLORS["blue"])
+    arrow = "\u25b2" if direction == "up" else "\u25bc"
+    arrow_color = COLORS["green"] if direction == "up" else COLORS["red"]
+
+    children = [
+        # Header with metric
+        html.Div(style={"display": "flex", "justifyContent": "space-between",
+                         "alignItems": "flex-start", "marginBottom": "10px"}, children=[
+            html.Div(children=[
+                html.Span(headline, style={"fontSize": "14px", "fontWeight": "600",
+                                            "color": COLORS["white"]}),
+            ]),
+            html.Div(children=[
+                html.Span(metric_value, style={"fontSize": "22px", "fontWeight": "700",
+                                                "color": border_color, "marginRight": "6px"}),
+                html.Span(f"{arrow}", style={"color": arrow_color, "fontSize": "14px"}),
+            ]),
+        ]),
+    ]
+
+    if narrative:
+        children.append(html.P(narrative, style={
+            "fontSize": "13px", "color": COLORS["text_muted"], "lineHeight": "1.6",
+            "margin": "0 0 10px 0",
+        }))
+
+    if sparkline_values:
+        fig = sparkline_figure(sparkline_values, border_color, height=40)
+        children.append(dcc.Graph(figure=fig, config=CHART_CONFIG,
+                                  style={"height": "40px", "width": "100%", "marginBottom": "8px"}))
+
+    if action_text:
+        children.append(html.Div(style={"display": "flex", "alignItems": "center", "gap": "6px"}, children=[
+            html.I(className="fa-solid fa-bolt", style={"color": COLORS["yellow"], "fontSize": "11px"}),
+            html.Span(action_text, style={"fontSize": "12px", "color": COLORS["yellow"],
+                                           "fontWeight": "600"}),
+        ]))
+
+    return html.Div(
+        className="card",
+        style={"borderLeft": f"3px solid {border_color}", "padding": "20px"},
+        children=children,
+    )
+
+
+def morning_briefing(title, summary_text, signals=None):
+    """AI-generated morning briefing narrative card for dashboard landing pages.
+
+    signals: optional list of dicts {label, status, detail}
+    where status is 'green'|'amber'|'red'
+    """
+    signal_colors = {"green": COLORS["green"], "amber": COLORS["yellow"], "red": COLORS["red"]}
+
+    children = [
+        html.Div(style={"display": "flex", "alignItems": "center", "gap": "10px",
+                         "marginBottom": "14px"}, children=[
+            html.I(className="fa-solid fa-brain",
+                   style={"color": COLORS["blue"], "fontSize": "16px"}),
+            html.Span(title, style={"fontSize": "15px", "fontWeight": "700",
+                                     "color": COLORS["white"]}),
+            html.Span("AI-Generated", style={"fontSize": "10px", "color": COLORS["text_muted"],
+                                               "backgroundColor": "rgba(75,123,245,0.12)",
+                                               "padding": "2px 8px", "borderRadius": "4px",
+                                               "fontWeight": "600", "letterSpacing": "0.3px"}),
+        ]),
+        html.P(summary_text, style={
+            "fontSize": "14px", "color": COLORS["white"], "lineHeight": "1.7",
+            "margin": "0 0 16px 0", "opacity": "0.9",
+        }),
+    ]
+
+    if signals:
+        signal_items = []
+        for sig in signals:
+            sc = signal_colors.get(sig.get("status", "green"), COLORS["green"])
+            signal_items.append(html.Div(
+                style={"display": "flex", "alignItems": "center", "gap": "8px",
+                        "padding": "6px 0"},
+                children=[
+                    html.Div(className=f"status-pulse status-pulse-{sig.get('status', 'green')}"),
+                    html.Span(sig["label"], style={"fontSize": "13px", "fontWeight": "600",
+                                                    "color": COLORS["white"], "minWidth": "120px"}),
+                    html.Span(sig.get("detail", ""), style={"fontSize": "12px",
+                                                              "color": COLORS["text_muted"]}),
+                ],
+            ))
+        children.append(html.Div(style={"borderTop": f"1px solid {COLORS['border']}",
+                                          "paddingTop": "12px"},
+                                  children=signal_items))
+
+    return html.Div(
+        className="card",
+        style={"background": f"linear-gradient(135deg, {COLORS['surface']} 0%, rgba(75,123,245,0.04) 100%)",
+               "borderLeft": f"3px solid {COLORS['blue']}",
+               "padding": "24px"},
+        children=children,
+    )
+
+
 def use_case_badges(use_cases):
     """Badge pills for use cases."""
     badge_style = {
@@ -735,17 +852,21 @@ def layout_executive(title, subtitle, heroes, main_chart, panels):
 
 
 def layout_table(title, subtitle, filters, kpi_items, table_columns=None, table_data=None,
-                 page_size=10, style_conditions=None, table_component=None):
+                 page_size=10, style_conditions=None, table_component=None,
+                 insight=None):
     """Style B: Data Table View.
 
     New API (interactive DataTable with native sort/filter/pagination):
         table_columns: list of {"name": "...", "id": "..."} for DataTable
         table_data: list of row dicts for DataTable
+    insight: optional insight_card component to display above the table
 
     Legacy API (backward compatible):
         table_component: pre-built html component (e.g. rich_table)
     """
     content = []
+    if insight:
+        content.append(insight)
     if kpi_items:
         content.append(kpi_strip(kpi_items))
 
@@ -759,7 +880,7 @@ def layout_table(title, subtitle, filters, kpi_items, table_columns=None, table_
 
 
 def layout_split(title, subtitle, tab_contents=None, banner_text=None, bottom_stats=None,
-                 tabs=None, left_panel=None, right_panel=None):
+                 tabs=None, left_panel=None, right_panel=None, insight=None):
     """Style C: Split Analytics with real tab switching.
 
     New API:
@@ -799,6 +920,8 @@ def layout_split(title, subtitle, tab_contents=None, banner_text=None, bottom_st
             )))
 
     content = []
+    if insight:
+        content.append(insight)
     if banner_text:
         content.append(info_banner(banner_text))
     if tab_contents:
@@ -815,7 +938,7 @@ def layout_split(title, subtitle, tab_contents=None, banner_text=None, bottom_st
 
 
 def layout_alerts(title, subtitle, tab_contents=None, summary_kpis=None,
-                  tabs=None, alerts=None):
+                  tabs=None, alerts=None, insight=None):
     """Style D: Alert/Incident Cards with real tab switching.
 
     New API:
@@ -859,6 +982,8 @@ def layout_alerts(title, subtitle, tab_contents=None, summary_kpis=None,
             tab_contents.append((tabs[2], html.Div(all_cards)))
 
     content = []
+    if insight:
+        content.append(insight)
     if summary_kpis:
         content.append(kpi_strip(summary_kpis))
     if tab_contents:
@@ -869,7 +994,8 @@ def layout_alerts(title, subtitle, tab_contents=None, summary_kpis=None,
 
 
 def layout_forecast(title, subtitle, kpi_items, hero_value, hero_label,
-                    hero_trend_text, main_chart, side_component, bottom_table=None):
+                    hero_trend_text, main_chart, side_component, bottom_table=None,
+                    insight=None):
     """Style E: Forecast / Cost Analysis.
 
     hero_value: string like "$14.2M"
@@ -878,6 +1004,8 @@ def layout_forecast(title, subtitle, kpi_items, hero_value, hero_label,
     side_component: component for right sidebar (e.g., breakdown_list)
     """
     content = []
+    if insight:
+        content.append(insight)
     if kpi_items:
         content.append(kpi_strip(kpi_items))
 
@@ -913,10 +1041,11 @@ def layout_forecast(title, subtitle, kpi_items, hero_value, hero_label,
                       html.Div(className="content-area", children=content)])
 
 
-def layout_grid(title, subtitle, grid_items):
+def layout_grid(title, subtitle, grid_items, insight=None):
     """Style F: Operations Grid with varied panel sizes.
 
     grid_items: list of dicts {col_span, row_span, content}
+    insight: optional insight_card to display above the grid
     """
     children = []
     for item in grid_items:
@@ -938,8 +1067,12 @@ def layout_grid(title, subtitle, grid_items):
         children=children,
     )
 
+    page_content = []
+    if insight:
+        page_content.append(insight)
+    page_content.append(content)
     return html.Div([page_header(title, subtitle),
-                      html.Div(className="content-area", children=[content])])
+                      html.Div(className="content-area", children=page_content)])
 
 
 # ── Gauge / mini chart helpers ──────────────────────────────────────────────

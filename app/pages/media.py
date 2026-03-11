@@ -18,8 +18,9 @@ from app.page_styles import (
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
     _card, _hex_to_rgb,
+    insight_card, morning_briefing,
 )
-from app.theme import COLORS, FONT_FAMILY
+from app.theme import COLORS, FONT_FAMILY, get_vertical_theme
 from dash import dcc, html
 import plotly.graph_objects as go
 
@@ -32,8 +33,30 @@ def render_dashboard(cfg):
     """Executive media dashboard with hero metrics, viewership trend, and
     bottom panels for genre and platform breakdowns."""
 
+    vt = get_vertical_theme("media")
+
+    # ── Morning Briefing (AI Narrative Center) ───────────────────────────
+    briefing = morning_briefing(
+        title="Morning Briefing",
+        summary_text=(
+            "Content ROI is holding strong at 2.4x with original series outperforming "
+            "licensed catalog by 41%. Subscriber growth accelerated to +6.4% this quarter, "
+            "led by the Premium 4K tier. Engagement trends are positive — average watch time "
+            "rose to 2h 14m and completion rates hit 73.8%, driven by Drama and Sci-Fi originals."
+        ),
+        signals=[
+            {"label": "Content ROI", "status": "green", "detail": "2.4x — originals driving 41% higher returns"},
+            {"label": "Subscriber Growth", "status": "green", "detail": "+6.4% QoQ — 48.2M total subs"},
+            {"label": "Engagement", "status": "green", "detail": "73.8% completion — +2.1pp MoM"},
+            {"label": "Ad Yield", "status": "amber", "detail": "CPM rising but fill rate dipped to 92.4%"},
+        ],
+    )
+
     # -- hero metrics -------------------------------------------------------
     heroes = [
+        hero_metric("Content ROI", "2.4x",
+                     trend_text="+0.3x vs last quarter", trend_dir="up",
+                     accent="green", href="/media/content_strategy"),
         hero_metric("Total Subscribers", "48.2M",
                      trend_text="+6.4% vs last quarter", trend_dir="up",
                      accent="blue", href="/media/subscription_intel"),
@@ -76,6 +99,7 @@ def render_dashboard(cfg):
         line=dict(color=COLORS["green"], width=2, dash="dot"),
     ))
     fig_main.update_layout(**dark_chart_layout(
+        vertical="media",
         height=340,
         title=dict(text="Monthly Viewership Trends", font=dict(size=14,
                    color=COLORS["white"]), x=0.0),
@@ -110,6 +134,7 @@ def render_dashboard(cfg):
         textfont=dict(color=COLORS["white"], size=11),
     ))
     fig_plat.update_layout(**dark_chart_layout(
+        vertical="media",
         height=280,
         title=dict(text="Viewership by Platform", font=dict(size=14,
                    color=COLORS["white"]), x=0.0),
@@ -119,14 +144,31 @@ def render_dashboard(cfg):
     ))
     plat_chart = dcc.Graph(figure=fig_plat, config=CHART_CONFIG)
 
+    # ── Insight card: content performance anomaly ─────────────────────────
+    content_insight = insight_card(
+        headline="Original Series Outperforming Licensed Catalog",
+        metric_value="41%",
+        direction="up",
+        narrative=(
+            "Original series are generating 41% higher engagement than licensed "
+            "content this quarter. Drama and Sci-Fi originals lead with 82% and "
+            "79% completion rates respectively. Recommend increasing original "
+            "slate investment to capitalize on audience preference shift."
+        ),
+        action_text="Review content investment allocation",
+        severity="healthy",
+        sparkline_values=[1.8, 1.9, 2.0, 2.1, 2.0, 2.2, 2.1, 2.3, 2.2, 2.4],
+    )
+
     return layout_executive(
         title="Media Outcome Hub",
         subtitle="Streaming performance at a glance",
-        heroes=heroes,
+        heroes=[briefing] + heroes,
         main_chart=main_chart,
         panels=[
             ("Genre Distribution", genre_donut, "/media/content_strategy"),
             ("Platform Split", plat_chart, "/media/platform_delivery"),
+            ("AI Insight", content_insight),
         ],
     )
 
@@ -285,6 +327,17 @@ def render_content_strategy(cfg):
         ("Pipeline Titles", "312", "yellow"),
     ]
 
+    content_insight = insight_card(
+        headline="EMEA Content Spend Yielding Higher Retention",
+        metric_value="20%",
+        direction="up",
+        narrative=(
+            "EMEA content spend yielding 20% higher retention than projected"
+        ),
+        action_text="Review EMEA content investment mix",
+        severity="healthy",
+    )
+
     return layout_split(
         title="Content Strategy",
         subtitle="Performance, pipeline, and investment analysis",
@@ -299,6 +352,7 @@ def render_content_strategy(cfg):
             "next quarter to maximize LTV."
         ),
         bottom_stats=bottom,
+        insight=content_insight,
     )
 
 
@@ -359,6 +413,17 @@ def render_audience_intel(cfg):
         for seg, users, wt, eng, genre, ret, status in segments
     ]
 
+    audience_insight = insight_card(
+        headline="Gen Z Segment Surging on Short-Form Content",
+        metric_value="3x",
+        direction="up",
+        narrative=(
+            "Gen Z segment showing 3x engagement with short-form content"
+        ),
+        action_text="Explore Gen Z content strategy",
+        severity="healthy",
+    )
+
     return layout_table(
         title="Audience Intelligence",
         subtitle="Segment behavior, demographics, and retention analysis",
@@ -366,6 +431,7 @@ def render_audience_intel(cfg):
         kpi_items=kpis,
         table_columns=columns,
         table_data=data,
+        insight=audience_insight,
     )
 
 
@@ -431,6 +497,17 @@ def render_subscription_intel(cfg):
          "color": COLORS["red"]},
     ])
 
+    sub_insight = insight_card(
+        headline="Premium Tier Churn Declining",
+        metric_value="Churn \u2193",
+        direction="down",
+        narrative=(
+            "Premium tier churn dropping; Family plan adoption accelerating"
+        ),
+        action_text="Review tier migration trends",
+        severity="healthy",
+    )
+
     return layout_forecast(
         title="Subscription Intelligence",
         subtitle="Revenue, churn, and tier performance",
@@ -440,6 +517,7 @@ def render_subscription_intel(cfg):
         hero_trend_text="+8.3% vs prior quarter",
         main_chart=main_chart,
         side_component=side,
+        insight=sub_insight,
     )
 
 
@@ -568,10 +646,22 @@ def render_ad_yield(cfg):
         {"col_span": 1, "row_span": 1, "content": prog_spark},
     ]
 
+    ad_insight = insight_card(
+        headline="Video Ad Format Outperforming Display",
+        metric_value="2.8x",
+        direction="up",
+        narrative=(
+            "Video ad format outperforming display by 2.8x on eCPM"
+        ),
+        action_text="Shift budget toward video inventory",
+        severity="healthy",
+    )
+
     return layout_grid(
         title="Ad Yield & Monetization",
         subtitle="Fill rate, CPM trends, and revenue optimization",
         grid_items=grid_items,
+        insight=ad_insight,
     )
 
 
@@ -708,11 +798,23 @@ def render_platform_delivery(cfg):
         ("Monitoring", html.Div(monitoring_cards)),
     ]
 
+    platform_insight = insight_card(
+        headline="CDN Edge Cache Hit Rate Improved",
+        metric_value="+4%",
+        direction="up",
+        narrative=(
+            "CDN edge cache hit rate improved 4% after configuration update"
+        ),
+        action_text="Review CDN configuration changes",
+        severity="healthy",
+    )
+
     return layout_alerts(
         title="Platform & Delivery",
         subtitle="Infrastructure health, CDN performance, and incident tracking",
         tab_contents=tab_contents,
         summary_kpis=summary_kpis,
+        insight=platform_insight,
     )
 
 
@@ -889,6 +991,17 @@ def render_personalization_ai(cfg):
         ("Avg Inference", "23ms", "yellow"),
     ]
 
+    personalization_insight = insight_card(
+        headline="Recommendation Engine A/B Test Lift",
+        metric_value="18.6%",
+        direction="up",
+        narrative=(
+            "Recommendation engine A/B test showing 18.6% lift in click-through"
+        ),
+        action_text="Promote winning variant to production",
+        severity="healthy",
+    )
+
     return layout_split(
         title="Personalization & AI",
         subtitle="A/B testing, recommendation engines, and ML model performance",
@@ -904,4 +1017,5 @@ def render_personalization_ai(cfg):
             "89.7% on the prior version."
         ),
         bottom_stats=bottom,
+        insight=personalization_insight,
     )

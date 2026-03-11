@@ -15,6 +15,7 @@ from app.page_styles import (
     page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
     tab_bar, info_banner, alert_card, progress_row, stat_card,
     rich_table, td, status_td, progress_td, breakdown_list,
+    insight_card, morning_briefing,
     trend_indicator, use_case_badges, donut_figure,
     data_table, interactive_tabs,
     layout_executive, layout_table, layout_split, layout_alerts,
@@ -22,7 +23,7 @@ from app.page_styles import (
     gauge_figure, sparkline_figure, metric_with_sparkline,
     _card, _hex_to_rgb,
 )
-from app.theme import COLORS, FONT_FAMILY
+from app.theme import COLORS, FONT_FAMILY, get_vertical_theme
 from dash import dcc, html
 import plotly.graph_objects as go
 
@@ -35,9 +36,35 @@ def render_dashboard(cfg):
     """Executive dashboard with subscriber, NPS, and uptime heroes,
     a subscriber-growth line chart, and two bottom panels (revenue donut
     + churn trend)."""
+    vt = get_vertical_theme("telecom")
 
-    # ── Hero metrics ──────────────────────────────────────────────────
+    # ── Morning Briefing (AI Narrative Center) ────────────────────────
+    briefing = morning_briefing(
+        title="Morning Briefing",
+        summary_text=(
+            "Customer Lifetime Value climbed to $847, up 6% QoQ, driven by premium "
+            "bundle adoption in urban markets. Network reliability holds at 99.97% "
+            "with zero P1 incidents this month. Churn continues its downward trend "
+            "at 1.21%, but a localized anomaly in the Southeast region warrants "
+            "monitoring — 340 base stations reported intermittent latency spikes "
+            "correlating with a 0.8% uptick in support calls."
+        ),
+        signals=[
+            {"label": "CLV", "status": "green", "detail": "$847 — +6% QoQ, premium bundles driving growth"},
+            {"label": "Network Reliability", "status": "green", "detail": "99.97% uptime — zero P1 incidents"},
+            {"label": "Churn", "status": "green", "detail": "1.21% monthly — 7th consecutive month of decline"},
+            {"label": "SE Region Latency", "status": "amber", "detail": "340 base stations — intermittent spikes detected"},
+        ],
+    )
+
+    # ── Hero metrics — Strategic North Stars ──────────────────────────
     heroes = [
+        hero_metric("Customer Lifetime Value", "$847",
+                     trend_text="+6% QoQ", trend_dir="up", accent="green",
+                     href="/telecom/consumer_cx"),
+        hero_metric("Service Reliability Index", "99.97%",
+                     trend_text="0 P1 incidents", trend_dir="up", accent="purple",
+                     href="/telecom/network_ops"),
         hero_metric("Total Subscribers", "48.7M",
                      trend_text="+3.2% YoY", trend_dir="up", accent="blue",
                      href="/telecom/consumer_cx"),
@@ -67,6 +94,7 @@ def render_dashboard(cfg):
         fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
     ))
     fig_growth.update_layout(**dark_chart_layout(
+        vertical="telecom",
         height=320,
         title=dict(text="Subscriber Growth", font=dict(size=14, color=COLORS["white"])),
         yaxis=dict(title="Subscribers (M)", showgrid=True,
@@ -97,6 +125,7 @@ def render_dashboard(cfg):
         marker=dict(size=6, color=COLORS["red"]),
     ))
     fig_churn.update_layout(**dark_chart_layout(
+        vertical="telecom",
         height=280,
         title=dict(text="Churn Trend", font=dict(size=14, color=COLORS["white"])),
         yaxis=dict(title="Churn %", showgrid=True,
@@ -105,16 +134,34 @@ def render_dashboard(cfg):
     ))
     panel_churn = dcc.Graph(figure=fig_churn, config=CHART_CONFIG)
 
+    # ── Insight card: network anomaly ─────────────────────────────────
+    anomaly_card = insight_card(
+        headline="SE Region Latency Anomaly",
+        metric_value="340",
+        direction="up",
+        narrative=(
+            "340 base stations in the Southeast region reported intermittent latency "
+            "spikes over the past 48 hours, correlating with a 0.8% uptick in support "
+            "calls. Root cause analysis points to a firmware update conflict on Ericsson "
+            "RAN units deployed in Q4. Churn risk for affected subscribers estimated at 2.3x baseline."
+        ),
+        action_text="Escalate to Network Ops for firmware rollback assessment",
+        severity="warning",
+        sparkline_values=[12, 14, 11, 15, 18, 22, 45, 112, 210, 340],
+    )
+
     # ── Assemble ──────────────────────────────────────────────────────
+    panels = [
+        ("Revenue by Segment", panel_rev, "/telecom/b2b_enterprise"),
+        ("Churn Trend", panel_churn, "/telecom/consumer_cx"),
+        ("AI Insight", anomaly_card),
+    ]
     return layout_executive(
         title="Telecom Outcome Hub",
         subtitle="Enterprise-wide KPIs and performance trends",
-        heroes=heroes,
+        heroes=[briefing] + heroes,
         main_chart=main_chart,
-        panels=[
-            ("Revenue by Segment", panel_rev, "/telecom/b2b_enterprise"),
-            ("Churn Trend", panel_churn, "/telecom/consumer_cx"),
-        ],
+        panels=panels,
     )
 
 
@@ -342,6 +389,16 @@ def render_consumer_cx(cfg):
         ("Escalation Rate", "11.3%", "red"),
     ]
 
+    cx_insight = insight_card(
+        headline="Call Center Lowest-Scoring Touchpoint",
+        metric_value="6.2/10",
+        direction="down",
+        narrative="Call center remains lowest-scoring touchpoint at 6.2/10 CSAT. "
+                  "Recommend AI-assisted routing to reduce wait times and improve first-call resolution.",
+        action_text="Implement AI-assisted call routing",
+        severity="warning",
+    )
+
     return layout_split(
         title="Consumer CX & Growth",
         subtitle="Customer satisfaction, journey analytics, and NPS drivers",
@@ -356,6 +413,7 @@ def render_consumer_cx(cfg):
             "consider AI-assisted routing to reduce wait times."
         ),
         bottom_stats=bottom,
+        insight=cx_insight,
     )
 
 
@@ -415,6 +473,16 @@ def render_b2b_enterprise(cfg):
         {"label": "Professional Svcs", "value": "$10M", "pct": 6, "color": COLORS["text_muted"]},
     ])
 
+    b2b_insight = insight_card(
+        headline="Enterprise ARR Growing 32%",
+        metric_value="+32%",
+        direction="up",
+        narrative="Enterprise segment ARR growing 32% YoY driven by SD-WAN adoption. "
+                  "Top 10 accounts represent 44% of B2B revenue — concentration risk moderate.",
+        action_text="Expand SD-WAN pipeline to mid-market",
+        severity="healthy",
+    )
+
     return layout_forecast(
         title="B2B / Enterprise",
         subtitle="Enterprise revenue pipeline, win rates, and service mix",
@@ -429,6 +497,7 @@ def render_b2b_enterprise(cfg):
                             "color": COLORS["white"], "marginBottom": "16px"}),
             side,
         ]),
+        insight=b2b_insight,
     )
 
 
@@ -559,10 +628,21 @@ def render_network_ops(cfg):
         {"col_span": 1, "row_span": 1, "content": panel_sla},
     ]
 
+    netops_insight = insight_card(
+        headline="EU-West Core Link at 87% Utilization",
+        metric_value="87%",
+        direction="up",
+        narrative="EU-West core link approaching capacity threshold. Current utilization at 87% "
+                  "with peak-hour bursts hitting 94%. Capacity expansion recommended within 60 days.",
+        action_text="Initiate EU-West capacity expansion",
+        severity="warning",
+    )
+
     return layout_grid(
         title="Network Operations",
         subtitle="Real-time network health, capacity, and incident monitoring",
         grid_items=grid_items,
+        insight=netops_insight,
     )
 
 
@@ -632,6 +712,16 @@ def render_field_energy(cfg):
         for wo_id, desc, region, priority, status, pct, color in orders
     ]
 
+    field_insight = insight_card(
+        headline="Southeast Power Cost Efficiency Leading",
+        metric_value="$0.08/kWh",
+        direction="down",
+        narrative="Southeast region showing best power cost efficiency at $0.08/kWh — "
+                  "34% below network average. Renewable energy contracts driving savings.",
+        action_text="Replicate Southeast energy strategy to other regions",
+        severity="healthy",
+    )
+
     return layout_table(
         title="Field Ops & Energy",
         subtitle="Work order management, SLA tracking, and technician dispatch",
@@ -639,6 +729,7 @@ def render_field_energy(cfg):
         kpi_items=kpis,
         table_columns=table_columns,
         table_data=table_data,
+        insight=field_insight,
     )
 
 
@@ -846,6 +937,16 @@ def render_fraud_prevention(cfg):
         ),
     ])
 
+    fraud_insight = insight_card(
+        headline="SIM Swap Attacks Up 23%",
+        metric_value="+23%",
+        direction="up",
+        narrative="SIM swap attacks increased 23% this month with losses at $480K. "
+                  "Recommend tightening verification thresholds and adding biometric step.",
+        action_text="Tighten SIM swap verification thresholds",
+        severity="critical",
+    )
+
     return layout_alerts(
         title="Fraud Prevention",
         subtitle="Real-time fraud detection, investigation queue, and financial impact",
@@ -855,6 +956,7 @@ def render_fraud_prevention(cfg):
             ("Resolved", tab_resolved),
         ],
         summary_kpis=summary,
+        insight=fraud_insight,
     )
 
 
@@ -1008,8 +1110,19 @@ def render_cyber_security(cfg):
         {"col_span": 1, "row_span": 1, "content": panel_siem},
     ]
 
+    cyber_insight = insight_card(
+        headline="Zero-Day Patching Response Improved",
+        metric_value="4.2h",
+        direction="down",
+        narrative="Zero-day vulnerability patching response improved to 4.2 hours from "
+                  "12.8 hours last quarter. Automated SIEM integration driving faster detection.",
+        action_text="Continue automated SIEM integration rollout",
+        severity="healthy",
+    )
+
     return layout_grid(
         title="Cyber Security",
         subtitle="Threat intelligence, attack surface monitoring, and SOC metrics",
         grid_items=grid_items,
+        insight=cyber_insight,
     )

@@ -15,13 +15,14 @@ from app.page_styles import (
     page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
     tab_bar, info_banner, alert_card, progress_row, stat_card,
     breakdown_list,
+    insight_card, morning_briefing,
     trend_indicator, use_case_badges, donut_figure,
     layout_executive, layout_table, layout_split, layout_alerts,
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
     _card, _hex_to_rgb,
 )
-from app.theme import COLORS, FONT_FAMILY
+from app.theme import COLORS, FONT_FAMILY, get_vertical_theme
 from dash import dcc, html
 import plotly.graph_objects as go
 
@@ -32,9 +33,36 @@ import plotly.graph_objects as go
 
 def render_dashboard(cfg):
     """Executive risk dashboard with hero metrics, trend chart, and panels."""
+    vt = get_vertical_theme("risk")
+
+    # --- Morning Briefing (AI Narrative Center) ------------------------------
+    briefing = morning_briefing(
+        title="Risk Morning Briefing",
+        summary_text=(
+            "Predictive Risk Exposure Score sits at 72/100, up 4 pts from last "
+            "quarter driven by elevated credit concentration in commercial real "
+            "estate. Compliance posture is stable at 94.2% but two regulatory "
+            "deadlines approach within 30 days (AML 6AMLD, DORA). Cyber threat "
+            "level remains HIGH after Q1 threat intelligence flagged a 28% surge "
+            "in phishing attempts targeting operations staff. Recommend immediate "
+            "review of CRE exposure limits and accelerated DORA readiness."
+        ),
+        signals=[
+            {"label": "Risk Exposure", "status": "amber", "detail": "Predictive score 72/100 — CRE concentration above appetite"},
+            {"label": "Compliance", "status": "green", "detail": "94.2% compliant — 2 deadlines within 30 days"},
+            {"label": "Cyber Threats", "status": "red", "detail": "Threat level HIGH — phishing attempts up 28%"},
+            {"label": "Capital Adequacy", "status": "green", "detail": "CET1 at 12.4% — well above 4.5% minimum"},
+        ],
+    )
+
+    # --- North Star hero metric ---------------------------------------------
+    north_star = hero_metric("Predictive Risk Score", "72 / 100",
+                              trend_text="4 pts up from last quarter", trend_dir="up",
+                              accent="yellow", href="/risk/enterprise_risk")
 
     # --- Hero metrics -------------------------------------------------------
     heroes = [
+        north_star,
         hero_metric("Total Value at Risk", "$284M",
                      trend_text="3.2% vs prior month", trend_dir="up",
                      accent="red", href="/risk/market_risk"),
@@ -70,6 +98,7 @@ def render_dashboard(cfg):
         fill="tozeroy", fillcolor=f"rgba({_hex_to_rgb(COLORS['yellow'])}, 0.08)",
     ))
     fig_trend.update_layout(**dark_chart_layout(
+        vertical="risk",
         height=320,
         title=dict(text="Risk Exposure Trends ($M)", font=dict(size=14, color=COLORS["white"])),
         yaxis=dict(title="Exposure ($M)", showgrid=True, gridcolor=COLORS["border"]),
@@ -107,6 +136,7 @@ def render_dashboard(cfg):
         textposition="outside", textfont=dict(color=COLORS["green"], size=10),
     ))
     fig_cap.update_layout(**dark_chart_layout(
+        vertical="risk",
         height=280, barmode="group",
         title=dict(text="Capital Adequacy Ratios", font=dict(size=14, color=COLORS["white"])),
         yaxis=dict(title="Ratio %", showgrid=True, gridcolor=COLORS["border"]),
@@ -115,15 +145,33 @@ def render_dashboard(cfg):
     panel_capital = dcc.Graph(figure=fig_cap, config=CHART_CONFIG,
                               style={"height": "280px"})
 
+    # --- Insight card: emerging threat / compliance gap ----------------------
+    risk_insight = insight_card(
+        headline="Emerging Threat: CRE Concentration Breach",
+        metric_value="112%",
+        direction="up",
+        narrative=(
+            "Credit concentration in commercial real estate has breached the "
+            "risk appetite limit at 112% utilization, up from 98% last month. "
+            "Correlated with rising vacancy rates in office sectors and "
+            "tightening refinancing conditions. DORA compliance deadline in "
+            "45 days adds regulatory urgency."
+        ),
+        action_text="Review CRE exposure limits and accelerate DORA readiness",
+        severity="critical",
+        sparkline_values=[88, 91, 93, 95, 98, 100, 103, 106, 109, 112],
+    )
+
     panels = [
         ("Risk Category Distribution", panel_donut, "/risk/enterprise_risk"),
         ("Capital Adequacy", panel_capital, "/risk/compliance"),
+        ("AI Insight", risk_insight),
     ]
 
     return layout_executive(
         title="Risk Dashboard",
         subtitle="Enterprise-wide risk exposure and capital adequacy overview",
-        heroes=heroes,
+        heroes=[briefing] + heroes,
         main_chart=main_chart,
         panels=panels,
     )
@@ -303,6 +351,14 @@ def render_enterprise_risk(cfg):
         ("Avg Time to Close", "18 days", "purple"),
     ]
 
+    insight = insight_card(
+        headline="High/Critical Risks Declining",
+        metric_value="-12%",
+        direction="down",
+        narrative="41 high/critical risks identified — 12% reduction from last assessment cycle.",
+        severity="healthy",
+    )
+
     return layout_split(
         title="Enterprise Risk Management",
         subtitle="Consolidated risk register and control effectiveness",
@@ -313,6 +369,7 @@ def render_enterprise_risk(cfg):
         ],
         banner_text=banner_text,
         bottom_stats=bottom_stats,
+        insight=insight,
     )
 
 
@@ -386,6 +443,14 @@ def render_credit_risk(cfg):
             "status": status,
         })
 
+    insight = insight_card(
+        headline="CRE Default Probability Elevated",
+        metric_value="4.8%",
+        direction="up",
+        narrative="Commercial real estate portfolio showing elevated default probability at 4.8% vs 2.1% target.",
+        severity="warning",
+    )
+
     return layout_table(
         title="Credit Risk",
         subtitle="Portfolio credit quality, default probabilities, and loss estimates",
@@ -393,6 +458,7 @@ def render_credit_risk(cfg):
         kpi_items=kpis,
         table_columns=columns,
         table_data=data,
+        insight=insight,
     )
 
 
@@ -458,6 +524,14 @@ def render_market_risk(cfg):
         {"label": "Derivatives", "value": "$10M", "pct": 7, "color": COLORS["red"]},
     ])
 
+    insight = insight_card(
+        headline="VaR Backtesting Within Tolerance",
+        metric_value="3",
+        direction="down",
+        narrative="VaR model backtesting shows 3 exceptions — within Basel green zone tolerance of 4.",
+        severity="healthy",
+    )
+
     return layout_forecast(
         title="Market Risk",
         subtitle="Value at Risk analysis and P&L back-testing",
@@ -472,6 +546,7 @@ def render_market_risk(cfg):
                             "color": COLORS["white"], "marginBottom": "16px"}),
             side,
         ]),
+        insight=insight,
     )
 
 
@@ -620,11 +695,20 @@ def render_operational_risk(cfg):
         ("Closed", html.Div(closed_cards)),
     ]
 
+    insight = insight_card(
+        headline="Mixed Risk Signal: Cyber Down, Fraud Up",
+        metric_value="+18%",
+        direction="up",
+        narrative="Cybersecurity incidents down 22% but fraud losses up 18%. Shifting risk profile requires attention.",
+        severity="warning",
+    )
+
     return layout_alerts(
         title="Operational Risk",
         subtitle="Active incidents, investigations, and operational loss tracking",
         tab_contents=tab_contents,
         summary_kpis=summary_kpis,
+        insight=insight,
     )
 
 
@@ -698,6 +782,14 @@ def render_compliance(cfg):
             "status": status,
         })
 
+    insight = insight_card(
+        headline="GDPR Remediation Near Complete",
+        metric_value="94%",
+        direction="up",
+        narrative="GDPR remediation 94% complete. 3 remaining findings require Q2 closure to meet deadline.",
+        severity="healthy",
+    )
+
     return layout_table(
         title="Regulatory Compliance",
         subtitle="Compliance status, audit findings, and regulatory change management",
@@ -705,6 +797,7 @@ def render_compliance(cfg):
         kpi_items=kpis,
         table_columns=columns,
         table_data=data,
+        insight=insight,
     )
 
 
@@ -871,8 +964,17 @@ def render_cyber_risk(cfg):
         {"col_span": 1, "row_span": 1, "content": patch_panel},
     ]
 
+    insight = insight_card(
+        headline="Incident Response Time Improved",
+        metric_value="28min",
+        direction="down",
+        narrative="Average incident response time improved to 28 minutes from 42 minutes last quarter.",
+        severity="healthy",
+    )
+
     return layout_grid(
         title="Cyber Risk",
         subtitle="Threat intelligence, vulnerability management, and security posture",
         grid_items=grid_items,
+        insight=insight,
     )

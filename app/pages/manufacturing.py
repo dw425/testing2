@@ -17,9 +17,10 @@ from app.page_styles import (
     layout_executive, layout_table, layout_split, layout_alerts,
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
+    insight_card, morning_briefing,
     _card, _hex_to_rgb,
 )
-from app.theme import COLORS, FONT_FAMILY
+from app.theme import COLORS, FONT_FAMILY, get_vertical_theme
 from dash import dcc, html
 import plotly.graph_objects as go
 
@@ -31,6 +32,26 @@ import plotly.graph_objects as go
 def render_dashboard(cfg):
     """Executive manufacturing dashboard with hero KPIs and production trends."""
 
+    # ── Morning briefing ───────────────────────────────────────────────────
+    briefing = morning_briefing(
+        title="Manufacturing Morning Briefing",
+        summary_text=(
+            "OEE remains our North Star metric at 87.4%, up 2.1% month-over-month. "
+            "Margin protection is holding steady with net margin per asset at $12.4K. "
+            "Equipment availability across all four facilities is at 97.2%, "
+            "though Berlin CNC-A1 spindle shows early wear signatures. "
+            "Focus today: sustain OEE gains while monitoring Tokyo welding line quality drift."
+        ),
+        signals=[
+            {"label": "OEE (North Star)", "status": "green",
+             "detail": "87.4% — above 85% target, trending up"},
+            {"label": "Margin Protection", "status": "green",
+             "detail": "Net margin per asset $12.4K — within plan"},
+            {"label": "Equipment Availability", "status": "amber",
+             "detail": "97.2% overall — CNC-A1 spindle flagged for inspection"},
+        ],
+    )
+
     # ── Hero metrics ──────────────────────────────────────────────────────
     heroes = [
         hero_metric(
@@ -39,6 +60,14 @@ def render_dashboard(cfg):
             trend_text="+2.1% vs last month",
             trend_dir="up",
             accent="blue",
+            href="/manufacturing/production_analytics",
+        ),
+        hero_metric(
+            "Net Margin per Asset",
+            "$12.4K",
+            trend_text="+$0.8K vs last quarter",
+            trend_dir="up",
+            accent="green",
             href="/manufacturing/production_analytics",
         ),
         hero_metric(
@@ -88,6 +117,7 @@ def render_dashboard(cfg):
         marker=dict(size=5),
     ))
     fig_main.update_layout(**dark_chart_layout(
+        vertical="manufacturing",
         height=340,
         title=dict(text="Production Output by Facility (units/day)",
                    font=dict(size=14, color=COLORS["white"]),
@@ -121,6 +151,7 @@ def render_dashboard(cfg):
         marker_color=COLORS["red"], opacity=0.85,
     ))
     fig_downtime.update_layout(**dark_chart_layout(
+        vertical="manufacturing",
         height=280, barmode="stack",
         title=dict(text="Downtime Hours (weekly)",
                    font=dict(size=13, color=COLORS["white"]),
@@ -131,8 +162,24 @@ def render_dashboard(cfg):
     downtime_chart = dcc.Graph(figure=fig_downtime, config=CHART_CONFIG,
                                style={"height": "280px"})
 
+    # ── Insight card ─────────────────────────────────────────────────────
+    insight = insight_card(
+        headline="Production Line Anomaly Detected",
+        metric_value="-12% throughput",
+        direction="down",
+        narrative=(
+            "Welding-C1 in Tokyo is showing a sustained throughput decline over "
+            "the past 72 hours, coinciding with a 34% rise in surface finish defects. "
+            "Supply chain data also flags a pending delay on replacement carbide inserts "
+            "for CNC-A2 (Sandvik Coromant), which could cascade to Berlin production "
+            "if not resolved within 5 days."
+        ),
+        action_text="Review Welding-C1 diagnostics",
+        severity="warning",
+    )
+
     # ── Assemble with layout_executive ────────────────────────────────────
-    return layout_executive(
+    dashboard = layout_executive(
         title="Manufacturing Dashboard",
         subtitle="Real-time production performance across all facilities",
         heroes=heroes,
@@ -142,6 +189,9 @@ def render_dashboard(cfg):
             ("Downtime Trend", downtime_chart, "/manufacturing/predictive_maintenance"),
         ],
     )
+
+    # Wrap with briefing and insight card at the top
+    return html.Div([briefing, insight, dashboard])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -193,6 +243,14 @@ def render_production_analytics(cfg):
         {"line": "CNC-G1", "facility": "Tokyo", "shift": "Morning", "units": "1,752", "cycle_time": "3.0 min", "utilization": "85%", "status": "Nominal"},
     ]
 
+    insight = insight_card(
+        headline="Line 7 Below OEE Target",
+        metric_value="72.1%",
+        direction="down",
+        narrative="Line 7 OEE at 72.1% — below 85% target. Downtime analysis shows bearing wear as root cause.",
+        severity="warning",
+    )
+
     return layout_table(
         title="Production Analytics",
         subtitle="Line-level production performance and utilization metrics",
@@ -200,6 +258,7 @@ def render_production_analytics(cfg):
         kpi_items=kpi_items,
         table_columns=columns,
         table_data=data,
+        insight=insight,
     )
 
 
@@ -396,6 +455,14 @@ def render_quality_control(cfg):
         ("CAPA Open", "7", "yellow"),
     ]
 
+    insight = insight_card(
+        headline="Cpk Improved to 1.41",
+        metric_value="1.41",
+        direction="up",
+        narrative="Process capability index improved to 1.41, within Six Sigma target range of 1.33+.",
+        severity="healthy",
+    )
+
     return layout_split(
         title="Quality Control",
         subtitle="Defect analysis and statistical process control",
@@ -406,6 +473,7 @@ def render_quality_control(cfg):
         ],
         banner_text=banner_text,
         bottom_stats=bottom_stats,
+        insight=insight,
     )
 
 
@@ -558,11 +626,20 @@ def render_supply_chain(cfg):
         ("On Track", html.Div(on_track_cards)),
     ]
 
+    insight = insight_card(
+        headline="Titanium Supplier Lead Time Extended",
+        metric_value="+3 wks",
+        direction="up",
+        narrative="Primary titanium supplier lead time extended 3 weeks. Recommend activating secondary source.",
+        severity="critical",
+    )
+
     return layout_alerts(
         title="Supply Chain Risk Monitor",
         subtitle="Supplier disruptions, material shortages, and logistics alerts",
         tab_contents=tab_contents,
         summary_kpis=summary_kpis,
+        insight=insight,
     )
 
 
@@ -677,6 +754,14 @@ def render_predictive_maintenance(cfg):
         ]))
     bottom_table = rich_table(wo_headers, wo_rows, col_widths=wo_col_widths)
 
+    insight = insight_card(
+        headline="4 Bearing Failures Predicted",
+        metric_value="4",
+        direction="up",
+        narrative="ML model predicting 4 bearing failures in next 14 days with 92% confidence.",
+        severity="warning",
+    )
+
     return layout_forecast(
         title="Predictive Maintenance",
         subtitle="AI-driven failure prediction and maintenance scheduling",
@@ -687,6 +772,7 @@ def render_predictive_maintenance(cfg):
         main_chart=main_chart,
         side_component=side_content,
         bottom_table=bottom_table,
+        insight=insight,
     )
 
 
@@ -801,10 +887,19 @@ def render_energy_sustainability(cfg):
         {"col_span": 2, "row_span": 1, "content": score_panel},
     ]
 
+    insight = insight_card(
+        headline="Carbon Emissions Down 8% YoY",
+        metric_value="-8%",
+        direction="down",
+        narrative="Carbon emissions per unit down 8% year-over-year. On track for ESG targets.",
+        severity="healthy",
+    )
+
     return layout_grid(
         title="Energy & Sustainability",
         subtitle="Environmental performance and resource efficiency tracking",
         grid_items=grid_items,
+        insight=insight,
     )
 
 
@@ -866,6 +961,14 @@ def render_workforce_ops(cfg):
         {"department": "Engineering", "facility": "Shanghai", "headcount": "143", "overtime": "8.9%", "safety_score": "96%", "training": "88%", "status": "Nominal"},
     ]
 
+    insight = insight_card(
+        headline="Safety Score at Record High",
+        metric_value="96.1",
+        direction="up",
+        narrative="Safety score at 96.1 — best quarter in 2 years. Zero lost-time incidents this month.",
+        severity="healthy",
+    )
+
     return layout_table(
         title="Workforce Operations",
         subtitle="Staffing, safety, and training metrics by facility and department",
@@ -873,4 +976,5 @@ def render_workforce_ops(cfg):
         kpi_items=kpi_items,
         table_columns=columns,
         table_data=data,
+        insight=insight,
     )

@@ -72,44 +72,65 @@ _VERTICALS = [
     {
         "key": "gaming",
         "icon": "fa-gamepad",
-        "color": "#FBBF24",
-        "stats": [("Tables", "6"), ("Models", "3"), ("KPIs", "17")],
+        "color": "#00E5FF",
+        "north_star": "Contribution Margin: 68.4%",
+        "health": "green",
+        "stats": [("Strategic Views", "7"), ("AI Models", "3"), ("North Stars", "4")],
+        "tagline": "Player economics, retention strategy, and live ops intelligence",
     },
     {
         "key": "telecom",
         "icon": "fa-tower-cell",
-        "color": "#34D399",
-        "stats": [("Tables", "5"), ("Models", "2"), ("KPIs", "17")],
+        "color": "#0091D5",
+        "north_star": "Customer Lifetime Value: $847",
+        "health": "green",
+        "stats": [("Strategic Views", "7"), ("AI Models", "2"), ("North Stars", "4")],
+        "tagline": "Subscriber value, network ROI, and service reliability",
     },
     {
         "key": "media",
         "icon": "fa-film",
-        "color": "#A78BFA",
-        "stats": [("Tables", "5"), ("Models", "2"), ("KPIs", "17")],
+        "color": "#7C4DFF",
+        "north_star": "Content ROI: 2.4x",
+        "health": "green",
+        "stats": [("Strategic Views", "7"), ("AI Models", "2"), ("North Stars", "4")],
+        "tagline": "Content economics, audience intelligence, and ad yield optimization",
     },
     {
         "key": "financial_services",
         "icon": "fa-building-columns",
-        "color": "#F87171",
-        "stats": [("Tables", "7"), ("Models", "3"), ("KPIs", "29")],
+        "color": "#288CFA",
+        "north_star": "Net Interest Margin: 3.42%",
+        "health": "amber",
+        "stats": [("Strategic Views", "7"), ("AI Models", "3"), ("North Stars", "5")],
+        "tagline": "Capital efficiency, risk-adjusted returns, and regulatory compliance",
     },
     {
         "key": "hls",
         "icon": "fa-heart-pulse",
-        "color": "#4B7BF5",
-        "stats": [("Tables", "6"), ("Models", "2"), ("KPIs", "22")],
+        "color": "#00897B",
+        "north_star": "Operating Margin: 12.4%",
+        "health": "amber",
+        "stats": [("Strategic Views", "7"), ("AI Models", "2"), ("North Stars", "4")],
+        "tagline": "Margin resilience, labor stability, and patient outcomes",
     },
     {
         "key": "manufacturing",
         "icon": "fa-industry",
-        "color": "#FB923C",
-        "stats": [("Tables", "6"), ("Models", "2"), ("KPIs", "16")],
+        "color": "#FF6D00",
+        "north_star": "OEE: 87.4%",
+        "health": "green",
+        "stats": [("Strategic Views", "7"), ("AI Models", "2"), ("North Stars", "4")],
+        "tagline": "Equipment effectiveness, supply chain, and shop-floor intelligence",
     },
     {
         "key": "risk",
         "icon": "fa-shield-halved",
-        "color": "#F472B6",
-        "stats": [("Tables", "5"), ("Models", "2"), ("KPIs", "18")],
+        "color": "#4B7BF5",
+        "north_star": "Risk Exposure Score: 72/100",
+        "health": "amber",
+        "stats": [("Strategic Views", "7"), ("AI Models", "2"), ("North Stars", "4")],
+        "tagline": "Predictive risk, compliance governance, and cyber resilience",
     },
 ]
 
@@ -271,7 +292,7 @@ def _render_landing():
 
 
 def _render_hub():
-    """Demo hub page with vertical cards at /hub."""
+    """Demo hub page with strategic command center cards at /hub."""
     cards = []
     for v in _VERTICALS:
         try:
@@ -290,20 +311,60 @@ def _render_hub():
             for stat_label, stat_val in v["stats"]
         ]
 
+        # Health status pulse indicator
+        health = v.get("health", "green")
+        health_pulse = html.Div(
+            className=f"status-pulse status-pulse-{health}",
+            style={"marginLeft": "auto"},
+        )
+
+        # North Star metric preview
+        north_star = v.get("north_star", "")
+        tagline = v.get("tagline", subtitle)
+
         card = dcc.Link(
             href=f"/{v['key']}/dashboard",
             className="vertical-card",
             children=[
                 html.Div(
-                    className="vertical-card-icon",
-                    style={"backgroundColor": f"{v['color']}20"},
-                    children=html.I(
-                        className=f"fa-solid {v['icon']}",
-                        style={"color": v["color"]},
-                    ),
+                    style={"display": "flex", "alignItems": "center", "gap": "12px",
+                           "marginBottom": "16px"},
+                    children=[
+                        html.Div(
+                            className="vertical-card-icon",
+                            style={"backgroundColor": f"{v['color']}20",
+                                   "marginBottom": "0", "flexShrink": "0"},
+                            children=html.I(
+                                className=f"fa-solid {v['icon']}",
+                                style={"color": v["color"]},
+                            ),
+                        ),
+                        html.Div(style={"flex": "1"}, children=[
+                            html.Div(title, className="vertical-card-title",
+                                     style={"marginBottom": "0"}),
+                        ]),
+                        health_pulse,
+                    ],
                 ),
-                html.Div(title, className="vertical-card-title"),
-                html.Div(subtitle, className="vertical-card-subtitle"),
+                # Strategic tagline
+                html.Div(tagline, className="vertical-card-subtitle",
+                          style={"marginBottom": "12px"}),
+                # North Star metric preview
+                html.Div(
+                    style={"backgroundColor": f"{v['color']}10",
+                           "borderLeft": f"3px solid {v['color']}",
+                           "borderRadius": "6px", "padding": "10px 14px",
+                           "marginBottom": "16px"},
+                    children=[
+                        html.Div("NORTH STAR", style={
+                            "fontSize": "9px", "fontWeight": "700",
+                            "color": COLORS["text_muted"], "letterSpacing": "1px",
+                            "marginBottom": "4px"}),
+                        html.Div(north_star, style={
+                            "fontSize": "15px", "fontWeight": "700",
+                            "color": v["color"]}),
+                    ],
+                ),
                 html.Div(className="vertical-card-stats", children=stats_children),
             ],
         )
@@ -316,7 +377,7 @@ def _render_hub():
                 children=[
                     html.Div("Blueprint AI Demo Hub", className="hub-title"),
                     html.Div(
-                        "Select an industry vertical to explore",
+                        "Strategic Command Centers — Select a vertical to explore executive intelligence",
                         className="hub-subtitle",
                     ),
                 ],
@@ -644,6 +705,50 @@ def _render_architecture():
     ])
 
     # ═══════════════════════════════════════════════════════════════════════
+    #  5. BUSINESS VALUE REALIZATION
+    # ═══════════════════════════════════════════════════════════════════════
+    _value_row = lambda tech, biz, icon: html.Div(
+        style={"display": "flex", "alignItems": "center", "gap": "16px",
+               "padding": "14px 0", "borderBottom": f"1px solid {COLORS['border']}"},
+        children=[
+            html.I(className=f"fa-solid {icon}",
+                   style={"color": COLORS["blue"], "fontSize": "16px", "width": "24px",
+                          "textAlign": "center"}),
+            html.Div(style={"flex": "1"}, children=[
+                html.Div(tech, style={"fontSize": "13px", "color": COLORS["text_muted"],
+                                       "marginBottom": "2px"}),
+                html.Div(biz, style={"fontSize": "14px", "fontWeight": "600",
+                                      "color": COLORS["white"]}),
+            ]),
+        ],
+    )
+
+    value_realization = html.Div(className="card", style={"padding": "24px"}, children=[
+        _section_title("fa-chart-line", "Business Value Realization", COLORS["green"]),
+        html.P("How data engineering excellence translates to executive outcomes:",
+               style={"fontSize": "13px", "color": COLORS["text_muted"], "marginBottom": "16px"}),
+        _value_row("Real-time Pipeline (Unity Catalog)", "Decision Confidence with Governed Data", "fa-shield-halved"),
+        _value_row(f"{len(gold_tables)} Gold + {len(silver_tables)} Silver Tables", "Integrated Financial and Operational Truth", "fa-database"),
+        _value_row(f"{len(model_names)} Predictive ML Models", "Early Warning Risk Mitigation", "fa-brain"),
+        _value_row("7 Strategic Views per Vertical", "Comprehensive Strategic Oversight", "fa-eye"),
+        _value_row("AI/BI Genie Conversational Analytics", "Self-Service Executive Intelligence", "fa-robot"),
+        html.Div(
+            style={"marginTop": "16px", "padding": "12px 16px",
+                   "backgroundColor": f"rgba({_hex_to_rgb(COLORS['green'])}, 0.06)",
+                   "borderRadius": "8px", "borderLeft": f"3px solid {COLORS['green']}",
+                   "display": "flex", "alignItems": "center", "gap": "8px"},
+            children=[
+                html.I(className="fa-solid fa-certificate",
+                       style={"color": COLORS["green"], "fontSize": "14px"}),
+                html.Span("All data sourced from Unity Catalog with end-to-end lineage. "
+                           "Meets 6 dimensions of data quality: Accuracy, Completeness, Consistency, "
+                           "Timeliness, Validity, Uniqueness.",
+                           style={"fontSize": "12px", "color": COLORS["text_muted"], "lineHeight": "1.5"}),
+            ],
+        ),
+    ])
+
+    # ═══════════════════════════════════════════════════════════════════════
     #  ASSEMBLE PAGE
     # ═══════════════════════════════════════════════════════════════════════
     return html.Div([
@@ -658,6 +763,7 @@ def _render_architecture():
                 children=[platform_diagram, app_diagram],
             ),
             data_model,
+            value_realization,
         ]),
     ])
 

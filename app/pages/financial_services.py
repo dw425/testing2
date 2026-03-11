@@ -13,13 +13,14 @@ from app.page_styles import (
     page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
     tab_bar, info_banner, alert_card, progress_row, stat_card,
     breakdown_list,
+    insight_card, morning_briefing,
     trend_indicator, use_case_badges, donut_figure,
     layout_executive, layout_table, layout_split, layout_alerts,
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
     _card, _hex_to_rgb,
 )
-from app.theme import COLORS, FONT_FAMILY
+from app.theme import COLORS, FONT_FAMILY, get_vertical_theme
 from dash import dcc, html
 import plotly.graph_objects as go
 
@@ -33,8 +34,39 @@ def render_dashboard(cfg):
     portfolio performance chart, asset allocation donut, and revenue
     breakdown bar chart."""
 
-    # ── Hero metrics ──────────────────────────────────────────────────
+    # ── Morning briefing ──────────────────────────────────────────────
+    briefing = morning_briefing(
+        title="Financial Services Morning Briefing",
+        summary_text=(
+            "Net Interest Margin held steady at 3.42%, outperforming the "
+            "peer median by 18 bps as the rate environment stabilises. "
+            "Risk-adjusted returns climbed to 8.7% on improved credit "
+            "selection in the IG book, while capital efficiency improved "
+            "quarter-over-quarter with RoRWA reaching 1.64%. Overnight "
+            "funding markets remain orderly; no stress signals detected."
+        ),
+        signals=[
+            {"label": "Net Interest Margin", "status": "green",
+             "detail": "3.42% — stable, +18 bps vs peer median"},
+            {"label": "Risk-Adjusted Returns", "status": "green",
+             "detail": "8.7% — up 40 bps QoQ on IG credit alpha"},
+            {"label": "Capital Efficiency (RoRWA)", "status": "green",
+             "detail": "1.64% — above 1.50% internal target"},
+            {"label": "Liquidity Coverage Ratio", "status": "amber",
+             "detail": "118% — trending toward 110% internal floor"},
+        ],
+    )
+
+    # ── Hero metrics — strategic North Stars + existing ────────────────
     heroes = [
+        hero_metric("Net Interest Margin", "3.42%",
+                     trend_text="+18 bps vs peers", trend_dir="up",
+                     accent="green",
+                     href="/financial_services/investment_alpha"),
+        hero_metric("Risk-Adjusted Return", "8.7%",
+                     trend_text="+40 bps QoQ", trend_dir="up",
+                     accent="blue",
+                     href="/financial_services/risk_management"),
         hero_metric("Assets Under Management", "$847.3B",
                      trend_text="+3.2% QoQ", trend_dir="up", accent="blue",
                      href="/financial_services/investment_alpha"),
@@ -46,6 +78,26 @@ def render_dashboard(cfg):
                      accent="yellow",
                      href="/financial_services/risk_management"),
     ]
+
+    # ── Insight card — market risk / capital adequacy ──────────────────
+    risk_insight = insight_card(
+        headline="Market Risk Anomaly — Equity Vol Surface",
+        metric_value="VaR +12%",
+        direction="up",
+        narrative=(
+            "Implied volatility skew on 3-month S&P options has steepened "
+            "beyond 2-sigma historical norms, pushing parametric VaR up 12% "
+            "intraday. The anomaly correlates with elevated dealer gamma "
+            "positioning ahead of quarterly OpEx. Capital adequacy ratios "
+            "remain well above minimums (CET1 at 14.1%), but the trend "
+            "warrants monitoring as the stress-test buffer narrows to 36 bps "
+            "above the internal floor."
+        ),
+        action_text="Review VaR decomposition in Risk Management",
+        sparkline_values=[42, 44, 43, 46, 48, 47, 51, 53, 55, 58, 61, 65],
+        severity="warning",
+        accent_color=COLORS["yellow"],
+    )
 
     # ── Main chart: portfolio performance line ────────────────────────
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -70,6 +122,7 @@ def render_dashboard(cfg):
         line=dict(color=COLORS["text_muted"], width=1.5, dash="dash"),
     ))
     perf_fig.update_layout(**dark_chart_layout(
+        vertical="financial_services",
         height=320,
         title=dict(text="Portfolio Performance (Indexed to 100)",
                    font=dict(size=14, color=COLORS["white"])),
@@ -104,6 +157,7 @@ def render_dashboard(cfg):
         textfont=dict(color=COLORS["white"], size=11),
     ))
     rev_fig.update_layout(**dark_chart_layout(
+        vertical="financial_services",
         height=280,
         title=dict(text="Revenue by Business Line",
                    font=dict(size=14, color=COLORS["white"])),
@@ -120,7 +174,8 @@ def render_dashboard(cfg):
         ("Revenue by Business Line", rev_chart, "/financial_services/operations"),
     ]
 
-    return layout_executive(
+    # ── Layout assembly with briefing and insight ─────────────────────
+    dashboard = layout_executive(
         title="Financial Services Dashboard",
         subtitle="Enterprise-wide performance across Capital Markets, "
                  "Wealth Management, and Investment Banking",
@@ -128,6 +183,13 @@ def render_dashboard(cfg):
         main_chart=main_chart,
         panels=panels,
     )
+
+    # Prepend briefing and append insight into the content area
+    content_area = dashboard.children[1]  # the content-area div
+    content_area.children.insert(0, briefing)
+    content_area.children.append(risk_insight)
+
+    return dashboard
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -203,6 +265,17 @@ def render_investment_alpha(cfg):
          "color": COLORS["text_muted"]},
     ])
 
+    investment_insight = insight_card(
+        headline="APAC Equities Fund Outperforming Benchmark",
+        metric_value="+240bps",
+        direction="up",
+        narrative=(
+            "APAC equities fund outperforming benchmark by 240bps this quarter"
+        ),
+        action_text="Review APAC allocation strategy",
+        severity="healthy",
+    )
+
     return layout_forecast(
         title="Investment & Alpha Generation",
         subtitle="Fund performance, alpha attribution, and strategy "
@@ -213,6 +286,7 @@ def render_investment_alpha(cfg):
         hero_trend_text="+3.6% vs benchmark",
         main_chart=main_chart,
         side_component=side,
+        insight=investment_insight,
     )
 
 
@@ -293,6 +367,17 @@ def render_trading_advisory(cfg):
             "status": status,
         })
 
+    trading_insight = insight_card(
+        headline="FX Desk Leading Performance This Month",
+        metric_value="72%",
+        direction="up",
+        narrative=(
+            "FX desk showing 72% win rate \u2014 best performing desk this month"
+        ),
+        action_text="Review FX desk strategy breakdown",
+        severity="healthy",
+    )
+
     return layout_table(
         title="Trading & Advisory",
         subtitle="Real-time trading desk activity, PnL attribution, "
@@ -301,6 +386,7 @@ def render_trading_advisory(cfg):
         kpi_items=kpis,
         table_columns=table_columns,
         table_data=table_data,
+        insight=trading_insight,
     )
 
 
@@ -449,12 +535,24 @@ def render_risk_management(cfg):
         ("Historical", html.Div(historical_cards)),
     ]
 
+    risk_insight = insight_card(
+        headline="VaR Breach Frequency Declining",
+        metric_value="2 vs 7",
+        direction="down",
+        narrative=(
+            "VaR breach frequency declining \u2014 2 events vs 7 last quarter"
+        ),
+        action_text="Review VaR model performance",
+        severity="healthy",
+    )
+
     return layout_alerts(
         title="Risk Management",
-        subtitle="Enterprise risk monitoring — VaR, stress testing, "
+        subtitle="Enterprise risk monitoring \u2014 VaR, stress testing, "
                  "concentration limits, and counterparty exposure",
         tab_contents=tab_contents,
         summary_kpis=summary_kpis,
+        insight=risk_insight,
     )
 
 
@@ -628,6 +726,17 @@ def render_regulatory(cfg):
         ("Open Findings", "3", "red"),
     ]
 
+    regulatory_insight = insight_card(
+        headline="CET1 Ratio Provides Strong Capital Buffer",
+        metric_value="14.1%",
+        direction="up",
+        narrative=(
+            "CET1 ratio at 14.1% provides 310bps buffer above regulatory minimum"
+        ),
+        action_text="Review capital adequacy projections",
+        severity="healthy",
+    )
+
     return layout_split(
         title="Regulatory & Compliance",
         subtitle="Capital adequacy, regulatory reporting, and audit "
@@ -639,6 +748,7 @@ def render_regulatory(cfg):
         ],
         banner_text=banner_text,
         bottom_stats=bottom_stats,
+        insight=regulatory_insight,
     )
 
 
@@ -779,11 +889,23 @@ def render_fraud_cyber(cfg):
         {"col_span": 1, "row_span": 1, "content": backlog_panel},
     ]
 
+    fraud_insight = insight_card(
+        headline="False Positive Rate Reduction",
+        metric_value="4.4%",
+        direction="down",
+        narrative=(
+            "False positive rate down to 4.4% \u2014 reducing investigation backlog"
+        ),
+        action_text="Review detection model tuning",
+        severity="healthy",
+    )
+
     return layout_grid(
         title="Fraud & Cyber Security",
         subtitle="Real-time threat monitoring, fraud detection, and "
                  "investigation pipeline across all channels",
         grid_items=grid_items,
+        insight=fraud_insight,
     )
 
 
@@ -867,6 +989,17 @@ def render_operations(cfg):
             "status": status,
         })
 
+    ops_insight = insight_card(
+        headline="Cross-Border STP Rate Improving",
+        metric_value="98.2%",
+        direction="up",
+        narrative=(
+            "STP rate for cross-border payments improved to 98.2%"
+        ),
+        action_text="Review cross-border processing pipeline",
+        severity="healthy",
+    )
+
     return layout_table(
         title="Operations & Infrastructure",
         subtitle="System health, settlement processing, and incident "
@@ -875,4 +1008,5 @@ def render_operations(cfg):
         kpi_items=kpis,
         table_columns=table_columns,
         table_data=table_data,
+        insight=ops_insight,
     )

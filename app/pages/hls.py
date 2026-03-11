@@ -16,8 +16,9 @@ from app.page_styles import (
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
     _card, _hex_to_rgb,
+    insight_card, morning_briefing,
 )
-from app.theme import COLORS, FONT_FAMILY
+from app.theme import COLORS, FONT_FAMILY, get_vertical_theme
 from dash import dcc, html
 import plotly.graph_objects as go
 
@@ -30,8 +31,38 @@ def render_dashboard(cfg):
     """Executive HLS dashboard with hero metrics, patient volume trend,
     department revenue donut and readmission trend chart."""
 
+    # ── Morning briefing ──────────────────────────────────────────────
+    briefing = morning_briefing(
+        title="HLS Morning Briefing",
+        summary_text=(
+            "Operating Margin Resilience remains strong at 12.4%, holding above "
+            "the 10% target for the third consecutive quarter despite rising supply "
+            "costs. Labor stability continues to improve with the Labor Stability "
+            "Index at 87%, driven by reduced RN turnover and expanded retention "
+            "programs. Patient outcomes are trending favorably\u2014readmission rates "
+            "fell to 8.2% and the Patient Outcomes Score reached 94.2%, reflecting "
+            "sustained gains in clinical quality across all departments."
+        ),
+        signals=[
+            {"label": "Operating Margin", "status": "green",
+             "detail": "12.4% \u2014 above 10% target for Q3 running"},
+            {"label": "Labor Stability Index", "status": "green",
+             "detail": "87% \u2014 RN turnover down 4.1 pts YoY"},
+            {"label": "Patient Outcomes", "status": "green",
+             "detail": "94.2% composite score, readmissions at 8.2%"},
+            {"label": "Supply Chain", "status": "amber",
+             "detail": "Epinephrine shortage \u2014 18 days stock remaining"},
+        ],
+    )
+
     # ── Hero metrics ──────────────────────────────────────────────────
     heroes = [
+        hero_metric("North Star: Operating Margin", "12.4%",
+                     trend_text="+1.2 pts vs prior quarter", trend_dir="up",
+                     accent="green", href="/hls/healthcare_ops"),
+        hero_metric("Labor Stability Index", "87%",
+                     trend_text="+4.1 pts vs prior year", trend_dir="up",
+                     accent="blue", href="/hls/healthcare_ops"),
         hero_metric("Patient Outcomes Score", "94.2%",
                      trend_text="+2.1% vs last quarter", trend_dir="up",
                      accent="green", href="/hls/patient_outcomes"),
@@ -70,6 +101,7 @@ def render_dashboard(cfg):
         marker=dict(size=5),
     ))
     vol_fig.update_layout(**dark_chart_layout(
+        vertical="hls",
         height=320,
         title=dict(text="Patient Volume Trends (2025)",
                    font=dict(size=14, color=COLORS["white"]),
@@ -108,6 +140,7 @@ def render_dashboard(cfg):
         mode="lines", line=dict(color=COLORS["yellow"], width=1, dash="dash"),
     ))
     readmit_fig.update_layout(**dark_chart_layout(
+        vertical="hls",
         height=280,
         title=dict(text="30-Day Readmission Rate",
                    font=dict(size=14, color=COLORS["white"]),
@@ -119,18 +152,41 @@ def render_dashboard(cfg):
     readmit_chart = dcc.Graph(figure=readmit_fig, config=CHART_CONFIG,
                               style={"height": "280px"})
 
+    # ── Insight card ──────────────────────────────────────────────────
+    staffing_insight = insight_card(
+        headline="Staffing Risk: ICU Weekend Coverage",
+        metric_value="74%",
+        direction="down",
+        narrative=(
+            "ICU weekend nurse-to-patient ratios have dipped below the 80% "
+            "staffing threshold for 3 of the last 4 weekends. This correlates "
+            "with a 1.6-point uptick in weekend readmission rates and may "
+            "pressure operating margin if overtime costs continue to rise."
+        ),
+        action_text="Review ICU staffing plan",
+        severity="warning",
+    )
+
     panels = [
         ("Department Revenue", dept_chart, "/hls/healthcare_ops"),
         ("Readmission Trend", readmit_chart, "/hls/patient_outcomes"),
     ]
 
-    return layout_executive(
+    # ── Layout assembly with briefing and insight ─────────────────────
+    dashboard = layout_executive(
         title="Healthcare & Life Sciences Dashboard",
         subtitle="Executive overview of clinical performance, utilization, and financials",
         heroes=heroes,
         main_chart=main_chart,
         panels=panels,
     )
+
+    # Prepend briefing and append insight into the content area
+    content_area = dashboard.children[1]  # the content-area div
+    content_area.children.insert(0, briefing)
+    content_area.children.append(staffing_insight)
+
+    return dashboard
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -250,10 +306,19 @@ def render_healthcare_ops(cfg):
         {"col_span": 1, "row_span": 1, "content": equip_panel},
     ]
 
+    insight = insight_card(
+        headline="ER Wait Times Down 12%",
+        metric_value="-12%",
+        direction="down",
+        narrative="ER wait times decreased 12% after triage protocol update. Average wait now 28 minutes.",
+        severity="healthy",
+    )
+
     return layout_grid(
         title="Healthcare Operations",
         subtitle="Real-time operational metrics across facilities",
         grid_items=grid_items,
+        insight=insight,
     )
 
 
@@ -327,6 +392,14 @@ def render_network_quality(cfg):
             "status": status,
         })
 
+    insight = insight_card(
+        headline="3 Providers Below HEDIS Threshold",
+        metric_value="3",
+        direction="up",
+        narrative="Three providers fell below HEDIS compliance thresholds this quarter. Network contract reviews recommended.",
+        severity="warning",
+    )
+
     return layout_table(
         title="Network & Quality",
         subtitle="Provider network performance, HEDIS compliance, and quality metrics",
@@ -334,6 +407,7 @@ def render_network_quality(cfg):
         kpi_items=kpi_items,
         table_columns=columns,
         table_data=data,
+        insight=insight,
     )
 
 
@@ -405,6 +479,14 @@ def render_biopharma_intel(cfg):
         ]),
     ])
 
+    insight = insight_card(
+        headline="Phase III Success Rate Trending Up",
+        metric_value="68%",
+        direction="up",
+        narrative="Phase III success rate at 68%, up from 61% last year. Oncology pipeline strongest performer.",
+        severity="healthy",
+    )
+
     return layout_forecast(
         title="BioPharma Intelligence",
         subtitle="Drug pipeline analytics, clinical trial tracking, and market forecast",
@@ -414,6 +496,7 @@ def render_biopharma_intel(cfg):
         hero_trend_text="+12.8% vs prior year",
         main_chart=main_chart,
         side_component=side,
+        insight=insight,
     )
 
 
@@ -541,11 +624,20 @@ def render_supply_chain(cfg):
         ("Normal", html.Div(normal_cards)),
     ]
 
+    insight = insight_card(
+        headline="Epinephrine Supply Critical",
+        metric_value="5 days",
+        direction="down",
+        narrative="Epinephrine supply at 5-day coverage — well below 14-day safety threshold. Expedited order placed.",
+        severity="critical",
+    )
+
     return layout_alerts(
         title="Supply Chain & Manufacturing",
         subtitle="Drug shortages, equipment logistics, cold chain, and supplier monitoring",
         tab_contents=tab_contents,
         summary_kpis=summary_kpis,
+        insight=insight,
     )
 
 
@@ -727,6 +819,14 @@ def render_medtech_surgery(cfg):
         ("Device Uptime", "99.1%", "green"),
     ]
 
+    insight = insight_card(
+        headline="Robotic-Assisted Procedures Outperforming",
+        metric_value="-0.8%",
+        direction="down",
+        narrative="Robotic-assisted procedures showing 0.8% lower complication rate vs traditional methods.",
+        severity="healthy",
+    )
+
     return layout_split(
         title="MedTech & Digital Surgery",
         subtitle="Surgical outcomes, robotic device utilization, and training compliance",
@@ -737,6 +837,7 @@ def render_medtech_surgery(cfg):
         ],
         banner_text=banner_text,
         bottom_stats=bottom_stats,
+        insight=insight,
     )
 
 
@@ -817,6 +918,14 @@ def render_patient_outcomes(cfg):
             "trend": f"{trend_arrow} {trend_pct}",
         })
 
+    insight = insight_card(
+        headline="Cardiac Care Readmission Improved",
+        metric_value="-2.1pts",
+        direction="down",
+        narrative="Cardiac care readmission rate improved 2.1 points this quarter to 6.1%.",
+        severity="healthy",
+    )
+
     return layout_table(
         title="Patient Outcomes",
         subtitle="Condition-level outcome analysis with recovery scoring and trend tracking",
@@ -824,4 +933,5 @@ def render_patient_outcomes(cfg):
         kpi_items=kpi_items,
         table_columns=columns,
         table_data=data,
+        insight=insight,
     )

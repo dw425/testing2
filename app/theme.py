@@ -12,16 +12,93 @@ base CSS stylesheet for the dark industrial theme.
 COLORS = {
     "blue": "#4B7BF5",
     "blue_hover": "#3D6BE0",
-    "dark": "#131620",
-    "panel": "#1A1F2E",
-    "border": "#272D3F",
-    "text_muted": "#8892A7",
-    "white": "#E8ECF4",
+    # 4-tier dark surface hierarchy (GitHub Dark-inspired)
+    "bg_base": "#0D1117",       # Deepest layer — page canvas
+    "dark": "#131620",          # Legacy alias (≈ bg_base variant)
+    "surface": "#161B22",       # Card backgrounds, content containers
+    "panel": "#1A1F2E",         # Legacy alias (≈ surface)
+    "surface_elevated": "#21262D",  # Modals, dropdowns, hover states
+    "surface_highest": "#30363D",   # Active selections, pressed states
+    # Borders — semi-transparent for theme coherence
+    "border_subtle": "rgba(255,255,255,0.06)",
+    "border": "#272D3F",        # Default border
+    "border_strong": "rgba(255,255,255,0.12)",
+    # Text hierarchy
+    "text_primary": "#E6EDF3",  # Main text — off-white, not pure white
+    "white": "#E8ECF4",         # Legacy alias
+    "text_secondary": "#8B949E",  # Descriptions, secondary info
+    "text_muted": "#8892A7",    # Legacy alias
+    "text_tertiary": "#484F58", # Disabled, very subtle labels
+    # Semantic accents
     "green": "#34D399",
     "yellow": "#FBBF24",
     "red": "#F87171",
     "purple": "#A78BFA",
+    "cyan": "#00E5FF",
+    "orange": "#FF6D00",
+    "coral": "#FF5252",
 }
+
+# ---------------------------------------------------------------------------
+# Per-vertical color themes
+# ---------------------------------------------------------------------------
+
+VERTICAL_THEMES = {
+    "gaming": {
+        "accent_primary": "#00E5FF",
+        "accent_secondary": "#FF007F",
+        "bg_base": "#050816",
+        "chart_colorway": ["#00E5FF", "#FF007F", "#A78BFA", "#34D399", "#FBBF24", "#F87171"],
+    },
+    "telecom": {
+        "accent_primary": "#0091D5",
+        "accent_secondary": "#26A69A",
+        "bg_base": "#0F1923",
+        "chart_colorway": ["#0091D5", "#26A69A", "#4B7BF5", "#34D399", "#FBBF24", "#F87171"],
+    },
+    "financial_services": {
+        "accent_primary": "#1C4E80",
+        "accent_secondary": "#288CFA",
+        "bg_base": "#0D1117",
+        "chart_colorway": ["#288CFA", "#34D399", "#F87171", "#FBBF24", "#A78BFA", "#1C4E80"],
+    },
+    "hls": {
+        "accent_primary": "#00897B",
+        "accent_secondary": "#1976D2",
+        "bg_base": "#FAFAFA",       # Light theme for healthcare
+        "is_light": True,
+        "chart_colorway": ["#00897B", "#1976D2", "#F87171", "#FBBF24", "#A78BFA", "#34D399"],
+    },
+    "manufacturing": {
+        "accent_primary": "#FF6D00",
+        "accent_secondary": "#34D399",
+        "bg_base": "#1B2631",
+        "chart_colorway": ["#FF6D00", "#34D399", "#4B7BF5", "#FBBF24", "#F87171", "#A78BFA"],
+    },
+    "media": {
+        "accent_primary": "#7C4DFF",
+        "accent_secondary": "#FF5252",
+        "bg_base": "#121212",
+        "chart_colorway": ["#7C4DFF", "#FF5252", "#34D399", "#FBBF24", "#4B7BF5", "#A78BFA"],
+    },
+    "risk": {
+        "accent_primary": "#1A237E",
+        "accent_secondary": "#4B7BF5",
+        "bg_base": "#0D1117",
+        "chart_colorway": ["#4B7BF5", "#F87171", "#FBBF24", "#34D399", "#A78BFA", "#1A237E"],
+    },
+}
+
+
+def get_vertical_theme(vertical_name: str) -> dict:
+    """Return the theme dict for a given vertical, falling back to defaults."""
+    return VERTICAL_THEMES.get(vertical_name, {
+        "accent_primary": COLORS["blue"],
+        "accent_secondary": COLORS["purple"],
+        "bg_base": COLORS["bg_base"],
+        "chart_colorway": [COLORS["blue"], COLORS["green"], COLORS["red"],
+                           COLORS["yellow"], COLORS["purple"], COLORS["cyan"]],
+    })
 
 # ---------------------------------------------------------------------------
 # Status badge colors  (bg, text, border)
@@ -111,11 +188,16 @@ def get_base_stylesheet() -> str:
 
     /* ---------- card ---------- */
     .card {{
-        background-color: {COLORS["panel"]};
+        background-color: {COLORS["surface"]};
         border: 1px solid {COLORS["border"]};
         border-radius: 12px;
         padding: 24px;
         margin-bottom: 16px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }}
+    .card:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }}
 
     .card-title {{
@@ -282,6 +364,7 @@ def get_base_stylesheet() -> str:
         padding: 0 32px 32px 32px;
         overflow-y: auto;
         height: calc(100vh - 80px);
+        scroll-behavior: smooth;
     }}
 
     /* ---------- page transition ---------- */
@@ -297,6 +380,37 @@ def get_base_stylesheet() -> str:
     .dash-loading .dash-spinner-container {{
         background-color: rgba(19, 22, 32, 0.7) !important;
     }}
+
+    /* ---------- staggered card entry ---------- */
+    @keyframes fadeInUp {{
+        from {{ opacity: 0; transform: translateY(12px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    .content-area .card {{
+        animation: fadeInUp 0.35s ease-out both;
+    }}
+    .content-area .card:nth-child(1) {{ animation-delay: 0s; }}
+    .content-area .card:nth-child(2) {{ animation-delay: 0.05s; }}
+    .content-area .card:nth-child(3) {{ animation-delay: 0.1s; }}
+    .content-area .card:nth-child(4) {{ animation-delay: 0.15s; }}
+    .content-area .card:nth-child(5) {{ animation-delay: 0.2s; }}
+    .content-area .card:nth-child(6) {{ animation-delay: 0.25s; }}
+
+    /* ---------- status health pulse ---------- */
+    @keyframes statusPulse {{
+        0%, 100% {{ opacity: 1; }}
+        50% {{ opacity: 0.5; }}
+    }}
+    .status-pulse {{
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        animation: statusPulse 2s ease-in-out infinite;
+    }}
+    .status-pulse-green {{ background-color: {COLORS["green"]}; box-shadow: 0 0 6px {COLORS["green"]}50; }}
+    .status-pulse-amber {{ background-color: {COLORS["yellow"]}; box-shadow: 0 0 6px {COLORS["yellow"]}50; }}
+    .status-pulse-red {{ background-color: {COLORS["red"]}; box-shadow: 0 0 6px {COLORS["red"]}50; }}
 
     /* ---------- data table ---------- */
     .dash-table {{
@@ -508,13 +622,13 @@ def get_base_stylesheet() -> str:
         cursor: pointer !important;
     }}
     .Select-menu-outer {{
-        background-color: {COLORS["panel"]} !important;
+        background-color: {COLORS["surface_elevated"]} !important;
         border-color: {COLORS["border"]} !important;
         border-radius: 0 0 8px 8px !important;
         z-index: 100 !important;
     }}
     .Select-option {{
-        background-color: {COLORS["panel"]} !important;
+        background-color: {COLORS["surface_elevated"]} !important;
         color: {COLORS["white"]} !important;
     }}
     .Select-option.is-focused {{
@@ -635,5 +749,50 @@ def get_base_stylesheet() -> str:
     }}
     .genie-msg-ai li {{
         margin-bottom: 2px;
+    }}
+
+    /* ---------- responsive breakpoints ---------- */
+    @media (max-width: 1200px) {{
+        .content-area {{
+            padding: 0 20px 20px 20px;
+        }}
+        .hub-grid {{
+            padding: 0 24px 24px;
+        }}
+    }}
+    @media (max-width: 768px) {{
+        .content-area {{
+            padding: 0 12px 12px 12px;
+        }}
+        .page-header {{
+            padding: 16px 12px 12px 12px;
+        }}
+        .hub-grid {{
+            grid-template-columns: 1fr !important;
+            padding: 0 12px 24px;
+        }}
+        .sidebar {{
+            display: none;
+        }}
+    }}
+
+    /* ---------- chart transition smoothing ---------- */
+    .js-plotly-plot .plotly .main-svg {{
+        transition: opacity 0.3s ease;
+    }}
+
+    /* ---------- insight card accent border animation ---------- */
+    @keyframes insightPulse {{
+        0%, 100% {{ opacity: 1; }}
+        50% {{ opacity: 0.7; }}
+    }}
+
+    /* ---------- reduce motion for accessibility ---------- */
+    @media (prefers-reduced-motion: reduce) {{
+        *, *::before, *::after {{
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }}
     }}
     """
