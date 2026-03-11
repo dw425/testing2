@@ -661,10 +661,8 @@ def insight_card(headline, metric_value, direction="up", narrative="",
             "margin": "0 0 10px 0",
         }))
 
-    if sparkline_values:
-        fig = sparkline_figure(sparkline_values, border_color, height=40)
-        children.append(dcc.Graph(figure=fig, config=CHART_CONFIG,
-                                  style={"height": "40px", "width": "100%", "marginBottom": "8px"}))
+    # Sparkline intentionally omitted — at 40px it renders as a distracting
+    # thin line.  The sparkline_values parameter is kept for API compat.
 
     if action_text:
         children.append(html.Div(style={"display": "flex", "alignItems": "center", "gap": "6px"}, children=[

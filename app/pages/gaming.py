@@ -90,14 +90,13 @@ def render_dashboard(cfg):
         x=days, y=dau_values, name="DAU (M)",
         mode="lines+markers",
         line=dict(color=COLORS["blue"], width=2),
-        marker=dict(size=4),
-        fill="tozeroy",
-        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
+        marker=dict(size=5),
     ))
     fig_main.add_trace(go.Scatter(
         x=days, y=[v / 1000 for v in new_users], name="New Users (K)",
-        mode="lines",
+        mode="lines+markers",
         line=dict(color=COLORS["green"], width=2, dash="dot"),
+        marker=dict(size=3),
         yaxis="y2",
     ))
     fig_main.update_layout(**dark_chart_layout(
@@ -106,9 +105,11 @@ def render_dashboard(cfg):
         title=dict(text="Player Trends  —  Last 30 Days",
                    font=dict(size=14, color=COLORS["white"])),
         yaxis=dict(title="DAU (millions)", showgrid=True,
-                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"],
+                   range=[1.0, 1.35]),
         yaxis2=dict(title="New Users (K)", overlaying="y", side="right",
-                    showgrid=False, color=COLORS["text_muted"]),
+                    showgrid=False, color=COLORS["text_muted"],
+                    range=[0.07, 0.12]),
         legend=dict(orientation="h", y=-0.18, x=0.5, xanchor="center"),
     ))
     main_chart = dcc.Graph(figure=fig_main, config=CHART_CONFIG)
