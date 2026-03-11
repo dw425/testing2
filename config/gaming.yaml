@@ -105,28 +105,39 @@ ml:
     target_value: 8.4
 pages:
 - id: dashboard
-  label: Live Ops Command Center
+  label: Player Experience Hub
   icon: fa-gamepad
+  group: ""
   enabled: true
-- id: player_intel
-  label: Player Intelligence
-  icon: fa-users
+- id: know_player
+  label: Know the Player
+  icon: fa-user-magnifying-glass
+  group: "Next Gen Player Experience"
   enabled: true
-- id: revenue
-  label: Revenue & Monetization
-  icon: fa-coins
-  enabled: true
-- id: ua_growth
-  label: User Acquisition & Growth
+- id: grow_playerbase
+  label: Grow the Playerbase
   icon: fa-rocket
+  group: "Next Gen Player Experience"
   enabled: true
-- id: game_dev
-  label: Game Development & Quality
+- id: grow_revenue
+  label: Grow Your Revenue
+  icon: fa-coins
+  group: "Next Gen Player Experience"
+  enabled: true
+- id: build_games
+  label: De-risk Development
   icon: fa-code-branch
+  group: "Build Great Games"
   enabled: true
-- id: infrastructure
-  label: Infrastructure & Ops
+- id: live_ops
+  label: Effective Live Operations
   icon: fa-server
+  group: "Build Great Games"
+  enabled: true
+- id: efficient_ops
+  label: Efficient Operations
+  icon: fa-chart-bar
+  group: "Efficient Operations"
   enabled: true
 genie:
   space_name: GamingIQ Genie
@@ -138,36 +149,140 @@ genie:
   - gaming_iq.silver.player_telemetry
   - gaming_iq.silver.transaction_log
   sample_questions:
-  - What is the average Player LTV by game title and segment?
-  - Show me D1, D7, and D30 retention rates by acquisition source.
-  - Which UA campaigns have the best ROAS in the last 30 days?
-  - What is the current ARPDAU trend across all titles?
-  - Which game has the highest content ROI from live events?
-  - Show me bug resolution rate and build times by milestone.
-  - What are the server uptime percentages by region?
+  # --- Player Intelligence ---
+  - What are the current DAU and MAU numbers broken down by game title?
+  - How has DAU trended over the past 90 days across all titles?
+  - What is the DAU-to-MAU ratio (stickiness) for each game?
+  - Show me D1, D7, D14, and D30 retention curves by cohort week.
+  - Which acquisition source delivers the best D7 retention rate?
+  - How does retention differ between organic and paid users?
+  - What is the overall churn rate this month compared to last month?
   - Which player segment has the highest churn risk right now?
-  - What is the CPI and CPM by acquisition channel?
-  - How does battle pass engagement compare across game titles?
+  - What are the top predictive features driving churn in our model?
+  - Show me a cohort analysis of revenue retention for the last 12 weekly cohorts.
+  - How many players are in each segment (Whale, Dolphin, Minnow, Free-to-Play)?
+  - What is the average player lifetime in days by game title?
+  - What is the median session length and how has it changed over the past quarter?
+  - What is the engagement score distribution across all active players?
+  # --- Revenue & Monetization ---
+  - What is the current ARPDAU trend across all titles?
+  - How does ARPU compare across player segments and regions?
+  - What is the average Player LTV by game title and segment?
+  - What percentage of total revenue comes from IAP vs ads vs subscriptions?
+  - Show me daily IAP revenue broken down by game title for the past 30 days.
+  - What is the average ad revenue per session by region?
+  - How many active subscribers do we have and what is the monthly subscription revenue?
+  - What is the current battle pass attach rate and total battle pass revenue?
+  - What is the free-to-paid conversion rate by acquisition channel?
+  - What percentage of DAU are paying users and how has that changed over time?
+  - Show me the spend distribution histogram for paying users this month.
+  - What is the revenue per paying user (ARPPU) by game title?
+  - Which in-app purchase items generate the most revenue?
+  - How does LTV compare to CAC by acquisition source?
+  - What is the first-purchase conversion rate by day since install?
+  # --- User Acquisition & Growth ---
+  - What is the CPI by acquisition channel for the past 30 days?
+  - Which UA campaigns have the best ROAS in the last 30 days?
+  - Show me total UA spend and installs by campaign and platform.
+  - What is the breakdown of organic vs paid installs this month?
+  - Which channel has the best install-to-first-session conversion rate?
+  - What is the channel attribution breakdown for new players this week?
+  - What is our current viral coefficient and how has it trended?
+  - How effective is the referral program in driving new installs?
+  - Show me the funnel from ad impression to install to first purchase by channel.
+  - Which creative variants are driving the lowest CPI?
+  - What is the 7-day ROAS by region and campaign?
+  # --- Game Development & Quality ---
+  - What is the current build stability score across all active branches?
+  - Show me crash rates by platform and app version for the past 14 days.
+  - What is the average bug resolution time by severity level?
+  - How has the QA pass rate trended over the last five milestones?
+  - What is our current App Store rating and how has it changed since the last update?
+  - Show me review sentiment analysis for the most recent app version.
+  - What was the impact of the latest update on retention and session length?
+  - What are the results of the most recent A/B tests and their statistical significance?
+  - How many critical bugs are currently open and what is their average age?
+  # --- Live Ops & Content ---
+  - Which game has the highest content ROI from live events?
+  - What is the revenue lift from the current live event compared to baseline?
+  - How does seasonal engagement differ between holiday events and regular events?
+  - What is the conversion rate on the current limited-time offer?
+  - What percentage of eligible players participated in the latest event?
+  - What is the average reward payout per player and how does it affect economy health?
+  - What is the overall battle pass progression distribution at this point in the season?
+  - Which live event type generates the highest player engagement?
+  - How does event participation correlate with 30-day retention?
+  - Show me the ROI for each live ops event run in the past quarter.
+  - What is the optimal pricing for limited-time bundles based on historical conversion data?
+  # --- Infrastructure & Operations ---
+  - What are the server uptime percentages by region?
+  - What is the current average matchmaking latency by region?
+  - What is the peak concurrent user count today and how does it compare to last week?
+  - Show me CDN cache hit rates and content delivery latency by region.
+  - Which regional servers are experiencing the highest load right now?
+  - What is the current error rate by service and how does it compare to the 30-day average?
+  - How fresh is the data in our analytics pipeline and are there any lag issues?
+  - What is the current server cost per concurrent user by region?
+  - Show me the p50, p95, and p99 API response times for the past 24 hours.
+  # --- Economy & Balance ---
+  - What is the net virtual currency flow (sources minus sinks) over the past 30 days?
+  - Is there evidence of inflation in our in-game economy based on item price trends?
+  - How are items priced relative to their rarity tier and is pricing consistent?
+  - What is the total marketplace transaction volume and gross merchandise value this week?
+  - What is the daily trade volume on the player-to-player marketplace?
+  - Is the sink-to-source ratio for virtual currency within our target balance range?
+  - Which items have the highest velocity on the marketplace?
+  - How do economy metrics differ between new players and veterans?
+  # --- Social & Community ---
+  - What is the current guild participation rate and average guild size by game?
+  - What is the average friend network size and how does it correlate with retention?
+  - How has in-game chat volume trended over the past 30 days?
+  - What is the player report rate and how does it break down by report category?
+  - What are the current toxicity metrics and how do they compare to last month?
+  - What is the overall community sentiment score based on social media and forums?
+  - How does having guild membership affect spending and session frequency?
+  - What percentage of players have added at least one friend in the past 7 days?
+  # --- Competitive & Esports ---
+  - What does the ranked player distribution look like across all skill tiers?
+  - What is the average match fairness score and how often are matches within the target skill delta?
+  - What is the current tournament participation rate and how has it changed over the past quarter?
+  - How active is the leaderboard and what percentage of ranked players compete weekly?
+  - What is the skill rating distribution and are there any signs of rating inflation or deflation?
+  - What is the win-rate distribution by skill tier and are any tiers showing imbalance?
+  - How do competitive players differ from casual players in terms of LTV and session length?
+  - What is the average time for a new player to reach ranked play?
+  # --- Cross-Platform & Technical ---
+  - What is the platform split of DAU across iOS, Android, PC, and console?
+  - What percentage of players are using cross-play and how has adoption trended?
+  - How does device performance (FPS, load time) vary across platform and device tier?
+  - What are the average load times by platform and how do they correlate with session abandonment?
+  - What is the average client storage usage and how does it affect uninstall rates?
+  - Which device models have the highest crash rates?
+  - What is the breakdown of graphics quality settings chosen by players on each platform?
 dashboard:
   kpis:
-  - title: Daily Active Users
-    query: SELECT dau FROM gold.live_ops_kpis ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:,.0f}'
-    value: "2.4M"
+  - title: Player LTV
+    value: "$47.80"
     accent: blue
-  - title: ARPDAU
-    query: SELECT arpdau FROM gold.live_ops_kpis ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:.3f}'
-    value: "$0.118"
-    accent: purple
-  - title: D7 Retention
-    query: SELECT d7_retention FROM gold.player_retention_cohorts ORDER BY cohort_date DESC LIMIT 1
-    format: '{:.0%}'
+  - title: Player Retention (D7)
     value: "41%"
     accent: green
+  - title: ARPDAU
+    value: "$0.118"
+    accent: purple
+  - title: CLV
+    value: "$52.40"
+    accent: blue
+  - title: ROAS
+    value: "1.52x"
+    accent: green
+  - title: CPI
+    value: "$2.30"
+    accent: purple
+  - title: Active Players (DAU)
+    value: "2.4M"
+    accent: blue
   - title: High Churn Risk
-    query: SELECT churn_risk_high FROM gold.live_ops_kpis ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:,.0f}'
     value: "34.2K"
     accent: red
     alert: true

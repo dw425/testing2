@@ -131,28 +131,39 @@ ml:
     target_value: 0.93
 pages:
 - id: dashboard
-  label: Enterprise Risk Command Center
+  label: Capital Markets Hub
   icon: fa-building-columns
+  group: ""
   enabled: true
-- id: banking
-  label: Banking Intelligence
-  icon: fa-university
+- id: investment_alpha
+  label: Investment Analytics & Alpha
+  icon: fa-chart-line
+  group: "Drive Growth"
   enabled: true
-- id: capital_markets
-  label: Capital Markets Analytics
+- id: trading_advisory
+  label: Trading & Advisory
   icon: fa-chart-pie
+  group: "Drive Growth"
   enabled: true
-- id: insurance
-  label: Insurance Operations
+- id: risk_management
+  label: Risk Management
   icon: fa-shield-halved
+  group: "Protect the Firm"
   enabled: true
-- id: fraud_compliance
-  label: Fraud & Compliance Hub
+- id: regulatory
+  label: Regulatory & Compliance
   icon: fa-gavel
+  group: "Protect the Firm"
   enabled: true
-- id: customer
-  label: Customer & Distribution
-  icon: fa-users
+- id: fraud_cyber
+  label: Fraud & Cybersecurity
+  icon: fa-user-shield
+  group: "Protect the Firm"
+  enabled: true
+- id: operations
+  label: Operations & Efficiency
+  icon: fa-gears
+  group: "Drive Efficiency"
   enabled: true
 genie:
   space_name: FinancialServicesIQ Genie
@@ -166,36 +177,140 @@ genie:
   - financial_services_iq.silver.transaction_raw
   - financial_services_iq.silver.market_data
   sample_questions:
-  - What is the transaction fraud detection rate by channel?
-  - Show me the credit portfolio delinquency breakdown by loan type.
-  - What is the portfolio VaR contribution by asset class?
-  - Which insurance product lines have the highest combined ratio?
-  - How many AML alerts are open vs resolved this month?
-  - What is the customer LTV distribution by segment?
-  - Show me claims fraud detection rate by claim type.
-  - What is the Sharpe ratio by portfolio over the last quarter?
-  - Which distribution channels have the highest policy retention?
-  - What is the STP settlement rate trend in capital markets?
+  # Banking Operations
+  - What is the current net interest margin trend over the past 12 months?
+  - Show me monthly loan origination volume by product type for this fiscal year.
+  - What is the deposit growth rate by region and customer segment?
+  - Which branches are performing above target on revenue per FTE?
+  - What is the digital banking adoption rate compared to last quarter?
+  - Show me the account opening funnel conversion rates by channel.
+  - What is the cross-sell rate for retail banking customers by segment?
+  - How has the cost-to-income ratio trended across business lines?
+  - What is the average time to fund for mortgage originations by region?
+  - Which retail banking products have the highest year-over-year growth in new accounts?
+  # Credit Risk
+  - What is the 30-60-90 day delinquency rate trend by loan category?
+  - Show me the loss given default estimates by collateral type.
+  - What is the exposure at default distribution across the commercial loan portfolio?
+  - How has the credit score distribution shifted for new originations this quarter?
+  - What is the portfolio concentration risk by industry sector?
+  - Which early warning signals are triggering most frequently for watch-list accounts?
+  - What is the provision coverage ratio by loan segment compared to peers?
+  - Show me the CECL reserve adequacy analysis by portfolio vintage.
+  - What is the migration matrix for credit ratings over the last four quarters?
+  - How do default rates compare across geographic regions for consumer lending?
+  # Capital Markets
+  - What is total AUM by asset class and how has it changed month-over-month?
+  - Show me portfolio returns versus benchmark by strategy for the current quarter.
+  - What is the daily Value at Risk at the 95th and 99th percentile by trading desk?
+  - How does the Sharpe ratio compare across equity, fixed income, and alternatives portfolios?
+  - What is the alpha generation attribution by sector and geography?
+  - Show me trade execution quality metrics including slippage and fill rates.
+  - What is the straight-through processing rate by trade type and counterparty?
+  - How has settlement efficiency trended and what is the current fail rate?
+  - What is the market making P&L by product and how does it compare to budget?
+  - Show me counterparty credit exposure by rating tier and netting agreement.
+  # Insurance Operations
+  - What is the combined ratio by insurance line of business for the current year?
+  - Show me the loss ratio trend by product line over the past 8 quarters.
+  - How does the expense ratio compare across distribution channels?
+  - What is the average claims processing time by claim type and severity?
+  - Show me the solvency ratio trend and how it compares to regulatory minimums.
+  - What is the reserve adequacy position by line of business and accident year?
+  - Which policy segments have the highest retention rates at renewal?
+  - What is the lapse rate by product type and policy duration cohort?
+  - Show me underwriting profitability by risk tier and geographic region.
+  - What is the claims severity trend for auto and homeowners lines?
+  # Fraud & AML
+  - What is the transaction fraud rate by payment channel and transaction type?
+  - Show me the false positive rate trend for the fraud detection model by segment.
+  - How many SARs have been filed this quarter compared to the same period last year?
+  - What is the AML alert volume by risk category and disposition outcome?
+  - What is the KYC completion rate for new account onboarding by customer type?
+  - Show me sanctions screening hit rates and average resolution time.
+  - What is the real-time fraud detection rate and average decision latency?
+  - How large is the investigation backlog by case priority and analyst team?
+  - What is the fraud loss recovery rate by fraud type and detection method?
+  - Show me the geographic distribution of flagged suspicious transactions this month.
+  # Customer Analytics
+  - What is the average customer lifetime value by segment and product holding?
+  - Show me the NPS trend by customer segment and service channel.
+  - Which customer segments have the highest predicted churn probability?
+  - What is the profitability distribution across customer segments?
+  - How does wallet share compare for affluent versus mass market customers?
+  - What are the top next-best-action recommendations by customer segment?
+  - What is the average relationship depth measured by products per household?
+  - Show me the affluent segment growth rate by region and acquisition channel.
+  - How does customer satisfaction correlate with digital engagement frequency?
+  - What is the customer attrition rate by tenure cohort and primary product?
+  # Regulatory & Compliance
+  - What are the current Basel III CET1 and total capital ratios versus requirements?
+  - Show me the latest stress test results under adverse and severely adverse scenarios.
+  - Are all Dodd-Frank reporting obligations current and what items are pending?
+  - What is the status of MiFID II transaction reporting completeness and accuracy?
+  - How many GDPR data subject access requests are open and what is the average response time?
+  - Show me outstanding audit findings by severity and remediation due date.
+  - What is the regulatory capital allocation by business unit and risk type?
+  - How has the leverage ratio trended over the past six quarters?
+  - What is the liquidity coverage ratio and net stable funding ratio position?
+  - Show me the compliance training completion rate by department and deadline.
+  # Payments & Cards
+  - What is the total transaction volume and value by payment type this month?
+  - Show me interchange revenue by card product and merchant category.
+  - What is the card activation rate within the first 30 and 90 days of issuance?
+  - How has contactless payment adoption trended across customer demographics?
+  - What is the mobile wallet usage rate by platform and customer age group?
+  - Show me the payment failure rate by channel and root cause category.
+  - What is the dispute rate by card type and dispute reason code?
+  - How does authorization approval rate compare across card products and regions?
+  - What is the average revenue per active card by portfolio segment?
+  - Show me real-time payment volume growth compared to ACH and wire transfers.
+  # Wealth Management
+  - What is the AUM growth rate by advisor team and client segment?
+  - Show me advisor productivity metrics including revenue per advisor and client-to-advisor ratio.
+  - What is the client retention rate by AUM tier and relationship tenure?
+  - How has fee compression impacted management fee revenue year-over-year?
+  - What is the portfolio allocation breakdown by asset class for each client segment?
+  - How frequently are portfolios being rebalanced and what triggers rebalancing events?
+  - What percentage of clients are on track for their stated financial goals?
+  - Show me net new asset flows by advisor team and source channel.
+  - What is the average onboarding time for new wealth management clients?
+  - How do managed portfolio returns compare to self-directed account performance?
+  # Digital & Innovation
+  - What is the digital channel adoption rate by customer segment and transaction type?
+  - Show me API call volume and error rates for open banking integrations.
+  - What is the open banking consent rate and most-used third-party provider categories?
+  - How are fintech partnership metrics trending for embedded lending and payments?
+  - What is the process automation rate for account opening and loan servicing?
+  - Show me straight-through processing rates across all operational workflows.
+  - What is the mobile app daily active user trend and session duration?
+  - How does chatbot resolution rate compare to live agent handling for service requests?
+  - What is the digital sales conversion rate versus branch and call center channels?
+  - Show me the technology cost ratio as a percentage of revenue by business line.
 dashboard:
   kpis:
-  - title: Transactions Today
-    query: SELECT transactions_today FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:.1f}M'
-    value: "12.5M"
+  - title: Alpha Generation
+    value: "+180 bps"
     accent: blue
-  - title: Fraud Blocked
-    query: SELECT fraud_blocked FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:.0f}'
-    value: "847"
-    accent: red
-    alert: true
   - title: Portfolio VaR (95%)
-    query: SELECT var_95_daily FROM gold.risk_overview_kpis ORDER BY snapshot_time DESC LIMIT 1
-    format: ${:.0f}M
     value: "$47M"
     accent: purple
-  - title: Combined Ratio
-    query: SELECT combined_ratio FROM gold.insurance_metrics ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:.1f}%'
-    value: "96.4%"
+  - title: Fraud Detection Rate
+    value: "96.2%"
     accent: green
+  - title: STP Rate
+    value: "94%"
+    accent: blue
+  - title: Trading Cost
+    value: "2.4 bps"
+    accent: purple
+  - title: Regulatory Timeliness
+    value: "99.1%"
+    accent: green
+  - title: AUM Growth
+    value: "+8.7%"
+    accent: blue
+  - title: Reconciliation Breaks
+    value: "0.6%"
+    accent: red
+    alert: true

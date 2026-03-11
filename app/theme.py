@@ -453,4 +453,96 @@ def get_base_stylesheet() -> str:
             grid-template-columns: 1fr;
         }}
     }}
+
+    /* ---------- dark dcc.Dropdown ---------- */
+    .Select-control {{
+        background-color: {COLORS["panel"]} !important;
+        border-color: {COLORS["border"]} !important;
+        border-radius: 8px !important;
+        cursor: pointer !important;
+    }}
+    .Select-menu-outer {{
+        background-color: {COLORS["panel"]} !important;
+        border-color: {COLORS["border"]} !important;
+        border-radius: 0 0 8px 8px !important;
+        z-index: 100 !important;
+    }}
+    .Select-option {{
+        background-color: {COLORS["panel"]} !important;
+        color: {COLORS["white"]} !important;
+    }}
+    .Select-option.is-focused {{
+        background-color: rgba(75, 123, 245, 0.15) !important;
+    }}
+    .Select-value-label, .Select-value {{
+        color: {COLORS["white"]} !important;
+    }}
+    .Select-placeholder {{
+        color: {COLORS["text_muted"]} !important;
+    }}
+    .Select-input input {{
+        color: {COLORS["white"]} !important;
+    }}
+    .Select-arrow {{
+        border-color: {COLORS["text_muted"]} transparent transparent !important;
+    }}
+    .Select.is-open > .Select-control {{
+        border-color: {COLORS["blue"]} !important;
+    }}
+    .Select-clear-zone .Select-clear {{
+        color: {COLORS["text_muted"]} !important;
+    }}
+    .has-value.Select--single > .Select-control .Select-value .Select-value-label {{
+        color: {COLORS["white"]} !important;
+    }}
+
+    /* ---------- dark DataTable ---------- */
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner input {{
+        color: {COLORS["white"]} !important;
+        background-color: {COLORS["dark"]} !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner .dash-filter input {{
+        color: {COLORS["white"]} !important;
+        background-color: {COLORS["dark"]} !important;
+        border: 1px solid {COLORS["border"]} !important;
+        border-radius: 4px !important;
+        padding: 4px 8px !important;
+        font-size: 12px !important;
+    }}
+    .dash-table-container .previous-next-container {{
+        background-color: {COLORS["panel"]} !important;
+        border: 1px solid {COLORS["border"]} !important;
+        border-top: none !important;
+        padding: 8px !important;
+    }}
+    .dash-table-container .previous-next-container button {{
+        color: {COLORS["white"]} !important;
+        background-color: {COLORS["panel"]} !important;
+        border: 1px solid {COLORS["border"]} !important;
+        border-radius: 6px !important;
+        cursor: pointer !important;
+    }}
+    .dash-table-container .previous-next-container button:hover {{
+        background-color: rgba(75, 123, 245, 0.15) !important;
+        border-color: {COLORS["blue"]} !important;
+    }}
+
+    /* ---------- dcc.Tabs dark theme ---------- */
+    .tab-container {{
+        border-bottom: 1px solid {COLORS["border"]} !important;
+    }}
+    .tab {{
+        border: none !important;
+        background-color: transparent !important;
+    }}
+    .tab--selected {{
+        border-bottom: 2px solid {COLORS["blue"]} !important;
+        color: {COLORS["white"]} !important;
+    }}
+
+    /* ---------- row selection highlight ---------- */
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected {{
+        background-color: rgba(75, 123, 245, 0.15) !important;
+        border-color: {COLORS["blue"]} !important;
+    }}
     """

@@ -97,28 +97,39 @@ ml:
 
 pages:
   - id: dashboard
-    label: Audience Command Center
-    icon: fa-users
-    enabled: true
-  - id: content
-    label: Content Performance
+    label: Media Outcome Hub
     icon: fa-film
+    group: ""
     enabled: true
-  - id: subscriptions
-    label: Subscription & Revenue
+  - id: content_strategy
+    label: Content Strategy
+    icon: fa-clapperboard
+    group: "Content & Audience"
+    enabled: true
+  - id: audience_intel
+    label: Audience Intelligence
+    icon: fa-users
+    group: "Content & Audience"
+    enabled: true
+  - id: subscription_intel
+    label: Subscription Intelligence
     icon: fa-credit-card
+    group: "Revenue Optimization"
     enabled: true
-  - id: advertising
-    label: Advertising & Yield
+  - id: ad_yield
+    label: Ad Yield & Monetization
     icon: fa-rectangle-ad
+    group: "Revenue Optimization"
     enabled: true
-  - id: creative
-    label: Creative & Campaigns
-    icon: fa-palette
-    enabled: true
-  - id: platform
-    label: Platform & QoS
+  - id: platform_delivery
+    label: Platform & Delivery
     icon: fa-server
+    group: "Platform Operations"
+    enabled: true
+  - id: personalization_ai
+    label: Personalization & AI
+    icon: fa-brain
+    group: "Platform Operations"
     enabled: true
 
 genie:
@@ -131,16 +142,116 @@ genie:
     - media_iq.silver.viewing_sessions
     - media_iq.silver.ad_impressions
   sample_questions:
-    - "What is the average subscriber LTV by plan type?"
-    - "Show me content ROI for original vs licensed content."
-    - "Which content genres have the highest completion rate?"
-    - "What is the current ad fill rate and CPM by ad format?"
-    - "How does monthly churn rate vary by subscription tier?"
-    - "What is the recommendation engine click-through rate by genre?"
-    - "Show me streaming quality metrics by platform."
-    - "Which advertising campaigns have the best ROAS this quarter?"
-    - "What is the cross-platform identity match rate by region?"
-    - "How does average watch time per day trend over the last 90 days?"
+    # --- Audience & Engagement ---
+    - "What is our monthly active user count by platform for the last six months?"
+    - "How does daily active user count compare across Web, iOS, Android, Smart TV, and Console?"
+    - "What is the average watch time per user per day, broken down by subscription tier?"
+    - "Show me average session duration trends over the last 90 days by device type."
+    - "What is the binge rate for original series released this quarter?"
+    - "Which genres have the highest episode completion rate?"
+    - "How does platform stickiness (DAU/MAU ratio) compare across regions?"
+    - "What percentage of viewers use more than one device per week?"
+    - "What are the peak viewing hours by region and day of the week?"
+    - "How has cross-device usage changed quarter over quarter for the past year?"
+    # --- Content Performance ---
+    - "What is the content ROI for original productions versus licensed titles released this year?"
+    - "What percentage of our catalog has been watched by at least one viewer in the last 30 days?"
+    - "Which genre delivers the highest average revenue per title?"
+    - "How do original series compare to licensed series on completion rate and average watch time?"
+    - "What are the top 20 titles by total view hours this month?"
+    - "How does content performance decay over time for titles older than 12 months?"
+    - "What is our library freshness score and how many titles were added in the last quarter?"
+    - "What is the recommendation hit rate by genre and region?"
+    - "Which titles have the highest rewatch rate in the last 90 days?"
+    - "Show me the bottom 25 titles by catalog utilization and their acquisition cost."
+    # --- Subscription & Revenue ---
+    - "What is the average subscriber lifetime value by plan type?"
+    - "How does monthly churn rate vary across Premium, Standard, Free, and Trial tiers?"
+    - "What is the current plan mix distribution and how has it shifted over the past year?"
+    - "What is our free trial to paid conversion rate by acquisition channel?"
+    - "How effective are our winback campaigns at reactivating churned subscribers?"
+    - "What is the revenue split between SVOD and AVOD for the current quarter?"
+    - "How does paywall conversion rate differ by content genre?"
+    - "What is the estimated pricing elasticity for our Premium tier based on recent A/B tests?"
+    - "Show me subscriber LTV cohort analysis for users acquired in the last 12 months."
+    - "What is the average revenue per user by region and subscription tier?"
+    # --- Advertising & Yield ---
+    - "What is the average CPM by ad format and platform?"
+    - "What is our current ad fill rate and how has it trended over the past six months?"
+    - "Which advertising campaigns have the best return on ad spend this quarter?"
+    - "What is the video ad completion rate by ad format and device type?"
+    - "What is our brand safety score across content categories?"
+    - "How does ad viewability rate compare across Web, mobile, and CTV inventory?"
+    - "Are we hitting frequency capping thresholds, and how does that affect ad completion rate?"
+    - "What is the revenue split between programmatic and direct-sold advertising?"
+    - "How does CTV ad performance compare to mobile and desktop on CPM and ROAS?"
+    - "What is the average ad load time and how does it correlate with viewer drop-off?"
+    # --- Creative & Campaigns ---
+    - "Which acquisition campaigns drove the most new subscribers last quarter?"
+    - "What are the A/B test results for our latest homepage redesign?"
+    - "How quickly does creative fatigue set in for our top-performing display ads?"
+    - "What is the subscriber acquisition channel mix and cost per acquisition by channel?"
+    - "How does social media engagement rate compare across platforms for our latest original series?"
+    - "What measurable PR impact did our most recent press coverage generate in new sign-ups?"
+    - "Show me brand lift survey results for our latest brand campaign."
+    - "Which creative variants have the highest click-through rate in current campaigns?"
+    - "What is the correlation between social media buzz and first-week viewership for new releases?"
+    - "How does email campaign performance compare to push notification campaigns on conversion rate?"
+    # --- Platform & QoS ---
+    - "What is the current buffering rate by platform and region?"
+    - "What is the average video start time across devices and how does it compare to our SLA?"
+    - "Show me average bitrate quality delivered by device type over the past 30 days."
+    - "How does CDN performance compare across our providers by region?"
+    - "What are the top error codes by frequency and which devices are most affected?"
+    - "Which device and OS combinations have the highest app crash rates?"
+    - "What is the app crash rate trend over the last three releases?"
+    - "What is the average page load time for our Web platform by page type?"
+    - "How does streaming quality of service correlate with viewer churn probability?"
+    - "What is the peak concurrent stream count by region and how close are we to capacity limits?"
+    # --- Content Strategy ---
+    - "Based on historical performance, which genres should we prioritize for greenlighting next year?"
+    - "What is the current status of our development pipeline and projected release schedule?"
+    - "How does content acquisition cost compare to actual viewership performance by genre?"
+    - "What does genre demand forecasting suggest for comedy versus drama over the next two quarters?"
+    - "Where are the biggest competitive content gaps relative to our top three competitors?"
+    - "What seasonal trends should we account for in our Q4 content release calendar?"
+    - "What is the average time from greenlight to release for original productions?"
+    - "Which content investments from the past two years have exceeded their projected ROI?"
+    - "How does audience demand for documentary content compare across US, UK, and APAC?"
+    - "What is the optimal release cadence for episodic series based on engagement data?"
+    # --- Personalization ---
+    - "What is the recommendation engine click-through rate by genre and user segment?"
+    - "What percentage of our catalog is covered by the personalization engine?"
+    - "How effective is our cold start strategy for new users in their first seven days?"
+    - "Are there measurable fairness gaps in recommendation performance across demographic groups?"
+    - "What is the content diversity score of recommendations served to the average user?"
+    - "Do we see evidence of filter bubbles in viewing patterns for long-tenure subscribers?"
+    - "How does recommendation CTR differ between the home feed and post-play suggestions?"
+    - "What is the impact of personalized thumbnails on title-level click-through rate?"
+    - "How does recommendation acceptance rate change over a subscriber's first 90 days?"
+    - "What percentage of total view hours are driven by algorithmic recommendations versus editorial placements?"
+    # --- Rights & Licensing ---
+    - "What is our license utilization rate for the current content catalog?"
+    - "What is the average cost per stream for licensed content by genre?"
+    - "How does territorial performance vary for our top 50 licensed titles?"
+    - "Are we optimizing release windows effectively based on viewership decay curves?"
+    - "Which content licenses are expiring in the next 90 days and what is their current viewership?"
+    - "What is the renewal ROI for licensed titles that were renewed in the past year?"
+    - "How does the cost per stream for licensed content compare to original content?"
+    - "Which territories are underperforming relative to the licensing fees paid?"
+    - "What is the average remaining license term weighted by content value?"
+    - "How many titles have exclusivity clauses and what premium do they deliver in viewership?"
+    # --- Social & Community ---
+    - "What is the social sharing rate for our top 20 titles across social platforms?"
+    - "How do user review scores on our platform correlate with completion rate?"
+    - "What is our community growth rate on owned social channels over the past quarter?"
+    - "Which influencer partnerships delivered the most measurable audience acquisition?"
+    - "What is the second-screen engagement rate during live events and sports broadcasts?"
+    - "What is the overall social sentiment trend for our brand over the past six months?"
+    - "How does social media conversation volume predict first-week viewership for new titles?"
+    - "What are the most discussed topics in user reviews for titles released this quarter?"
+    - "How does community engagement on our platform forums correlate with subscriber retention?"
+    - "Which social platforms drive the most referral traffic to our streaming service?"
 
 dashboard:
   kpis:
@@ -157,3 +268,15 @@ dashboard:
       value: "4.2%"
       accent: red
       alert: true
+    - title: Content Engagement Score
+      value: "7.8"
+      accent: blue
+    - title: Ad Fill Rate
+      value: "92%"
+      accent: green
+    - title: Recommendation CTR
+      value: "12.4%"
+      accent: purple
+    - title: Platform Uptime
+      value: "99.98%"
+      accent: green

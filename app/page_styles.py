@@ -2,20 +2,24 @@
 
 Six distinct page styles inspired by the Lakehouse Optimizer app:
   A (Executive)  - hero metrics, main chart, side panels
-  B (Table)      - filter bar, KPI strip, rich data table
-  C (Split)      - tabs, info banner, side-by-side panels
-  D (Alerts)     - tabs, expandable alert/incident cards
+  B (Table)      - filter bar, KPI strip, interactive DataTable
+  C (Split)      - real tabs (dcc.Tabs), info banner, side-by-side panels
+  D (Alerts)     - real tabs, expandable alert/incident cards
   E (Forecast)   - KPI strip, hero number, dual-axis chart
   F (Grid)       - multi-panel grid with varied sizes
 """
 
-from dash import dcc, html
+from dash import dcc, html, dash_table
 import plotly.graph_objects as go
 from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS
 
 # ── Chart helpers ───────────────────────────────────────────────────────────
 
-CHART_CONFIG = {"displayModeBar": False}
+CHART_CONFIG = {
+    "displayModeBar": "hover",
+    "displaylogo": False,
+    "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+}
 
 ACCENT_ICONS = {
     "blue": "fa-chart-line",
@@ -101,53 +105,80 @@ def kpi_strip(items):
 
 
 def filter_bar(filters):
-    """Horizontal filter dropdowns. filters: [{label, options}]"""
+    """Interactive filter bar using dcc.Dropdown. filters: [{label, options}]"""
     children = []
-    for f in filters:
+    for i, f in enumerate(filters):
+        opts = f.get("options", ["All"])
+        options = [{"label": o, "value": o} for o in opts]
         children.append(html.Div(
-            style={"display": "flex", "alignItems": "center", "gap": "8px",
-                    "backgroundColor": COLORS["panel"], "border": f"1px solid {COLORS['border']}",
-                    "borderRadius": "8px", "padding": "8px 14px"},
+            style={"display": "flex", "alignItems": "center", "gap": "8px", "minWidth": "180px"},
             children=[
                 html.Span(f["label"], style={"fontSize": "12px", "color": COLORS["text_muted"],
-                                              "fontWeight": "500"}),
-                html.Span(f.get("options", ["All"])[0],
-                           style={"fontSize": "12px", "color": COLORS["white"], "fontWeight": "600"}),
-                html.I(className="fa-solid fa-chevron-down",
-                       style={"fontSize": "10px", "color": COLORS["text_muted"], "marginLeft": "4px"}),
+                                              "fontWeight": "500", "whiteSpace": "nowrap"}),
+                dcc.Dropdown(
+                    options=options,
+                    value=opts[0] if opts else "All",
+                    clearable=False,
+                    style={"width": "150px", "fontSize": "12px"},
+                ),
             ],
         ))
     return html.Div(
-        style={"display": "flex", "gap": "10px", "marginBottom": "16px", "flexWrap": "wrap"},
+        style={"display": "flex", "gap": "12px", "marginBottom": "16px", "flexWrap": "wrap"},
         children=children,
     )
 
 
-def tab_bar(tabs, active_idx=0):
-    """Horizontal tab navigation."""
+def interactive_tabs(tab_contents):
+    """Real tab switching using dcc.Tabs.
+    tab_contents: list of (label, component) tuples
+    """
+    _tab_style = {
+        "backgroundColor": "transparent",
+        "border": "none",
+        "borderBottom": "2px solid transparent",
+        "color": COLORS["text_muted"],
+        "padding": "10px 20px",
+        "fontFamily": FONT_FAMILY,
+        "fontSize": "13px",
+        "fontWeight": "600",
+    }
+    _selected_style = dict(_tab_style)
+    _selected_style.update({
+        "color": COLORS["white"],
+        "borderBottom": f"2px solid {COLORS['blue']}",
+    })
+
     children = []
-    for i, t in enumerate(tabs):
-        is_active = (i == active_idx)
-        style = {
-            "padding": "10px 20px", "fontSize": "13px", "fontWeight": "600",
-            "cursor": "pointer", "borderBottom": "2px solid transparent",
-            "color": COLORS["white"] if is_active else COLORS["text_muted"],
-            "borderBottomColor": COLORS["blue"] if is_active else "transparent",
-            "transition": "all 0.15s",
-        }
-        children.append(html.Span(t, style=style))
-    return html.Div(
-        style={"display": "flex", "gap": "0", "borderBottom": f"1px solid {COLORS['border']}",
-               "marginBottom": "20px"},
+    for i, (label, content) in enumerate(tab_contents):
+        children.append(dcc.Tab(
+            label=label,
+            value=f"tab-{i}",
+            children=[html.Div(content, style={"paddingTop": "20px"})],
+            style=_tab_style,
+            selected_style=_selected_style,
+        ))
+
+    return dcc.Tabs(
+        value="tab-0",
         children=children,
+        style={"borderBottom": f"1px solid {COLORS['border']}"},
+        colors={"border": COLORS["border"], "primary": COLORS["blue"],
+                "background": "transparent"},
     )
+
+
+# Keep old tab_bar for backward compat but mark deprecated
+def tab_bar(tabs, active_idx=0):
+    """DEPRECATED: Use interactive_tabs() instead."""
+    return interactive_tabs([(t, html.Div()) for t in tabs])
 
 
 def info_banner(text, icon="fa-circle-info"):
     """Colored info/insight callout banner."""
     return html.Div(
         style={"backgroundColor": "rgba(75, 123, 245, 0.08)",
-               "border": f"1px solid rgba(75, 123, 245, 0.25)",
+               "border": "1px solid rgba(75, 123, 245, 0.25)",
                "borderLeft": f"3px solid {COLORS['blue']}",
                "borderRadius": "8px", "padding": "14px 18px", "marginBottom": "20px",
                "display": "flex", "alignItems": "flex-start", "gap": "12px"},
@@ -161,7 +192,7 @@ def info_banner(text, icon="fa-circle-info"):
 
 
 def alert_card(severity, title, description, impact=None, details=None, timestamp=None):
-    """Expandable alert/incident card with severity indicator."""
+    """Alert/incident card with severity indicator."""
     sev_colors = {"critical": COLORS["red"], "warning": COLORS["yellow"],
                   "info": COLORS["blue"], "healthy": COLORS["green"]}
     sev_color = sev_colors.get(severity, COLORS["blue"])
@@ -259,8 +290,66 @@ def stat_card(label, value, accent="blue"):
     )
 
 
+def data_table(columns, data, page_size=10, style_conditions=None):
+    """Interactive DataTable with native sort/filter/pagination.
+    columns: list of {"name": "Display Name", "id": "col_id"} dicts
+    data: list of row dicts
+    """
+    conditions = [
+        {"if": {"row_index": "odd"}, "backgroundColor": "rgba(255,255,255,0.03)"},
+    ]
+    if style_conditions:
+        conditions.extend(style_conditions)
+
+    return html.Div(
+        className="card",
+        style={"padding": "0", "overflow": "hidden"},
+        children=[dash_table.DataTable(
+            columns=columns,
+            data=data,
+            sort_action="native",
+            filter_action="native",
+            page_action="native",
+            page_size=page_size,
+            row_selectable="single",
+            style_table={"overflowX": "auto"},
+            style_cell={
+                "backgroundColor": COLORS["panel"],
+                "color": COLORS["white"],
+                "border": f"1px solid {COLORS['border']}",
+                "fontSize": "13px",
+                "fontFamily": FONT_FAMILY,
+                "padding": "10px 14px",
+                "textAlign": "left",
+                "minWidth": "80px",
+                "maxWidth": "250px",
+                "whiteSpace": "normal",
+            },
+            style_header={
+                "backgroundColor": COLORS["dark"],
+                "color": COLORS["text_muted"],
+                "fontWeight": "600",
+                "fontSize": "11px",
+                "textTransform": "uppercase",
+                "letterSpacing": "0.5px",
+                "border": f"1px solid {COLORS['border']}",
+                "padding": "12px 14px",
+            },
+            style_filter={
+                "backgroundColor": COLORS["dark"],
+                "color": COLORS["white"],
+                "border": f"1px solid {COLORS['border']}",
+                "padding": "4px 8px",
+            },
+            style_data_conditional=conditions,
+            style_as_list_view=True,
+        )],
+    )
+
+
+# Keep old rich_table for backward compat
 def rich_table(headers, rows, col_widths=None):
-    """Styled data table with header and pre-built row Trs."""
+    """Static styled table (use data_table for interactive version)."""
     th_style = {
         "padding": "12px 14px", "fontSize": "11px", "color": COLORS["text_muted"],
         "textAlign": "left", "borderBottom": f"1px solid {COLORS['border']}",
@@ -443,15 +532,6 @@ def _card(children, **style_overrides):
 def layout_executive(title, subtitle, heroes, main_chart, panels):
     """Style A: Executive Dashboard.
 
-    Layout:
-    ┌──────────┬──────────┬──────────┐
-    │ HERO 1   │ HERO 2   │ HERO 3   │
-    ├──────────┴──────────┴──────────┤
-    │       MAIN CHART (full)        │
-    ├────────────────┬───────────────┤
-    │   PANEL 1      │   PANEL 2    │
-    └────────────────┴───────────────┘
-
     heroes: list of hero_metric() components
     main_chart: dcc.Graph or html component
     panels: list of (title_str, component) tuples
@@ -460,18 +540,15 @@ def layout_executive(title, subtitle, heroes, main_chart, panels):
     hero_cols = min(hero_count, 4)
 
     content = [
-        # Hero metrics row
         html.Div(
             style={"display": "grid",
                    "gridTemplateColumns": f"repeat({hero_cols}, 1fr)",
                    "gap": "16px", "marginBottom": "20px"},
             children=heroes,
         ),
-        # Main chart
         _card([main_chart], padding="20px"),
     ]
 
-    # Bottom panels (side by side)
     if panels:
         panel_divs = []
         for ptitle, pcomp in panels:
@@ -491,75 +568,78 @@ def layout_executive(title, subtitle, heroes, main_chart, panels):
                       html.Div(className="content-area", children=content)])
 
 
-def layout_table(title, subtitle, filters, kpi_items, table_component):
+def layout_table(title, subtitle, filters, kpi_items, table_columns=None, table_data=None,
+                 page_size=10, style_conditions=None, table_component=None):
     """Style B: Data Table View.
 
-    Layout:
-    ┌─────────────────────────────────┐
-    │ [Filter▼] [Filter▼] [Filter▼]  │
-    ├─────┬─────┬─────┬─────┬────────┤
-    │ KPI │ KPI │ KPI │ KPI │  KPI   │
-    ├─────┴─────┴─────┴─────┴────────┤
-    │     RICH DATA TABLE (full)      │
-    │  with progress bars, badges     │
-    └─────────────────────────────────┘
+    New API (interactive DataTable with native sort/filter/pagination):
+        table_columns: list of {"name": "...", "id": "..."} for DataTable
+        table_data: list of row dicts for DataTable
 
-    filters: list for filter_bar()
-    kpi_items: list for kpi_strip()
-    table_component: pre-built rich_table() or html.Div
+    Legacy API (backward compatible):
+        table_component: pre-built html component (e.g. rich_table)
     """
     content = []
     if filters:
         content.append(filter_bar(filters))
     if kpi_items:
         content.append(kpi_strip(kpi_items))
-    content.append(table_component)
+
+    if table_component is not None:
+        content.append(table_component)
+    elif table_columns and table_data is not None:
+        content.append(data_table(table_columns, table_data, page_size, style_conditions))
 
     return html.Div([page_header(title, subtitle),
                       html.Div(className="content-area", children=content)])
 
 
-def layout_split(title, subtitle, tabs, banner_text, left_panel, right_panel, bottom_stats=None):
-    """Style C: Split Analytics Panel.
+def layout_split(title, subtitle, tab_contents=None, banner_text=None, bottom_stats=None,
+                 tabs=None, left_panel=None, right_panel=None):
+    """Style C: Split Analytics with real tab switching.
 
-    Layout:
-    ┌─────────────────────────────────┐
-    │  TAB 1 │ TAB 2 │ TAB 3         │
-    ├─────────────────────────────────┤
-    │  ℹ INFO BANNER                  │
-    ├────────────────┬────────────────┤
-    │  LEFT PANEL    │  RIGHT PANEL   │
-    │  (chart)       │  (donut)       │
-    ├─────┬─────┬────┴───┬───────────┤
-    │STAT │STAT │  STAT  │   STAT    │
-    └─────┴─────┴────────┴───────────┘
+    New API:
+        tab_contents: list of (tab_label, tab_component) tuples
 
-    tabs: list of tab label strings
-    left_panel: (title, component) tuple
-    right_panel: (title, component) tuple
-    bottom_stats: list of (label, value, accent) tuples
+    Legacy API (backward compatible):
+        tabs: list of tab label strings
+        left_panel: (title_str, component) tuple
+        right_panel: (title_str, component) tuple
+        -> Auto-converts to tab_contents with side-by-side layout in first tab
     """
+    # Convert legacy API to new tab_contents
+    if tab_contents is None and tabs is not None:
+        side_by_side = html.Div(
+            style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+            children=[
+                _card([
+                    html.Div(left_panel[0] if left_panel else "",
+                             style={"fontSize": "14px", "fontWeight": "600",
+                                    "color": COLORS["white"], "marginBottom": "12px"}),
+                    left_panel[1] if left_panel else html.Div(),
+                ], padding="20px"),
+                _card([
+                    html.Div(right_panel[0] if right_panel else "",
+                             style={"fontSize": "14px", "fontWeight": "600",
+                                    "color": COLORS["white"], "marginBottom": "12px"}),
+                    right_panel[1] if right_panel else html.Div(),
+                ], padding="20px"),
+            ],
+        )
+        tab_contents = [(tabs[0], side_by_side)]
+        for label in tabs[1:]:
+            tab_contents.append((label, html.Div(
+                style={"padding": "40px", "textAlign": "center"},
+                children=[html.Div(f"{label} analytics coming soon",
+                                   style={"color": COLORS["text_muted"], "fontSize": "14px"})],
+            )))
+
     content = []
-    if tabs:
-        content.append(tab_bar(tabs))
     if banner_text:
         content.append(info_banner(banner_text))
+    if tab_contents:
+        content.append(interactive_tabs(tab_contents))
 
-    # Side-by-side panels
-    panels = []
-    for ptitle, pcomp in [left_panel, right_panel]:
-        panels.append(_card([
-            html.Div(ptitle, style={"fontSize": "14px", "fontWeight": "600",
-                                     "color": COLORS["white"], "marginBottom": "16px"}),
-            pcomp,
-        ], padding="20px"))
-
-    content.append(html.Div(
-        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
-        children=panels,
-    ))
-
-    # Bottom stat row
     if bottom_stats:
         content.append(html.Div(
             style={"display": "flex", "gap": "12px", "marginTop": "16px"},
@@ -570,40 +650,55 @@ def layout_split(title, subtitle, tabs, banner_text, left_panel, right_panel, bo
                       html.Div(className="content-area", children=content)])
 
 
-def layout_alerts(title, subtitle, tabs, alerts, summary_kpis=None):
-    """Style D: Alert/Incident Cards.
+def layout_alerts(title, subtitle, tab_contents=None, summary_kpis=None,
+                  tabs=None, alerts=None):
+    """Style D: Alert/Incident Cards with real tab switching.
 
-    Layout:
-    ┌─────────────────────────────────┐
-    │ TAB 1 │ TAB 2 │   [Filter▼]    │
-    ├─────────────────────────────────┤
-    │ ▪ ALERT CARD 1 (critical)      │
-    │   ├─ detail row                 │
-    │   └─ impact badge              │
-    ├─────────────────────────────────┤
-    │ ▪ ALERT CARD 2 (warning)       │
-    ├─────────────────────────────────┤
-    │ ▪ ALERT CARD 3 (info)          │
-    └─────────────────────────────────┘
+    New API:
+        tab_contents: list of (tab_label, alerts_component) tuples
 
-    tabs: list of tab label strings
-    alerts: list of alert_card dicts {severity, title, description, impact, details, timestamp}
-    summary_kpis: optional list for kpi_strip at top
+    Legacy API (backward compatible):
+        tabs: list of tab label strings
+        alerts: list of alert dicts with severity, title, description, etc.
+        -> Auto-groups alerts into tabs by severity
     """
+    # Convert legacy API to new tab_contents
+    if tab_contents is None and tabs is not None and alerts is not None:
+        # Build alert cards from dicts
+        all_cards = []
+        for a in alerts:
+            all_cards.append(alert_card(
+                severity=a.get("severity", "info"),
+                title=a.get("title", ""),
+                description=a.get("description", ""),
+                impact=a.get("impact"),
+                details=a.get("details"),
+                timestamp=a.get("timestamp"),
+            ))
+
+        # Split into groups for tabs
+        critical_warning = [c for c, a in zip(all_cards, alerts)
+                           if a.get("severity") in ("critical", "warning")]
+        info_other = [c for c, a in zip(all_cards, alerts)
+                     if a.get("severity") not in ("critical", "warning")]
+
+        tab_contents = []
+        if len(tabs) >= 1:
+            tab_contents.append((tabs[0], html.Div(critical_warning or all_cards)))
+        if len(tabs) >= 2:
+            tab_contents.append((tabs[1], html.Div(info_other or [
+                html.Div("No items in this view",
+                         style={"color": COLORS["text_muted"], "padding": "40px",
+                                "textAlign": "center", "fontSize": "14px"}),
+            ])))
+        if len(tabs) >= 3:
+            tab_contents.append((tabs[2], html.Div(all_cards)))
+
     content = []
     if summary_kpis:
         content.append(kpi_strip(summary_kpis))
-    if tabs:
-        content.append(tab_bar(tabs))
-    for a in alerts:
-        content.append(alert_card(
-            severity=a.get("severity", "info"),
-            title=a.get("title", ""),
-            description=a.get("description", ""),
-            impact=a.get("impact"),
-            details=a.get("details"),
-            timestamp=a.get("timestamp"),
-        ))
+    if tab_contents:
+        content.append(interactive_tabs(tab_contents))
 
     return html.Div([page_header(title, subtitle),
                       html.Div(className="content-area", children=content)])
@@ -612,19 +707,6 @@ def layout_alerts(title, subtitle, tabs, alerts, summary_kpis=None):
 def layout_forecast(title, subtitle, kpi_items, hero_value, hero_label,
                     hero_trend_text, main_chart, side_component, bottom_table=None):
     """Style E: Forecast / Cost Analysis.
-
-    Layout:
-    ┌─────┬─────┬─────┬──────────────┐
-    │ KPI │ KPI │ KPI │     KPI      │
-    ├─────┴─────┴─────┴──────────────┤
-    │  ┌────────────────┬──────────┐ │
-    │  │   HERO VALUE   │ SIDE     │ │
-    │  │   ▲ trend      │ PANEL    │ │
-    │  │   MAIN CHART   │          │ │
-    │  └────────────────┴──────────┘ │
-    ├────────────────────────────────┤
-    │      BOTTOM TABLE (optional)   │
-    └────────────────────────────────┘
 
     hero_value: string like "$14.2M"
     hero_trend_text: string like "+8.3% vs prior quarter"
@@ -635,7 +717,6 @@ def layout_forecast(title, subtitle, kpi_items, hero_value, hero_label,
     if kpi_items:
         content.append(kpi_strip(kpi_items))
 
-    # Hero section with main chart + side panel
     hero_panel = _card([
         html.Div(hero_label, style={"fontSize": "13px", "color": COLORS["text_muted"],
                                      "marginBottom": "8px", "fontWeight": "500"}),
@@ -671,21 +752,7 @@ def layout_forecast(title, subtitle, kpi_items, hero_value, hero_label,
 def layout_grid(title, subtitle, grid_items):
     """Style F: Operations Grid with varied panel sizes.
 
-    Layout:
-    ┌────────┬────────┬────────────────┐
-    │ SMALL  │ SMALL  │   TALL PANEL   │
-    │ metric │ metric │   (2 rows)     │
-    ├────────┴────────┤                │
-    │   WIDE CHART    │                │
-    │   (2 cols)      ├────────────────┤
-    ├────────┬────────┤  CHART/TABLE   │
-    │PROGRESS│ GAUGE  │                │
-    └────────┴────────┴────────────────┘
-
     grid_items: list of dicts {col_span, row_span, content}
-        col_span: int (default 1, out of 3)
-        row_span: int (default 1)
-        content: html component
     """
     children = []
     for item in grid_items:

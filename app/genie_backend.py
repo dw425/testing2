@@ -148,6 +148,8 @@ _SUMMARY_BUILDERS = {
     "media": lambda: _build_config_summary("media"),
     "financial_services": lambda: _build_config_summary("financial_services"),
     "hls": lambda: _build_config_summary("hls"),
+    "manufacturing": lambda: _build_config_summary("manufacturing"),
+    "risk": lambda: _build_config_summary("risk"),
 }
 
 
@@ -180,6 +182,8 @@ _VERTICAL_DESCRIPTIONS = {
     "media": "audience intelligence, content analytics, and media monetization",
     "financial_services": "banking, capital markets, and insurance analytics",
     "hls": "healthcare providers, health plans, biopharma, and medtech analytics",
+    "manufacturing": "production analytics, quality control, predictive maintenance, and supply chain",
+    "risk": "enterprise risk management, credit risk, market risk, operational risk, and compliance",
 }
 
 _APP_NAMES = {
@@ -188,6 +192,8 @@ _APP_NAMES = {
     "media": "Media IQ",
     "financial_services": "Financial Services IQ",
     "hls": "Health & Life Sciences IQ",
+    "manufacturing": "Manufacturing IQ",
+    "risk": "Risk IQ",
 }
 
 
@@ -844,6 +850,285 @@ _DEMO_RESPONSES: Dict[str, List[Dict[str, Any]]] = {
             ],
         },
     ],
+
+    # -----------------------------------------------------------------
+    # MANUFACTURING
+    # -----------------------------------------------------------------
+    "manufacturing": [
+        {
+            "patterns": [r"oee", r"equipment", r"effectiveness", r"utilization", r"downtime"],
+            "answer": (
+                "**Overall Equipment Effectiveness (OEE) Analysis**\n\n"
+                "Current OEE across all facilities: **87.4%** (+2.1% vs last month)\n\n"
+                "**OEE Breakdown by Facility:**\n"
+                "| Facility | Availability | Performance | Quality | OEE |\n"
+                "|----------|-------------|-------------|---------|-----|\n"
+                "| Berlin | 94.2% | 91.8% | 98.1% | 84.8% |\n"
+                "| Detroit | 92.8% | 93.4% | 97.6% | 84.6% |\n"
+                "| Tokyo | 96.1% | 94.2% | 98.8% | 89.5% |\n"
+                "| Shanghai | 93.5% | 95.1% | 97.2% | 86.5% |\n\n"
+                "**Key Insight:** Tokyo leads with 89.5% OEE driven by superior availability "
+                "(96.1%) and quality (98.8%). Shanghai has the highest performance rate but "
+                "quality improvements could push OEE above 90%.\n\n"
+                "**Unplanned Downtime:** 1.4 hrs/week avg (down from 2.1 hrs last quarter)"
+            ),
+            "sql": (
+                "SELECT facility, availability_pct, performance_pct, quality_pct,\n"
+                "       (availability_pct * performance_pct * quality_pct / 10000) AS oee\n"
+                "FROM manufacturing_iq.gold.equipment_metrics\n"
+                "WHERE report_date = current_date()\n"
+                "GROUP BY facility\n"
+                "ORDER BY oee DESC"
+            ),
+        },
+        {
+            "patterns": [r"quality", r"defect", r"yield", r"scrap", r"first pass"],
+            "answer": (
+                "**Quality Control Summary**\n\n"
+                "- **First Pass Yield:** 94.8% (+0.6% vs last month)\n"
+                "- **DPMO:** 2,340 (target: 2,000)\n"
+                "- **Sigma Level:** 4.32\u03c3\n"
+                "- **Scrap Rate:** 2.3% ($142K MTD)\n\n"
+                "**Defects by Type:**\n"
+                "| Type | Count | % of Total | Trend |\n"
+                "|------|-------|------------|-------|\n"
+                "| Dimensional | 46 | 32% | \u2193 -8% |\n"
+                "| Surface Finish | 50 | 34% | \u2191 +12% |\n"
+                "| Structural | 19 | 13% | \u2193 -3% |\n"
+                "| Cosmetic | 31 | 21% | \u2192 flat |\n\n"
+                "**Alert:** Welding-C1 line in Tokyo shows 34% increase in surface finish defects. "
+                "Root cause: worn tooling on station WC1-07."
+            ),
+            "sql": (
+                "SELECT defect_type, COUNT(*) AS defect_count,\n"
+                "       ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 1) AS pct\n"
+                "FROM manufacturing_iq.gold.quality_events\n"
+                "WHERE event_date >= date_sub(current_date(), 30)\n"
+                "GROUP BY defect_type ORDER BY defect_count DESC"
+            ),
+        },
+        {
+            "patterns": [r"maintenance", r"predict", r"failure", r"mtbf", r"mttr", r"uptime"],
+            "answer": (
+                "**Predictive Maintenance Dashboard**\n\n"
+                "- **MTBF (Mean Time Between Failures):** 842 hours\n"
+                "- **MTTR (Mean Time to Repair):** 4.2 hours\n"
+                "- **Equipment Availability:** 97.2% (+1.8% vs prior quarter)\n"
+                "- **Open Work Orders:** 23\n\n"
+                "**Upcoming Predicted Failures (7-day window):**\n"
+                "| Equipment | Facility | Risk Score | Predicted Failure |\n"
+                "|-----------|----------|------------|-------------------|\n"
+                "| CNC-A1 Spindle | Berlin | 94% | 2-3 days |\n"
+                "| Hydraulic Press HP-03 | Detroit | 87% | 4-5 days |\n"
+                "| Welding Robot WR-07 | Tokyo | 82% | 5-7 days |\n\n"
+                "**Model Performance:** The XGBoost failure predictor achieves 92% accuracy "
+                "with a 78% confidence score on 3-week forecasts."
+            ),
+            "sql": (
+                "SELECT equipment_id, facility, risk_score,\n"
+                "       predicted_failure_date, confidence\n"
+                "FROM manufacturing_iq.gold.predictive_maintenance\n"
+                "WHERE predicted_failure_date <= date_add(current_date(), 7)\n"
+                "ORDER BY risk_score DESC"
+            ),
+        },
+        {
+            "patterns": [r"supply", r"supplier", r"lead time", r"inventory", r"shortage"],
+            "answer": (
+                "**Supply Chain Risk Summary**\n\n"
+                "- **Active Suppliers:** 148\n"
+                "- **On-Time Delivery:** 91.3%\n"
+                "- **Average Lead Time:** 18.4 days\n"
+                "- **Open Risks:** 12 (2 critical, 4 warning)\n\n"
+                "**Critical Alerts:**\n"
+                "1. **Semiconductor Shortage (NXP):** Lead time extended to 26 weeks. "
+                "Buffer stock covers 3.5 weeks. Alt supplier qualification in progress.\n"
+                "2. **Shanghai Port Congestion:** 8-12 day vessel delays. 3 containers held. "
+                "Air freight authorized for critical components.\n\n"
+                "**Inventory Health:**\n"
+                "| Material | Stock (days) | Status |\n"
+                "|----------|-------------|--------|\n"
+                "| MCU Modules | 24 | Critical |\n"
+                "| Aluminum 6061 | 18 | Warning |\n"
+                "| Steel AISI 4140 | 45 | Healthy |\n"
+                "| Hydraulic Valves | 12 | Critical |"
+            ),
+            "sql": (
+                "SELECT material, stock_days, risk_status,\n"
+                "       supplier, lead_time_days\n"
+                "FROM manufacturing_iq.gold.supply_chain_inventory\n"
+                "WHERE stock_days < 30\n"
+                "ORDER BY stock_days ASC"
+            ),
+        },
+        {
+            "patterns": [r"energy", r"carbon", r"sustain", r"emission", r"waste"],
+            "answer": (
+                "**Energy & Sustainability Metrics**\n\n"
+                "- **Energy Efficiency Index:** 82.5% (target: 85%)\n"
+                "- **Carbon Emissions:** 315 tonnes CO2e/month (\u2193 25% YoY)\n"
+                "- **Water Usage:** 142 m\u00b3/day (\u2193 21% YoY)\n"
+                "- **Waste Recycling Rate:** 73.8% (target: 80%)\n"
+                "- **Sustainability Score:** B+\n\n"
+                "**Energy per Unit by Facility:**\n"
+                "| Facility | kWh/unit | Target | Status |\n"
+                "|----------|----------|--------|--------|\n"
+                "| Berlin | 4.8 | 4.5 | Over |\n"
+                "| Detroit | 5.2 | 4.5 | Over |\n"
+                "| Tokyo | 3.9 | 4.5 | Met |\n"
+                "| Shanghai | 6.1 | 4.5 | Over |\n\n"
+                "**Progress:** Scope 1 emissions reduced 68%, Scope 2 reduced 52%. "
+                "On track for carbon neutrality target by 2030."
+            ),
+        },
+    ],
+
+    # -----------------------------------------------------------------
+    # RISK
+    # -----------------------------------------------------------------
+    "risk": [
+        {
+            "patterns": [r"var", r"value at risk", r"market risk", r"trading", r"p&l"],
+            "answer": (
+                "**Market Risk / Value at Risk Analysis**\n\n"
+                "- **VaR (95% 1-day):** $142M\n"
+                "- **VaR (99% 1-day):** $218M\n"
+                "- **Expected Shortfall (97.5%):** $287M\n"
+                "- **Portfolio Beta:** 1.12\n\n"
+                "**VaR by Asset Class:**\n"
+                "| Asset Class | VaR ($M) | % of Total | Trend |\n"
+                "|------------|----------|------------|-------|\n"
+                "| Equities | $62M | 44% | \u2191 +8% |\n"
+                "| Fixed Income | $31M | 22% | \u2193 -3% |\n"
+                "| FX | $24M | 17% | \u2192 flat |\n"
+                "| Commodities | $15M | 11% | \u2191 +12% |\n"
+                "| Derivatives | $10M | 7% | \u2193 -5% |\n\n"
+                "**Backtesting:** 3 exceptions in the last 250 trading days (within Basel "
+                "green zone). The Market Anomaly Detector (IsolationForest) achieves 89% "
+                "precision on intraday anomalies."
+            ),
+            "sql": (
+                "SELECT asset_class, var_1d_99, var_contribution_pct,\n"
+                "       var_change_30d\n"
+                "FROM risk_iq.gold.market_risk_summary\n"
+                "WHERE report_date = current_date()\n"
+                "ORDER BY var_1d_99 DESC"
+            ),
+        },
+        {
+            "patterns": [r"credit", r"default", r"portfolio", r"loan", r"npl", r"exposure"],
+            "answer": (
+                "**Credit Risk Portfolio Summary**\n\n"
+                "- **Total Exposure:** $48.3B\n"
+                "- **Default Rate:** 1.24%\n"
+                "- **Loss Given Default:** 42.8%\n"
+                "- **NPL Ratio:** 2.1%\n"
+                "- **Coverage Ratio:** 156%\n\n"
+                "**Portfolio by Segment:**\n"
+                "| Segment | Exposure | PD | LGD | Expected Loss |\n"
+                "|---------|----------|-----|-----|---------------|\n"
+                "| Retail Mortgages | $15.6B | 0.42% | 22% | $14.4M |\n"
+                "| Corporate Lending | $12.1B | 0.85% | 38% | $39.1M |\n"
+                "| Commercial RE | $8.4B | 2.30% | 45% | $86.9M |\n"
+                "| Consumer Credit | $6.1B | 1.92% | 48% | $56.2M |\n"
+                "| SME Portfolio | $4.2B | 3.10% | 52% | $67.7M |\n\n"
+                "**Alert:** Commercial RE concentration exceeds 30% appetite threshold. "
+                "Credit Default Predictor (XGBoost, AUC-ROC: 0.94) flags 847 accounts "
+                "for watchlist review."
+            ),
+            "sql": (
+                "SELECT portfolio_segment, total_exposure,\n"
+                "       probability_of_default, loss_given_default,\n"
+                "       expected_loss\n"
+                "FROM risk_iq.gold.credit_portfolio_summary\n"
+                "ORDER BY total_exposure DESC"
+            ),
+        },
+        {
+            "patterns": [r"operational", r"incident", r"loss", r"outage", r"fraud"],
+            "answer": (
+                "**Operational Risk Summary**\n\n"
+                "- **Open Incidents:** 14\n"
+                "- **Under Investigation:** 8\n"
+                "- **Total Losses YTD:** $18.7M\n"
+                "- **Avg Resolution Time:** 4.2 days\n\n"
+                "**Active Critical Incidents:**\n"
+                "1. **Core Banking Outage** (OPS-2024-0847): 3h 42m ongoing. "
+                "~142K transactions affected. Failover active. Est. loss: $4.2M.\n"
+                "2. **Unauthorized Wire Transfer** (OPS-2024-0846): $8.6M attempted "
+                "from 3 dormant accounts. Blocked, forensics engaged.\n\n"
+                "**Loss by Event Type (YTD):**\n"
+                "| Event Type | Loss | % of Total |\n"
+                "|-----------|------|------------|\n"
+                "| Execution & Process | $7.2M | 39% |\n"
+                "| External Fraud | $4.8M | 26% |\n"
+                "| System Failures | $3.9M | 21% |\n"
+                "| Employment Practices | $2.8M | 15% |"
+            ),
+            "sql": (
+                "SELECT event_type, SUM(loss_amount) AS total_loss,\n"
+                "       COUNT(*) AS incident_count\n"
+                "FROM risk_iq.gold.operational_incidents\n"
+                "WHERE discovery_date >= date_trunc('year', current_date())\n"
+                "GROUP BY event_type ORDER BY total_loss DESC"
+            ),
+        },
+        {
+            "patterns": [r"compliance", r"regulat", r"basel", r"capital", r"cet1", r"audit"],
+            "answer": (
+                "**Regulatory Compliance Status**\n\n"
+                "- **Overall Compliance Score:** 94.2%\n"
+                "- **Open Findings:** 23\n"
+                "- **CET1 Capital Ratio:** 14.1% (min: 4.5%)\n"
+                "- **Total Capital Ratio:** 17.3% (min: 8.0%)\n"
+                "- **Leverage Ratio:** 6.2% (min: 3.0%)\n"
+                "- **LCR:** 128% (min: 100%)\n\n"
+                "**Compliance Items by Status:**\n"
+                "| Status | Count | % |\n"
+                "|--------|-------|---|\n"
+                "| Compliant | 142 | 83.5% |\n"
+                "| Under Review | 18 | 10.6% |\n"
+                "| Remediation | 7 | 4.1% |\n"
+                "| Past Due | 3 | 1.8% |\n\n"
+                "**Critical Items:** AML/6AMLD enhanced due diligence (45% complete) "
+                "and DORA ICT risk framework (35% complete) require immediate attention."
+            ),
+            "sql": (
+                "SELECT regulation, compliance_pct, status, due_date\n"
+                "FROM risk_iq.gold.compliance_tracker\n"
+                "WHERE status != 'Compliant'\n"
+                "ORDER BY compliance_pct ASC"
+            ),
+        },
+        {
+            "patterns": [r"cyber", r"threat", r"vulnerab", r"attack", r"security", r"patch"],
+            "answer": (
+                "**Cyber Risk Dashboard**\n\n"
+                "- **Threat Level:** HIGH (78/100)\n"
+                "- **Attack Frequency (24h):** 1,847 events\n"
+                "- **Blocked Threats:** 1,694 (91.7% block rate)\n"
+                "- **Avg Response Time:** 28 min (target: <30 min)\n"
+                "- **Patch Compliance:** 91%\n\n"
+                "**Open Vulnerabilities:**\n"
+                "| Severity | Count | SLA Breached |\n"
+                "|----------|-------|--------------|\n"
+                "| Critical | 12 | 3 |\n"
+                "| High | 47 | 8 |\n"
+                "| Medium | 183 | 5 |\n"
+                "| Low | 342 | 2 |\n"
+                "| Informational | 89 | 0 |\n\n"
+                "**Alert:** External threat level elevated since Mar 2 following "
+                "threat intelligence briefing. Supply chain risk at 62% (elevated)."
+            ),
+            "sql": (
+                "SELECT severity, COUNT(*) AS vuln_count,\n"
+                "       SUM(CASE WHEN sla_breached THEN 1 ELSE 0 END) AS breached\n"
+                "FROM risk_iq.gold.vulnerability_inventory\n"
+                "WHERE status = 'open'\n"
+                "GROUP BY severity ORDER BY vuln_count DESC"
+            ),
+        },
+    ],
 }
 
 
@@ -879,6 +1164,8 @@ def _ask_demo(question: str, use_case: str) -> Dict[str, Any]:
         "media": "audience intelligence and content analytics",
         "financial_services": "banking, capital markets, and insurance analytics",
         "hls": "healthcare providers, health plans, and biopharma analytics",
+        "manufacturing": "production analytics, quality control, and supply chain management",
+        "risk": "enterprise risk management, credit risk, and regulatory compliance",
     }
     vertical_desc = vertical_names.get(use_case, "your data")
 

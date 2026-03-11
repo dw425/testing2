@@ -105,28 +105,39 @@ ml:
 
 pages:
   - id: dashboard
-    label: HLS Command Center
+    label: HLS Outcome Hub
     icon: fa-heart-pulse
+    group: ""
     enabled: true
-  - id: provider_ops
-    label: Provider Operations
+  - id: healthcare_ops
+    label: Healthcare Operations
     icon: fa-hospital
+    group: "Healthcare"
     enabled: true
-  - id: clinical_quality
-    label: Clinical Quality & Outcomes
+  - id: network_quality
+    label: Network & Quality
     icon: fa-stethoscope
+    group: "Healthcare"
     enabled: true
-  - id: health_plans
-    label: Health Plan Analytics
-    icon: fa-file-medical
-    enabled: true
-  - id: biopharma
+  - id: biopharma_intel
     label: BioPharma Intelligence
     icon: fa-flask
+    group: "BioPharma"
     enabled: true
-  - id: medtech
-    label: MedTech & Supply Chain
+  - id: supply_chain
+    label: Supply Chain & Manufacturing
+    icon: fa-truck-fast
+    group: "BioPharma & MedTech"
+    enabled: true
+  - id: medtech_surgery
+    label: MedTech & Digital Surgery
     icon: fa-microchip
+    group: "MedTech"
+    enabled: true
+  - id: patient_outcomes
+    label: Patient Outcomes
+    icon: fa-people-group
+    group: "Cross-Cutting"
     enabled: true
 
 genie:
@@ -139,23 +150,123 @@ genie:
     - hls_iq.silver.admission_events
     - hls_iq.silver.claims_raw
   sample_questions:
-    - What is the current bed utilization rate by facility?
-    - Show me 30-day readmission rates by department and diagnosis.
-    - What is the claims processing time by plan type?
-    - Which clinical quality measures are below national benchmark?
-    - How many clinical trials are currently enrolling vs target?
-    - What is the denial rate by payer and denial reason?
-    - Show me the fraud, waste, and abuse detection rate by claim type.
-    - What is the manufacturing yield for MedTech products by category?
-    - How does the ED wait time vary by facility and time of day?
-    - What is the care gap closure rate by health plan?
+    # --- Provider Operations ---
+    - "What is the current bed utilization rate by facility and unit?"
+    - "How does ED wait time vary by facility, shift, and time of day?"
+    - "What is the average length of stay by department and diagnosis category?"
+    - "Show me nurse-to-patient staffing ratios across all ICU units for the past quarter."
+    - "What is the patient throughput per hour in the Emergency Department by day of week?"
+    - "Which operating rooms have the highest OR utilization rate over the last 90 days?"
+    - "How many patients are pending discharge today and what are the primary delay reasons?"
+    - "Where are the top patient flow bottlenecks from admission to discharge by facility?"
+    - "What is the average door-to-provider time in the ED by acuity level?"
+    - "Show me bed turnover time trends by unit and facility for the past six months."
+    # --- Clinical Quality ---
+    - "What are the 30-day readmission rates by department, diagnosis, and payer?"
+    - "Show me HCAHPS survey scores by facility and compare to the national benchmark."
+    - "What is the risk-adjusted mortality rate by service line and quarter?"
+    - "What is the sepsis bundle compliance rate by facility and how does it trend over time?"
+    - "Which hospital-acquired conditions have the highest incidence rates this year?"
+    - "Show me CMS core measure performance across all facilities with benchmark comparison."
+    - "What are the patient safety indicator rates by facility and PSI category?"
+    - "Which clinical pathways have the highest variance from expected outcomes?"
+    - "How does our catheter-associated urinary tract infection rate compare to the national average?"
+    - "What is the percentage of surgical patients who received timely prophylactic antibiotics?"
+    # --- Revenue Cycle ---
+    - "What is the denial rate by payer, denial reason code, and service line?"
+    - "Show me accounts receivable days outstanding by payer and facility."
+    - "What is the clean claim rate by billing department and submission method?"
+    - "Which service lines have the highest charge capture leakage over the past quarter?"
+    - "What is the coding accuracy rate by coder and specialty?"
+    - "Show me the net collection rate by payer mix segment for the past twelve months."
+    - "What is our payer mix breakdown by facility and how has it shifted year over year?"
+    - "What is the net revenue per case by DRG and how does it compare to the cost benchmark?"
+    - "How much revenue has been lost to underpayments by payer in the last fiscal year?"
+    - "What is the average number of days from date of service to final payment by payer?"
+    # --- Health Plan Analytics ---
+    - "What is the medical loss ratio by plan type and region for the current plan year?"
+    - "Show me average claims processing time by claim type and auto-adjudication rate."
+    - "What is the average prior authorization turnaround time and approval rate by service category?"
+    - "What is the member retention rate by plan type and how does it compare year over year?"
+    - "How are we performing against CMS Star Rating targets across all measures?"
+    - "Which HEDIS measures are below the 75th percentile benchmark and need improvement?"
+    - "What is the care gap closure rate by measure, region, and member risk tier?"
+    - "Show me the risk adjustment factor accuracy by plan and how it impacts revenue."
+    - "What percentage of members have completed their annual wellness visit by plan type?"
+    - "How does our Medicare Advantage plan performance compare across quality domains?"
+    # --- Fraud, Waste & Abuse ---
+    - "What is the overall FWA detection rate by claim type and detection method?"
+    - "Show me the improper payment rate trend by program and quarter."
+    - "Which providers are statistical outliers in billing volume or cost per episode?"
+    - "What is the upcoding detection rate by specialty and facility?"
+    - "How many duplicate claims were identified and what is the total dollar impact?"
+    - "Are there any patterns consistent with phantom billing across our provider network?"
+    - "What is the total audit recovery amount by payer and recovery category this year?"
+    - "Which geographic regions show the highest concentration of suspicious claim patterns?"
+    - "What percentage of flagged FWA cases are confirmed after investigation?"
+    - "Show me the top 10 providers by overpayment recovery amount in the last 12 months."
+    # --- BioPharma Intelligence ---
+    - "What is the clinical trial enrollment rate versus target by therapeutic area and site?"
+    - "Show me the average time to market by drug class and regulatory pathway."
+    - "What is the manufacturing yield by production facility and product line?"
+    - "What are the adverse event reporting trends by drug and severity classification?"
+    - "How does HCP engagement score vary by specialty, channel, and territory?"
+    - "What is the formulary access rate by payer tier and therapeutic area?"
+    - "Show me market share trends by therapeutic area and competitor over the past eight quarters."
+    - "What are the prescription volume trends by drug, region, and prescriber specialty?"
+    - "What is the patient adherence rate for our top five branded medications?"
+    - "How does our real-world evidence data compare to clinical trial efficacy endpoints?"
+    # --- MedTech & Supply Chain ---
+    - "What is the device utilization rate by product category and facility?"
+    - "Show me field service response time by region and priority level."
+    - "What is the CAPA closure rate and average days to resolution by category?"
+    - "How many regulatory submissions are pending and what is the average approval timeline?"
+    - "Are there any active or pending product recalls and what is the affected unit volume?"
+    - "What is the inventory optimization score by distribution center and product line?"
+    - "Show me procedure volume trends by device category and facility over the past year."
+    - "What is the average total cost of ownership for our top surgical device categories?"
+    - "How does our backorder rate compare across product lines and suppliers?"
+    - "What is the contract compliance rate by GPO agreement and product category?"
+    # --- Population Health ---
+    - "What is the chronic disease prevalence by condition, age cohort, and geography?"
+    - "Show me preventive screening rates by measure and how they compare to Healthy People targets."
+    - "Which social determinants of health have the strongest correlation with readmission risk?"
+    - "How do health equity metrics vary across race, ethnicity, and zip code?"
+    - "What is the engagement rate for our wellness and chronic disease management programs?"
+    - "Show me the risk stratification distribution across our attributed patient population."
+    - "What percentage of high-risk patients have a documented care plan in the last 90 days?"
+    - "How has the prevalence of diabetes and hypertension trended over the past five years?"
+    - "What is the ED utilization rate among our managed population by risk tier?"
+    - "Which communities have the largest gaps between expected and actual preventive care utilization?"
+    # --- Pharmacy & Drug ---
+    - "What is the formulary compliance rate by prescriber and therapeutic class?"
+    - "Show me the generic utilization rate by drug category and facility."
+    - "What is the total specialty drug spend by therapeutic area and trend over time?"
+    - "What is the medication adherence rate by drug class and patient demographic?"
+    - "How many drug interaction alerts were triggered and what percentage were overridden?"
+    - "What is the biosimilar adoption rate compared to reference biologics by therapeutic area?"
+    - "Show me 340B program savings by facility and eligible drug category."
+    - "What is the average cost per prescription by plan type and pharmacy channel?"
+    - "Which high-cost medications have available therapeutic alternatives with lower total cost?"
+    - "What percentage of discharged patients received medication reconciliation within 48 hours?"
+    # --- Interoperability & Data ---
+    - "What is the FHIR API adoption rate across our connected systems and trading partners?"
+    - "Show me data exchange volume trends by interface type and partner organization."
+    - "What is the EHR integration completion rate by facility and module?"
+    - "What is the clinical data completeness score by data domain and source system?"
+    - "How is patient consent management tracking across opt-in and opt-out rates?"
+    - "What is the patient matching accuracy rate and how many potential duplicates exist?"
+    - "Show me real-world evidence dataset availability by therapeutic area and data quality score."
+    - "What percentage of external lab results are automatically reconciled into the EHR?"
+    - "How many ADT event notifications were successfully delivered to downstream care partners?"
+    - "What is the average data latency from source system ingestion to analytics availability?"
 
 dashboard:
   kpis:
     - title: Bed Utilization
       value: "87.3%"
       accent: blue
-    - title: Readmission Rate
+    - title: Readmission Rate (30-day)
       value: "8.2%"
       accent: purple
     - title: Star Rating
@@ -165,3 +276,15 @@ dashboard:
       value: "4.7%"
       accent: red
       alert: true
+    - title: Drug Pipeline Velocity
+      value: "14.2 mo"
+      accent: blue
+    - title: Manufacturing Yield
+      value: "94.6%"
+      accent: green
+    - title: Patient Satisfaction
+      value: "82 NPS"
+      accent: purple
+    - title: R&D Cost/Molecule
+      value: "$2.1B"
+      accent: red

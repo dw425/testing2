@@ -80,28 +80,39 @@ ml:
     target_value: 0.94
 pages:
 - id: dashboard
-  label: Network Command Center
+  label: Telecom Outcome Hub
   icon: fa-tower-cell
+  group: ""
   enabled: true
-- id: customer
-  label: Customer Intelligence
+- id: consumer_cx
+  label: Consumer CX & Growth
   icon: fa-users
+  group: "Enhance CX to Drive Revenue"
   enabled: true
-- id: revenue
-  label: Revenue & Growth
-  icon: fa-chart-line
+- id: b2b_enterprise
+  label: B2B / SMB / Enterprise
+  icon: fa-building
+  group: "Enhance CX to Drive Revenue"
   enabled: true
-- id: fraud
-  label: Fraud & Security
+- id: network_ops
+  label: Network Operations
+  icon: fa-network-wired
+  group: "Network & Field Operations"
+  enabled: true
+- id: field_energy
+  label: Field Ops & Energy
+  icon: fa-bolt
+  group: "Network & Field Operations"
+  enabled: true
+- id: fraud_prevention
+  label: Fraud Prevention
   icon: fa-shield-halved
+  group: "Protecting the Telecom"
   enabled: true
-- id: field_ops
-  label: Field Operations
-  icon: fa-truck
-  enabled: true
-- id: b2b_iot
-  label: B2B & IoT
-  icon: fa-microchip
+- id: cyber_security
+  label: Cyber Security
+  icon: fa-lock
+  group: "Protecting the Telecom"
   enabled: true
 genie:
   space_name: TelecomIQ Genie
@@ -113,36 +124,140 @@ genie:
   - telecom_iq.silver.call_detail_records
   - telecom_iq.silver.network_events
   sample_questions:
+  # Customer Intelligence
   - What is the current customer churn rate by segment?
-  - Show me network uptime by region and technology type.
-  - Which regions have the highest MTTR for field operations?
-  - How many SIM swap fraud attempts were detected this month?
-  - What is the first-call resolution rate by service type?
-  - Show me ARPU trends by plan type over the last 6 months.
-  - Which cell sites have capacity utilization above 85%?
-  - What is the order-to-activate cycle time by region?
-  - How many IoT devices are connected by customer segment?
   - What is the NPS score distribution across consumer segments?
+  - Show me CSAT trends by region over the past 12 months.
+  - Which customer segments have the highest predicted churn probability this quarter?
+  - What does the customer journey look like from first contact to activation?
+  - What is the onboarding funnel drop-off rate at each stage?
+  - Which subscriber segments show the highest upsell propensity scores?
+  - How have loyalty program redemption rates changed year over year?
+  - What is the win-back success rate for churned subscribers by segment?
+  - What is the average customer lifetime value by acquisition channel?
+  # Network Performance
+  - Show me network uptime by region and technology type.
+  - What is the average latency by region for 5G vs. 4G LTE connections?
+  - Which cell towers have throughput below acceptable thresholds this week?
+  - Where are the top 10 coverage gaps based on customer complaints and signal data?
+  - What is the current 5G rollout progress by region compared to target?
+  - Which cell towers are operating above 85% load capacity?
+  - What is the handover success rate between 4G and 5G cells by region?
+  - Show me packet loss rates across the backbone network over the last 30 days.
+  - What is the jitter distribution for real-time services like VoLTE and video calls?
+  - How is spectrum utilization trending across licensed bands by market?
+  # Revenue & Growth
+  - Show me ARPU trends by plan type over the last 6 months.
+  - What is the monthly recurring revenue trend by subscriber segment?
+  - How has the plan mix shifted between prepaid and postpaid over the past year?
+  - What are the upgrade and downgrade rates by plan tier this quarter?
+  - What is the contract renewal rate by segment and tenure band?
+  - How many prepaid customers have converted to postpaid in the last 90 days?
+  - What is the total roaming revenue by partner network and region?
+  - Show me wholesale revenue trends by MVNO partner over the past 12 months.
+  - What is the bundle attach rate for mobile plus home internet offerings?
+  - How does ARPU compare across regions after adjusting for plan mix?
+  # Fraud & Security
+  - How many SIM swap fraud attempts were detected this month?
+  - What is the trend in subscription fraud incidents by region over the past 6 months?
+  - How much revenue was lost to International Revenue Share Fraud last quarter?
+  - What are the top device fraud patterns identified by the anomaly detection model?
+  - What is the revenue assurance gap between billed and collected amounts?
+  - How many anomaly detection alerts were triggered in the past 24 hours by category?
+  - Show me the real-time alert volume and response time for fraud events today.
+  - What is the false positive rate for our SIM swap detection model this month?
+  - How many fraudulent transactions were blocked in real time over the past 7 days?
+  - What is the average financial exposure per fraud incident by fraud type?
+  # Field Operations
+  - Which regions have the highest MTTR for field operations?
+  - What is the first-call resolution rate by service type?
+  - What is the current truck roll rate and how does it compare to the target?
+  - Show me SLA compliance by region and service tier for the past quarter.
+  - What is the average technician productivity measured in work orders completed per day?
+  - Which spare parts have inventory levels below the safety stock threshold?
+  - How large is the current work order backlog by priority level and region?
+  - What percentage of maintenance activities are preventive vs. reactive this quarter?
+  - What is the order-to-activate cycle time by region?
+  - How does repeat dispatch rate vary across different issue categories?
+  # B2B & IoT
+  - How many IoT devices are connected by customer segment?
+  - What is the total revenue from enterprise accounts by industry vertical?
+  - How has the IoT connected device count grown quarter over quarter?
+  - Which edge computing nodes are approaching capacity limits?
+  - How many private 5G network deployments are active and what is their utilization?
+  - What is the API usage trend for our B2B platform services over the past 6 months?
+  - How many SLA breaches have occurred on enterprise accounts this quarter?
+  - What is the revenue from managed services by service category?
+  - What is the SD-WAN adoption rate among enterprise customers?
+  - Show me the top 10 enterprise accounts by total contract value and their renewal dates.
+  # Billing & Payments
+  - How many bill shock incidents were reported this month by plan type?
+  - What is the payment failure rate by payment method over the past quarter?
+  - How effective is the current dunning process at recovering overdue balances?
+  - What is the average bill amount by plan type and region?
+  - How many billing disputes were filed this month and what are the top reasons?
+  - What is the total value of credit adjustments issued in the past 90 days?
+  - What is the collections rate for accounts that are 60 or more days past due?
+  - Show me the trend in auto-pay enrollment rates over the past 12 months.
+  - What percentage of subscribers exceed their plan allowance and incur overage charges?
+  - How has the adoption of paperless billing affected payment timeliness?
+  # Digital Experience
+  - What is the mobile app adoption rate by subscriber segment?
+  - What percentage of customer interactions are handled through digital self-service channels?
+  - What is the chatbot resolution rate for the top 10 support inquiry types?
+  - What is the website conversion rate for online plan upgrades?
+  - What is the e-commerce attach rate for device accessories during online purchases?
+  - What is the digital NPS score compared to the overall NPS?
+  - How has app session duration and frequency changed after the latest release?
+  - What is the drop-off rate at each step of the online checkout funnel?
+  - Which self-service features have the highest usage and satisfaction scores?
+  - What is the average response time for live chat vs. chatbot interactions?
+  # Regulatory & Compliance
+  - What is the current compliance status for data privacy regulations by market?
+  - How many number portability requests were processed this month and what is the average completion time?
+  - Are all emergency services routing requirements being met across all regions?
+  - What is the status of spectrum license renewals and upcoming expiration dates?
+  - Show me the latest quality of service report metrics compared to regulatory thresholds.
+  - How many customer data access requests were received and fulfilled under privacy regulations?
+  - What is the compliance rate for call data retention policies across all systems?
+  - How many regulatory audits were completed this year and what were the findings?
+  - What is the current status of accessibility compliance for our digital services?
+  - How are we tracking against mandated broadband coverage obligations by region?
+  # Capacity Planning
+  - Which cell sites have capacity utilization above 85%?
+  - What is the forecast accuracy for network traffic predictions over the past 6 months?
+  - How does actual capex spending compare to planned capex by project category?
+  - What is the current status of new site acquisitions by region?
+  - How many small cells have been deployed this quarter vs. the annual target?
+  - What is the fiber rollout progress by market compared to the deployment schedule?
+  - What is the projected date when current network capacity will be exhausted by region?
+  - How does weekend vs. weekday traffic pattern differ across top metro markets?
+  - What is the projected ROI for planned network expansion projects by region?
+  - How does current backhaul capacity compare to projected demand over the next 12 months?
 dashboard:
   kpis:
   - title: Subscriber Base
-    query: SELECT subscriber_base FROM gold.subscriber_metrics ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:,.0f}'
-    value: 14.2M
+    value: "14.2M"
     accent: blue
-  - title: Network Uptime
-    query: SELECT network_uptime FROM gold.network_performance ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:.2f}%'
-    value: 99.97%
-    accent: green
-  - title: Monthly Churn
-    query: SELECT churn_rate_monthly FROM gold.subscriber_metrics ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:.1f}%'
-    value: 1.8%
+  - title: Monthly Churn Rate
+    value: "1.8%"
     accent: purple
+  - title: ARPU
+    value: "$52.30"
+    accent: green
+  - title: Network Uptime
+    value: "99.97%"
+    accent: green
   - title: Fraud Blocked (24h)
-    query: SELECT fraud_blocked_24h FROM gold.fraud_events ORDER BY snapshot_time DESC LIMIT 1
-    format: '{:.0f}'
-    value: '229'
+    value: "229"
     accent: red
     alert: true
+  - title: NBO Conversion Rate
+    value: "12.4%"
+    accent: blue
+  - title: Energy Cost/GB
+    value: "$0.032"
+    accent: purple
+  - title: Cyber Threats Detected
+    value: "47"
+    accent: red
