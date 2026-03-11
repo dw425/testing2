@@ -46,6 +46,7 @@ from app.data_access import (  # noqa: E402
 )
 from app.genie_backend import ask_genie  # noqa: E402
 from app.layout import build_layout, build_sidebar  # noqa: E402
+from app.page_styles import _hex_to_rgb  # noqa: E402
 from app.theme import COLORS, get_base_stylesheet  # noqa: E402
 
 # Per-vertical page renderers
@@ -331,7 +332,8 @@ def _render_hub():
 
 
 def _render_architecture():
-    """Lakehouse architecture informational page -- reads config for context."""
+    """Architecture page with visual diagrams: Lakehouse, Databricks platform,
+    App architecture, and Data Model."""
     cfg = get_config()
     app_name = cfg["app"]["name"]
     catalog = cfg["app"].get("catalog", "")
@@ -342,61 +344,320 @@ def _render_architecture():
 
     ml_cfg = cfg.get("ml", {})
     model_names = []
-    algorithms = []
     for key, model in ml_cfg.items():
         if isinstance(model, dict) and "name" in model:
             model_names.append(model["name"])
-            algorithms.append(model.get("algorithm", ""))
 
-    layers = [
-        ("Bronze Layer", "fa-database", COLORS["yellow"],
-         f"Raw ingestion from source systems into {catalog} Delta tables "
-         "via Auto Loader with schema enforcement and audit logging."),
-        ("Silver Layer", "fa-filter", COLORS["blue"],
-         "Cleansed and enriched tables: " +
-         (", ".join(silver_tables) if silver_tables else "domain-specific tables") +
-         " with deduplication, type casting, and SCD2 merges."),
-        ("Gold Layer", "fa-gem", COLORS["green"],
-         "Business-ready aggregates: " +
-         (", ".join(gold_tables) if gold_tables else "KPI and summary tables") +
-         ". Optimized for BI and dashboards via the Databricks Lakehouse."),
-        ("ML & Serving", "fa-brain", COLORS["purple"],
-         (", ".join(f"{n} ({a})" for n, a in zip(model_names, algorithms)) if model_names else "ML models") +
-         ". Registered in MLflow, served via Model Serving with real-time inference."),
+    # ── Shared styles ──────────────────────────────────────────────────────
+    _box = lambda color, bg=None: {
+        "border": f"2px solid {color}",
+        "borderRadius": "10px",
+        "padding": "14px 18px",
+        "backgroundColor": bg or f"rgba({_hex_to_rgb(color)}, 0.06)",
+        "textAlign": "center",
+        "flex": "1",
+        "minWidth": "120px",
+    }
+    _arrow_down = lambda: html.Div(
+        html.I(className="fa-solid fa-arrow-down",
+               style={"color": COLORS["text_muted"], "fontSize": "18px"}),
+        style={"textAlign": "center", "padding": "6px 0"},
+    )
+    _arrow_right = lambda: html.Div(
+        html.I(className="fa-solid fa-arrow-right",
+               style={"color": COLORS["text_muted"], "fontSize": "16px"}),
+        style={"display": "flex", "alignItems": "center", "padding": "0 6px"},
+    )
+    _section_title = lambda icon, text, color: html.Div(
+        style={"display": "flex", "alignItems": "center", "gap": "10px", "marginBottom": "16px"},
+        children=[
+            html.Div(
+                style={"width": "32px", "height": "32px", "borderRadius": "8px",
+                       "backgroundColor": f"rgba({_hex_to_rgb(color)}, 0.15)",
+                       "display": "flex", "alignItems": "center", "justifyContent": "center"},
+                children=html.I(className=f"fa-solid {icon}",
+                                style={"color": color, "fontSize": "14px"}),
+            ),
+            html.Span(text, style={"fontSize": "16px", "fontWeight": "700",
+                                    "color": COLORS["white"]}),
+        ],
+    )
+    _label = lambda text, color=COLORS["white"]: html.Div(
+        text, style={"fontSize": "13px", "fontWeight": "600", "color": color}
+    )
+    _sublabel = lambda text: html.Div(
+        text, style={"fontSize": "11px", "color": COLORS["text_muted"], "marginTop": "2px"}
+    )
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  1. LAKEHOUSE ARCHITECTURE (Bronze → Silver → Gold)
+    # ═══════════════════════════════════════════════════════════════════════
+    bronze_tables = ["raw_events", "raw_transactions", "raw_user_profiles", "raw_system_logs"]
+    silver_display = silver_tables or ["enriched_events", "clean_profiles", "deduped_transactions"]
+    gold_display = gold_tables or ["kpi_aggregates", "retention_cohorts", "revenue_summary"]
+
+    def _layer_box(title, icon, color, tables):
+        return html.Div(style=_box(color), children=[
+            html.I(className=f"fa-solid {icon}",
+                   style={"fontSize": "20px", "color": color, "marginBottom": "6px", "display": "block"}),
+            _label(title, color),
+            html.Div(style={"marginTop": "8px"},
+                     children=[html.Div(t, style={"fontSize": "11px", "color": COLORS["text_muted"],
+                                                   "fontFamily": "monospace", "padding": "2px 0"})
+                               for t in tables[:4]]),
+        ])
+
+    lakehouse_diagram = html.Div(className="card", style={"padding": "24px"}, children=[
+        _section_title("fa-layer-group", "Lakehouse Architecture", COLORS["blue"]),
+        # Source → Bronze → Silver → Gold flow
+        html.Div(style={"display": "flex", "alignItems": "stretch", "gap": "0", "flexWrap": "wrap",
+                         "justifyContent": "center"},
+                 children=[
+            html.Div(style=_box(COLORS["text_muted"]), children=[
+                html.I(className="fa-solid fa-cloud-arrow-down",
+                       style={"fontSize": "20px", "color": COLORS["text_muted"],
+                              "marginBottom": "6px", "display": "block"}),
+                _label("Source Systems", COLORS["text_muted"]),
+                _sublabel("APIs, Streams, Files"),
+            ]),
+            _arrow_right(),
+            _layer_box("Bronze", "fa-database", COLORS["yellow"], bronze_tables),
+            _arrow_right(),
+            _layer_box("Silver", "fa-filter", COLORS["blue"], silver_display),
+            _arrow_right(),
+            _layer_box("Gold", "fa-gem", COLORS["green"], gold_display),
+            _arrow_right(),
+            html.Div(style=_box(COLORS["purple"]), children=[
+                html.I(className="fa-solid fa-chart-pie",
+                       style={"fontSize": "20px", "color": COLORS["purple"],
+                              "marginBottom": "6px", "display": "block"}),
+                _label("BI & Dashboards", COLORS["purple"]),
+                _sublabel("SQL Analytics, Apps"),
+            ]),
+        ]),
+        html.Div(style={"marginTop": "12px", "padding": "10px 16px",
+                         "backgroundColor": f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.06)",
+                         "borderRadius": "8px", "borderLeft": f"3px solid {COLORS['blue']}"},
+                 children=[
+            html.Div(f"Catalog: {catalog}", style={"fontSize": "12px", "color": COLORS["text_muted"],
+                                                     "fontFamily": "monospace"}),
+            html.Div("Delta Lake format · Unity Catalog governance · Auto Loader ingestion",
+                     style={"fontSize": "11px", "color": COLORS["text_muted"], "marginTop": "4px"}),
+        ]),
+    ])
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  2. DATABRICKS PLATFORM ARCHITECTURE
+    # ═══════════════════════════════════════════════════════════════════════
+    platform_services = [
+        ("Unity Catalog", "fa-shield-halved", COLORS["green"]),
+        ("SQL Warehouse", "fa-database", COLORS["blue"]),
+        ("ML Runtime", "fa-brain", COLORS["purple"]),
+        ("Model Serving", "fa-rocket", COLORS["red"]),
+        ("Workflows", "fa-gears", COLORS["yellow"]),
+        ("Genie AI", "fa-robot", COLORS["blue"]),
     ]
 
-    cards = []
-    for title, icon, color, desc in layers:
-        cards.append(
-            html.Div(className="card", children=[
-                html.Div(
-                    style={"display": "flex", "alignItems": "center", "gap": "12px", "marginBottom": "12px"},
-                    children=[
-                        html.Div(
-                            style={
-                                "width": "36px", "height": "36px", "borderRadius": "8px",
-                                "backgroundColor": f"{color}15", "display": "flex",
-                                "alignItems": "center", "justifyContent": "center",
-                            },
-                            children=html.I(className=f"fa-solid {icon}", style={"color": color, "fontSize": "16px"}),
-                        ),
-                        html.Span(title, style={"fontSize": "15px", "fontWeight": "600"}),
-                    ],
-                ),
-                html.P(desc, style={"fontSize": "13px", "color": COLORS["text_muted"], "lineHeight": "1.6"}),
-            ])
+    platform_diagram = html.Div(className="card", style={"padding": "24px"}, children=[
+        _section_title("fa-cubes", "Databricks Platform", COLORS["purple"]),
+        # Control plane
+        html.Div(style={"border": f"1px solid {COLORS['border']}", "borderRadius": "10px",
+                         "padding": "16px", "marginBottom": "12px"},
+                 children=[
+            html.Div("Control Plane", style={"fontSize": "11px", "fontWeight": "700",
+                                               "color": COLORS["text_muted"], "textTransform": "uppercase",
+                                               "letterSpacing": "1px", "marginBottom": "12px",
+                                               "textAlign": "center"}),
+            html.Div(style={"display": "flex", "gap": "10px", "flexWrap": "wrap", "justifyContent": "center"},
+                     children=[
+                html.Div(style={"textAlign": "center", "padding": "10px 14px",
+                                 "backgroundColor": f"rgba({_hex_to_rgb(color)}, 0.08)",
+                                 "borderRadius": "8px", "border": f"1px solid {color}30",
+                                 "minWidth": "100px"},
+                         children=[
+                    html.I(className=f"fa-solid {icon}",
+                           style={"fontSize": "16px", "color": color, "display": "block",
+                                  "marginBottom": "4px"}),
+                    html.Div(name, style={"fontSize": "11px", "fontWeight": "600",
+                                           "color": COLORS["white"]}),
+                ]) for name, icon, color in platform_services
+            ]),
+        ]),
+        _arrow_down(),
+        # Compute layer
+        html.Div(style={"display": "flex", "gap": "12px", "justifyContent": "center"},
+                 children=[
+            html.Div(style=_box(COLORS["blue"]), children=[
+                _label("Serverless SQL"),
+                _sublabel("Ad-hoc queries"),
+            ]),
+            html.Div(style=_box(COLORS["purple"]), children=[
+                _label("Job Clusters"),
+                _sublabel("ETL pipelines"),
+            ]),
+            html.Div(style=_box(COLORS["green"]), children=[
+                _label("Model Endpoints"),
+                _sublabel("Real-time inference"),
+            ]),
+        ]),
+        _arrow_down(),
+        # Storage
+        html.Div(style={**_box(COLORS["yellow"]), "flex": "none"},
+                 children=[
+            html.I(className="fa-solid fa-hard-drive",
+                   style={"fontSize": "18px", "color": COLORS["yellow"],
+                          "marginRight": "8px"}),
+            html.Span("Cloud Object Storage (Delta Lake)",
+                      style={"fontSize": "13px", "fontWeight": "600",
+                             "color": COLORS["white"]}),
+        ]),
+    ])
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  3. APP ARCHITECTURE
+    # ═══════════════════════════════════════════════════════════════════════
+    app_diagram = html.Div(className="card", style={"padding": "24px"}, children=[
+        _section_title("fa-sitemap", "Application Architecture", COLORS["green"]),
+        # Top: User layer
+        html.Div(style={**_box(COLORS["blue"]), "flex": "none", "marginBottom": "0"},
+                 children=[
+            html.I(className="fa-solid fa-user",
+                   style={"fontSize": "16px", "color": COLORS["blue"], "marginRight": "8px"}),
+            html.Span("Browser / Databricks App",
+                      style={"fontSize": "13px", "fontWeight": "600", "color": COLORS["white"]}),
+        ]),
+        _arrow_down(),
+        # Middle: Dash app components
+        html.Div(style={"display": "flex", "gap": "10px", "justifyContent": "center", "flexWrap": "wrap"},
+                 children=[
+            html.Div(style=_box(COLORS["green"]), children=[
+                _label("Dash App"),
+                _sublabel("layout.py · main.py"),
+            ]),
+            html.Div(style=_box(COLORS["purple"]), children=[
+                _label("Page Renderers"),
+                _sublabel("7 verticals × 7 pages"),
+            ]),
+            html.Div(style=_box(COLORS["blue"]), children=[
+                _label("Genie Backend"),
+                _sublabel("AI chat · FM API"),
+            ]),
+        ]),
+        _arrow_down(),
+        # Bottom: Data layer
+        html.Div(style={"display": "flex", "gap": "10px", "justifyContent": "center", "flexWrap": "wrap"},
+                 children=[
+            html.Div(style=_box(COLORS["yellow"]), children=[
+                _label("Data Access Layer"),
+                _sublabel("data_access.py"),
+            ]),
+            html.Div(style=_box(COLORS["green"]), children=[
+                _label("YAML Config"),
+                _sublabel(f"config/{catalog}.yaml"),
+            ]),
+            html.Div(style=_box(COLORS["purple"]), children=[
+                _label("Unity Catalog"),
+                _sublabel(f"{catalog}.*.*"),
+            ]),
+        ]),
+    ])
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  4. DATA MODEL (tables, fields, connections)
+    # ═══════════════════════════════════════════════════════════════════════
+    # Build table schema from genie tables and ML config
+    table_schemas = []
+    for tbl in genie_tables[:6]:
+        parts = tbl.split(".")
+        layer = parts[1] if len(parts) > 1 else "gold"
+        tbl_name = parts[-1]
+        layer_color = COLORS["blue"] if layer == "silver" else COLORS["green"]
+        # Generate plausible fields based on table name
+        common_fields = ["id", "timestamp", "created_at"]
+        if "player" in tbl_name or "user" in tbl_name:
+            fields = ["user_id", "segment", "ltv", "churn_score", "region"]
+        elif "retention" in tbl_name:
+            fields = ["cohort_date", "d1_rate", "d7_rate", "d30_rate", "segment"]
+        elif "revenue" in tbl_name or "transaction" in tbl_name:
+            fields = ["txn_id", "amount", "currency", "source", "user_id"]
+        elif "kpi" in tbl_name or "metric" in tbl_name:
+            fields = ["metric_name", "value", "period", "dimension", "category"]
+        elif "subscriber" in tbl_name or "customer" in tbl_name:
+            fields = ["customer_id", "plan_type", "tenure", "arpu", "status"]
+        elif "event" in tbl_name or "telemetry" in tbl_name:
+            fields = ["event_type", "user_id", "payload", "session_id", "device"]
+        elif "fraud" in tbl_name or "risk" in tbl_name:
+            fields = ["alert_id", "risk_score", "severity", "entity_id", "rule_id"]
+        elif "health" in tbl_name or "ops" in tbl_name:
+            fields = ["metric", "value", "threshold", "status", "region"]
+        else:
+            fields = ["entity_id", "value", "category", "status", "updated_at"]
+        table_schemas.append((f"{layer}.{tbl_name}", layer_color, fields))
+
+    # Add ML model entries
+    for m_name in model_names[:3]:
+        table_schemas.append((f"ml.{m_name.lower()}", COLORS["purple"],
+                              ["model_version", "features", "predictions", "score", "timestamp"]))
+
+    def _table_card(name, color, fields):
+        return html.Div(
+            style={"border": f"1px solid {color}40", "borderRadius": "8px", "overflow": "hidden",
+                   "backgroundColor": COLORS["panel"], "minWidth": "180px", "flex": "1"},
+            children=[
+                html.Div(name, style={"backgroundColor": f"rgba({_hex_to_rgb(color)}, 0.12)",
+                                       "padding": "8px 12px", "fontSize": "12px",
+                                       "fontWeight": "700", "color": color,
+                                       "fontFamily": "monospace", "borderBottom": f"1px solid {color}30"}),
+                html.Div(children=[
+                    html.Div(f, style={"padding": "3px 12px", "fontSize": "11px",
+                                        "color": COLORS["text_muted"], "fontFamily": "monospace",
+                                        "borderBottom": f"1px solid {COLORS['border']}"})
+                    for f in fields
+                ]),
+            ],
         )
 
+    data_model = html.Div(className="card", style={"padding": "24px"}, children=[
+        _section_title("fa-diagram-project", "Data Model", COLORS["yellow"]),
+        html.Div(style={"display": "grid", "gridTemplateColumns": "repeat(auto-fill, minmax(180px, 1fr))",
+                         "gap": "12px"},
+                 children=[_table_card(n, c, f) for n, c, f in table_schemas]),
+        # Connection legend
+        html.Div(style={"marginTop": "16px", "display": "flex", "gap": "16px", "flexWrap": "wrap"},
+                 children=[
+            html.Div(style={"display": "flex", "alignItems": "center", "gap": "6px"}, children=[
+                html.Div(style={"width": "12px", "height": "12px", "borderRadius": "3px",
+                                 "backgroundColor": COLORS["blue"]}),
+                html.Span("Silver Tables", style={"fontSize": "11px", "color": COLORS["text_muted"]}),
+            ]),
+            html.Div(style={"display": "flex", "alignItems": "center", "gap": "6px"}, children=[
+                html.Div(style={"width": "12px", "height": "12px", "borderRadius": "3px",
+                                 "backgroundColor": COLORS["green"]}),
+                html.Span("Gold Tables", style={"fontSize": "11px", "color": COLORS["text_muted"]}),
+            ]),
+            html.Div(style={"display": "flex", "alignItems": "center", "gap": "6px"}, children=[
+                html.Div(style={"width": "12px", "height": "12px", "borderRadius": "3px",
+                                 "backgroundColor": COLORS["purple"]}),
+                html.Span("ML Models", style={"fontSize": "11px", "color": COLORS["text_muted"]}),
+            ]),
+        ]),
+    ])
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  ASSEMBLE PAGE
+    # ═══════════════════════════════════════════════════════════════════════
     return html.Div([
         html.Div(className="page-header", children=[
             html.H1("Solution Architecture"),
-            html.P(f"{app_name} Databricks Lakehouse architecture and ML pipeline overview"),
+            html.P(f"{app_name} — Databricks Lakehouse architecture, platform services, and data model"),
         ]),
         html.Div(className="content-area", children=[
+            lakehouse_diagram,
             html.Div(
                 style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
-                children=cards,
+                children=[platform_diagram, app_diagram],
             ),
+            data_model,
         ]),
     ])
 

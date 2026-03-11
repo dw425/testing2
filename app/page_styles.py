@@ -666,14 +666,23 @@ def layout_table(title, subtitle, filters, kpi_items, table_columns=None, table_
         table_component: pre-built html component (e.g. rich_table)
     """
     content = []
-    if filters:
-        content.append(filter_bar(filters))
+    # filters parameter is accepted for backward compatibility but no longer rendered;
+    # the DataTable's native filter_action="native" provides real filtering.
     if kpi_items:
         content.append(kpi_strip(kpi_items))
 
+    # Hint text directing users to the DataTable's built-in column filtering
+    _hint = html.Div(
+        "Use column headers to sort and filter",
+        style={"fontSize": "12px", "color": COLORS["text_muted"],
+               "marginBottom": "8px", "fontStyle": "italic"},
+    )
+
     if table_component is not None:
+        content.append(_hint)
         content.append(table_component)
     elif table_columns and table_data is not None:
+        content.append(_hint)
         content.append(data_table(table_columns, table_data, page_size, style_conditions))
 
     return html.Div([page_header(title, subtitle),
@@ -856,7 +865,7 @@ def layout_grid(title, subtitle, grid_items):
 
     content = html.Div(
         style={"display": "grid", "gridTemplateColumns": "1fr 1fr 1fr",
-               "gap": "16px", "gridAutoRows": "minmax(180px, auto)"},
+               "gap": "16px", "gridAutoRows": "minmax(140px, auto)"},
         children=children,
     )
 

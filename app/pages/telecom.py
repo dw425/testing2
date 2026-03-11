@@ -50,9 +50,9 @@ def render_dashboard(cfg):
     ]
 
     # ── Main chart: subscriber growth (18 months) ─────────────────────
-    months = ["Jan '25", "Feb", "Mar", "Apr", "May", "Jun",
-              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-              "Jan '26", "Feb", "Mar"]
+    months = ["Jan '25", "Feb '25", "Mar '25", "Apr '25", "May '25", "Jun '25",
+              "Jul '25", "Aug '25", "Sep '25", "Oct '25", "Nov '25", "Dec '25",
+              "Jan '26", "Feb '26", "Mar '26"]
     subs = [44.1, 44.5, 44.9, 45.2, 45.6, 46.0,
             46.3, 46.8, 47.1, 47.5, 47.8, 48.0,
             48.2, 48.5, 48.7]
@@ -501,6 +501,19 @@ def render_network_ops(cfg):
                 ]),
             ],
         ),
+        # Regional coverage breakdown to fill 2-row span
+        html.Div(style={"marginTop": "16px", "borderTop": f"1px solid {COLORS['border']}",
+                         "paddingTop": "12px"},
+                 children=[
+            html.Div("Regional Coverage", style={"fontSize": "11px", "fontWeight": "700",
+                                                    "color": COLORS["text_muted"],
+                                                    "textTransform": "uppercase",
+                                                    "letterSpacing": "0.4px", "marginBottom": "8px"}),
+            progress_row("Northeast", "99.8%", 92, COLORS["green"]),
+            progress_row("Southeast", "99.6%", 88, COLORS["green"]),
+            progress_row("Midwest", "98.9%", 82, COLORS["blue"]),
+            progress_row("West Coast", "99.4%", 86, COLORS["green"]),
+        ]),
     ])
 
     # ── Panel 5: Incident Count ───────────────────────────────────────
