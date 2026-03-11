@@ -16,6 +16,7 @@ from app.page_styles import (
     tab_bar, info_banner, alert_card, progress_row, stat_card,
     rich_table, td, status_td, progress_td, breakdown_list,
     trend_indicator, use_case_badges, donut_figure,
+    data_table, interactive_tabs,
     layout_executive, layout_table, layout_split, layout_alerts,
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
@@ -119,8 +120,12 @@ def render_dashboard(cfg):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def render_consumer_cx(cfg):
-    """Split view with satisfaction bar chart, complaint donut, tabs,
-    info banner, and bottom stat cards."""
+    """Split view with three real tabs: Satisfaction, Journey, and NPS,
+    plus info banner and bottom stat cards."""
+
+    # ══════════════════════════════════════════════════════════════════
+    #  TAB 1: Satisfaction -- bar chart + donut side-by-side
+    # ══════════════════════════════════════════════════════════════════
 
     # ── Left panel: satisfaction by touchpoint (bar chart) ────────────
     touchpoints = ["Store Visit", "Call Center", "App", "Web Chat",
@@ -156,6 +161,176 @@ def render_consumer_cx(cfg):
                             center_text="4.2K", title="Complaint Categories")
     right_chart = dcc.Graph(figure=fig_comp, config=CHART_CONFIG)
 
+    tab_satisfaction = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([
+                html.Div("Satisfaction by Touchpoint",
+                         style={"fontSize": "14px", "fontWeight": "600",
+                                "color": COLORS["white"], "marginBottom": "12px"}),
+                left_chart,
+            ], padding="20px"),
+            _card([
+                html.Div("Complaint Breakdown",
+                         style={"fontSize": "14px", "fontWeight": "600",
+                                "color": COLORS["white"], "marginBottom": "12px"}),
+                right_chart,
+            ], padding="20px"),
+        ],
+    )
+
+    # ══════════════════════════════════════════════════════════════════
+    #  TAB 2: Journey -- funnel bar chart of customer journey stages
+    # ══════════════════════════════════════════════════════════════════
+
+    journey_stages = ["Awareness", "Consideration", "Purchase",
+                      "Retention", "Advocacy"]
+    journey_rates = [100, 64, 38, 29, 12]
+    journey_colors = [COLORS["blue"], COLORS["purple"], COLORS["green"],
+                      COLORS["yellow"], COLORS["red"]]
+
+    fig_journey = go.Figure()
+    fig_journey.add_trace(go.Bar(
+        x=journey_stages, y=journey_rates,
+        marker=dict(color=journey_colors, cornerradius=4),
+        text=[f"{r}%" for r in journey_rates], textposition="outside",
+        textfont=dict(color=COLORS["white"], size=12),
+    ))
+    fig_journey.update_layout(**dark_chart_layout(
+        height=320,
+        title=dict(text="Customer Journey Funnel",
+                   font=dict(size=14, color=COLORS["white"])),
+        yaxis=dict(title="Conversion Rate %", range=[0, 115],
+                   showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        xaxis=dict(color=COLORS["text_muted"]),
+    ))
+    chart_journey = dcc.Graph(figure=fig_journey, config=CHART_CONFIG)
+
+    # Stage-to-stage drop-off breakdown
+    dropoff_items = [
+        {"label": "Awareness -> Consideration", "value": "64%",
+         "pct": 64, "color": COLORS["purple"]},
+        {"label": "Consideration -> Purchase", "value": "59%",
+         "pct": 59, "color": COLORS["green"]},
+        {"label": "Purchase -> Retention", "value": "76%",
+         "pct": 76, "color": COLORS["yellow"]},
+        {"label": "Retention -> Advocacy", "value": "41%",
+         "pct": 41, "color": COLORS["red"]},
+    ]
+
+    tab_journey = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([
+                html.Div("Journey Funnel",
+                         style={"fontSize": "14px", "fontWeight": "600",
+                                "color": COLORS["white"], "marginBottom": "12px"}),
+                chart_journey,
+            ], padding="20px"),
+            _card([
+                html.Div("Stage Conversion Rates",
+                         style={"fontSize": "14px", "fontWeight": "600",
+                                "color": COLORS["white"], "marginBottom": "16px"}),
+                breakdown_list(dropoff_items),
+                html.Div(
+                    style={"marginTop": "20px", "padding": "12px",
+                           "backgroundColor": f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
+                           "borderRadius": "8px"},
+                    children=[
+                        html.Div("Key Insight",
+                                 style={"fontSize": "11px", "fontWeight": "700",
+                                        "color": COLORS["blue"],
+                                        "textTransform": "uppercase",
+                                        "marginBottom": "4px"}),
+                        html.Div(
+                            "Retention-to-Advocacy has the largest drop-off (41%). "
+                            "Loyalty programs and referral incentives could improve "
+                            "this conversion.",
+                            style={"fontSize": "12px", "color": COLORS["text_muted"],
+                                   "lineHeight": "1.5"}),
+                    ],
+                ),
+            ], padding="20px"),
+        ],
+    )
+
+    # ══════════════════════════════════════════════════════════════════
+    #  TAB 3: NPS -- distribution bar + channel breakdown
+    # ══════════════════════════════════════════════════════════════════
+
+    nps_categories = ["Detractors (0-6)", "Passives (7-8)", "Promoters (9-10)"]
+    nps_values = [18, 20, 62]
+    nps_colors = [COLORS["red"], COLORS["yellow"], COLORS["green"]]
+
+    fig_nps = go.Figure()
+    fig_nps.add_trace(go.Bar(
+        x=nps_categories, y=nps_values,
+        marker=dict(color=nps_colors, cornerradius=4),
+        text=[f"{v}%" for v in nps_values], textposition="outside",
+        textfont=dict(color=COLORS["white"], size=13),
+        width=0.5,
+    ))
+    fig_nps.update_layout(**dark_chart_layout(
+        height=300,
+        title=dict(text="NPS Distribution",
+                   font=dict(size=14, color=COLORS["white"])),
+        yaxis=dict(title="Percentage of Respondents", range=[0, 80],
+                   showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        xaxis=dict(color=COLORS["text_muted"]),
+    ))
+    chart_nps = dcc.Graph(figure=fig_nps, config=CHART_CONFIG)
+
+    # NPS by channel breakdown
+    nps_channel_items = [
+        {"label": "Mobile App", "value": "NPS 74",
+         "pct": 74, "color": COLORS["green"]},
+        {"label": "Self-Service Portal", "value": "NPS 68",
+         "pct": 68, "color": COLORS["green"]},
+        {"label": "In-Store", "value": "NPS 61",
+         "pct": 61, "color": COLORS["blue"]},
+        {"label": "Web Chat", "value": "NPS 55",
+         "pct": 55, "color": COLORS["blue"]},
+        {"label": "Social Media", "value": "NPS 48",
+         "pct": 48, "color": COLORS["yellow"]},
+        {"label": "Call Center", "value": "NPS 39",
+         "pct": 39, "color": COLORS["red"]},
+    ]
+
+    tab_nps = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([
+                html.Div("NPS Distribution",
+                         style={"fontSize": "14px", "fontWeight": "600",
+                                "color": COLORS["white"], "marginBottom": "12px"}),
+                chart_nps,
+                html.Div(
+                    style={"display": "flex", "justifyContent": "center",
+                           "alignItems": "center", "marginTop": "8px", "gap": "8px"},
+                    children=[
+                        html.Span("Overall NPS:",
+                                  style={"fontSize": "13px",
+                                         "color": COLORS["text_muted"]}),
+                        html.Span("+44",
+                                  style={"fontSize": "20px", "fontWeight": "700",
+                                         "color": COLORS["green"]}),
+                        html.Span("(+4 pts vs Q3)",
+                                  style={"fontSize": "11px",
+                                         "color": COLORS["text_muted"]}),
+                    ],
+                ),
+            ], padding="20px"),
+            _card([
+                html.Div("NPS by Channel",
+                         style={"fontSize": "14px", "fontWeight": "600",
+                                "color": COLORS["white"], "marginBottom": "16px"}),
+                breakdown_list(nps_channel_items),
+            ], padding="20px"),
+        ],
+    )
+
     # ── Bottom stats ──────────────────────────────────────────────────
     bottom = [
         ("Avg CSAT", "78.4", "blue"),
@@ -167,14 +342,16 @@ def render_consumer_cx(cfg):
     return layout_split(
         title="Consumer CX & Growth",
         subtitle="Customer satisfaction, journey analytics, and NPS drivers",
-        tabs=["Satisfaction", "Journey", "NPS"],
+        tab_contents=[
+            ("Satisfaction", tab_satisfaction),
+            ("Journey", tab_journey),
+            ("NPS", tab_nps),
+        ],
         banner_text=(
             "CX Insight: App channel satisfaction rose 5 pts after the Q1 UX "
             "refresh. Call center remains the lowest-scoring touchpoint -- "
             "consider AI-assisted routing to reduce wait times."
         ),
-        left_panel=("Satisfaction by Touchpoint", left_chart),
-        right_panel=("Complaint Breakdown", right_chart),
         bottom_stats=bottom,
     )
 
@@ -454,9 +631,9 @@ def render_field_energy(cfg):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def render_fraud_prevention(cfg):
-    """Alert card layout with tabs for active/investigating/resolved,
-    summary KPIs, and detailed alert cards for SIM swap, billing, and
-    roaming fraud."""
+    """Alert card layout with three real tabs -- Active Alerts,
+    Investigating, and Resolved -- each with unique alert content,
+    plus summary KPIs."""
 
     # ── Summary KPIs ──────────────────────────────────────────────────
     summary = [
@@ -466,104 +643,201 @@ def render_fraud_prevention(cfg):
         {"label": "Est. Savings", "value": "$4.6M", "accent": "blue"},
     ]
 
-    # ── Alert cards ───────────────────────────────────────────────────
-    alerts = [
-        {
-            "severity": "critical",
-            "title": "SIM Swap Fraud Cluster Detected",
-            "description": (
+    # ══════════════════════════════════════════════════════════════════
+    #  TAB 1: Active Alerts -- critical + warning alerts requiring action
+    # ══════════════════════════════════════════════════════════════════
+
+    tab_active = html.Div(children=[
+        alert_card(
+            severity="critical",
+            title="SIM Swap Fraud Cluster Detected",
+            description=(
                 "Coordinated SIM swap activity detected across 14 accounts in "
                 "the Southeast region. Pattern matches organized fraud ring "
                 "behavior with rapid sequential port-out requests."
             ),
-            "impact": "Financial Impact: $287K estimated",
-            "timestamp": "12 min ago",
-            "details": [
+            impact="Financial Impact: $287K estimated",
+            timestamp="12 min ago",
+            details=[
                 ("Affected Accounts", "14"),
                 ("Region", "Southeast -- Atlanta, Miami, Charlotte"),
                 ("Attack Vector", "Social engineering + dealer portal"),
                 ("Risk Score", "97 / 100"),
                 ("IMSI Changes", "14 in last 45 min"),
             ],
-        },
-        {
-            "severity": "critical",
-            "title": "Billing System Anomaly -- Revenue Leakage",
-            "description": (
+        ),
+        alert_card(
+            severity="critical",
+            title="Billing System Anomaly -- Revenue Leakage",
+            description=(
                 "Automated anomaly detection flagged abnormal CDR patterns "
                 "indicating potential revenue bypass. Approximately 3,200 calls "
                 "routed through a compromised interconnect gateway are not "
                 "generating billing records."
             ),
-            "impact": "Revenue Leakage: $142K / day",
-            "timestamp": "38 min ago",
-            "details": [
+            impact="Revenue Leakage: $142K / day",
+            timestamp="38 min ago",
+            details=[
                 ("Gateway ID", "GW-ATL-0042"),
                 ("Unbilled CDRs", "3,200+ daily"),
                 ("Duration", "Ongoing ~72 hours"),
                 ("Carrier", "Interconnect Partner C"),
                 ("Pattern", "Zero-rated international trunk"),
             ],
-        },
-        {
-            "severity": "warning",
-            "title": "International Roaming Fraud -- Premium Rate",
-            "description": (
+        ),
+        alert_card(
+            severity="warning",
+            title="International Roaming Fraud -- Premium Rate",
+            description=(
                 "Spike in premium-rate SMS origination from roaming subscribers "
                 "in Eastern Europe. 8 devices generating abnormal volumes "
                 "consistent with IRSF (International Revenue Share Fraud)."
             ),
-            "impact": "Financial Impact: $68K accrued",
-            "timestamp": "1 hr ago",
-            "details": [
+            impact="Financial Impact: $68K accrued",
+            timestamp="1 hr ago",
+            details=[
                 ("Devices Flagged", "8"),
                 ("Roaming Partner", "Operator EU-East-12"),
                 ("Premium Destinations", "Moldova, Latvia, Bosnia"),
                 ("SMS Volume", "24,000 msgs in 6 hrs"),
                 ("Avg Cost / msg", "$2.84"),
             ],
-        },
-        {
-            "severity": "warning",
-            "title": "Subscription Fraud -- Synthetic Identity",
-            "description": (
+        ),
+        alert_card(
+            severity="warning",
+            title="Subscription Fraud -- Synthetic Identity",
+            description=(
                 "Credit-check bypass detected for 6 new enterprise accounts "
                 "opened in the last 48 hours. Identity verification scores "
                 "are unusually clustered, suggesting synthetic identities."
             ),
-            "impact": "Potential Exposure: $180K device subsidy",
-            "timestamp": "2 hr ago",
-            "details": [
+            impact="Potential Exposure: $180K device subsidy",
+            timestamp="2 hr ago",
+            details=[
                 ("Accounts Flagged", "6"),
                 ("Devices Acquired", "42 handsets"),
                 ("Avg Credit Score", "710 (synthetic cluster)"),
                 ("Dealer Channel", "Online -- self-serve"),
             ],
-        },
-        {
-            "severity": "info",
-            "title": "Wangiri Callback Scheme -- Low Volume",
-            "description": (
-                "Low-volume Wangiri (one-ring) activity detected from a block "
-                "of Togolese numbers targeting prepaid subscribers. Auto-block "
-                "rule engaged; no customer impact so far."
+        ),
+    ])
+
+    # ══════════════════════════════════════════════════════════════════
+    #  TAB 2: Investigating -- ongoing investigation cases
+    # ══════════════════════════════════════════════════════════════════
+
+    tab_investigating = html.Div(children=[
+        alert_card(
+            severity="warning",
+            title="Dealer Collusion Ring -- Northeast Region",
+            description=(
+                "Internal audit flagged suspicious activation patterns at 3 "
+                "authorized dealer locations in New Jersey. Over 240 device "
+                "activations in 72 hours with identical credit profiles and "
+                "sequential IMEI numbers suggest organized subsidy fraud."
             ),
-            "impact": "Blocked -- $0 customer impact",
-            "timestamp": "3 hr ago",
-            "details": [
-                ("Source Range", "+228 9XXX XXXX"),
-                ("Calls Attempted", "340"),
-                ("Calls Blocked", "340 (100%)"),
-                ("Callback Attempts", "0"),
+            impact="Potential Exposure: $420K in device subsidies",
+            timestamp="Investigation opened 2 days ago",
+            details=[
+                ("Dealers Flagged", "3 locations (NJ-0147, NJ-0152, NJ-0168)"),
+                ("Activations Under Review", "243"),
+                ("Lead Investigator", "Fraud Analytics Team -- Region NE"),
+                ("Evidence Status", "Device IMEI logs & CCTV under review"),
+                ("Est. Completion", "5-7 business days"),
             ],
-        },
-    ]
+        ),
+        alert_card(
+            severity="info",
+            title="Compromised API Credentials -- Partner Portal",
+            description=(
+                "Security team detected unusual API call patterns from MVNO "
+                "Partner Delta's integration credentials. Traffic volume spiked "
+                "8x normal levels with queries targeting subscriber PII endpoints. "
+                "Credentials rotated; forensic analysis underway."
+            ),
+            impact="Data Exposure Risk: ~12K subscriber records queried",
+            timestamp="Investigation opened 4 days ago",
+            details=[
+                ("Partner", "MVNO Delta (Partner ID: P-00482)"),
+                ("Anomalous API Calls", "34,200 in 6-hour window"),
+                ("Endpoints Accessed", "/subscriber/lookup, /account/details"),
+                ("Credentials", "Rotated and re-issued"),
+                ("Forensic Status", "Log analysis 60% complete"),
+            ],
+        ),
+    ])
+
+    # ══════════════════════════════════════════════════════════════════
+    #  TAB 3: Resolved -- closed past incidents
+    # ══════════════════════════════════════════════════════════════════
+
+    tab_resolved = html.Div(children=[
+        alert_card(
+            severity="healthy",
+            title="PBX Toll Fraud -- Enterprise Client Acme Corp",
+            description=(
+                "Compromised PBX system at Acme Corp was exploited to route "
+                "premium-rate international calls through their SIP trunk. "
+                "Fraud was detected within 4 hours. SIP trunk suspended, "
+                "client PBX patched, and $38K in fraudulent charges reversed."
+            ),
+            impact="Resolved -- $38K recovered",
+            timestamp="Closed 3 days ago",
+            details=[
+                ("Duration", "4 hours (detection to containment)"),
+                ("Fraudulent Calls", "1,247 to premium numbers"),
+                ("Client Action", "PBX firmware updated, SIP ACL tightened"),
+                ("Financial Recovery", "$38K reversed, $0 customer liability"),
+            ],
+        ),
+        alert_card(
+            severity="healthy",
+            title="Wangiri Callback Scheme -- West Africa Block",
+            description=(
+                "Large-scale Wangiri (one-ring) campaign from Togolese number "
+                "block targeting 18,000 prepaid subscribers. Auto-block rules "
+                "engaged immediately. Zero customer callbacks recorded. "
+                "Number range permanently blacklisted."
+            ),
+            impact="Blocked -- $0 customer impact",
+            timestamp="Closed 5 days ago",
+            details=[
+                ("Source Range", "+228 9XXX XXXX (Togo)"),
+                ("Calls Attempted", "18,340"),
+                ("Calls Blocked", "18,340 (100%)"),
+                ("Customer Callbacks", "0"),
+                ("Action Taken", "Number range permanently blacklisted"),
+            ],
+        ),
+        alert_card(
+            severity="healthy",
+            title="SIM Box Fraud -- Wholesale Voice Bypass",
+            description=(
+                "Network analytics identified a SIM box operation in the "
+                "Midwest terminating international calls as local traffic, "
+                "bypassing interconnect fees. 48 SIMs deactivated, gateway "
+                "equipment seized in coordination with law enforcement."
+            ),
+            impact="Resolved -- $165K revenue leakage stopped",
+            timestamp="Closed 8 days ago",
+            details=[
+                ("SIMs Deactivated", "48"),
+                ("Bypass Duration", "~21 days before detection"),
+                ("Revenue Recovered", "$165K in retroactive billing"),
+                ("Law Enforcement", "FBI IC3 referral filed"),
+                ("Preventive Measure", "Enhanced velocity checks on bulk SIM activations"),
+            ],
+        ),
+    ])
 
     return layout_alerts(
         title="Fraud Prevention",
         subtitle="Real-time fraud detection, investigation queue, and financial impact",
-        tabs=["Active Alerts", "Investigating", "Resolved"],
-        alerts=alerts,
+        tab_contents=[
+            ("Active Alerts", tab_active),
+            ("Investigating", tab_investigating),
+            ("Resolved", tab_resolved),
+        ],
         summary_kpis=summary,
     )
 

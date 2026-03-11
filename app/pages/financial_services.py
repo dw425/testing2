@@ -411,12 +411,46 @@ def render_risk_management(cfg):
         },
     ]
 
+    # ── Build tab contents using new API ───────────────────────────────
+    active_cards = [alert_card(**a) for a in alerts
+                    if a["severity"] in ("critical", "warning")]
+    breach_cards = [alert_card(**a) for a in alerts
+                    if a["severity"] == "critical"] + [
+        alert_card(severity="critical",
+                   title="Intraday PnL Limit Breach — FICC Desk",
+                   description="Daily PnL drawdown on the FICC desk has hit -$18.4M, exceeding the -$15M intraday stop-loss limit. Position reduction directive issued to desk head.",
+                   timestamp="58 min ago"),
+    ]
+    historical_cards = [
+        alert_card(severity="healthy",
+                   title="Q4 VaR Backtesting — 0 Exceptions",
+                   description="99% 1-day VaR model produced zero backtesting exceptions in Q4. Model remains well-calibrated with a p-value of 0.42 under Kupiec test.",
+                   timestamp="Jan 15, 2026"),
+        alert_card(severity="healthy",
+                   title="CCAR Stress Test — Passed",
+                   description="All nine Fed-mandated scenarios passed with CET1 never falling below 9.8% (minimum 4.5%). Board approved capital distribution plan.",
+                   timestamp="Dec 18, 2025"),
+        alert_card(severity="info",
+                   title="Counterparty Exposure Rebalanced — Q3",
+                   description="Top-10 counterparty concentration reduced from 42% to 34% of total exposure following quarterly rebalancing. All within risk appetite.",
+                   timestamp="Oct 1, 2025"),
+        alert_card(severity="info",
+                   title="Market Risk Model Recalibration Complete",
+                   description="Annual recalibration of parametric VaR model completed. Volatility surface updated with 2025 regime data. No material impact to capital requirements.",
+                   timestamp="Sep 12, 2025"),
+    ]
+
+    tab_contents = [
+        ("Active Risks", html.Div(active_cards)),
+        ("Breaches", html.Div(breach_cards)),
+        ("Historical", html.Div(historical_cards)),
+    ]
+
     return layout_alerts(
         title="Risk Management",
         subtitle="Enterprise risk monitoring — VaR, stress testing, "
                  "concentration limits, and counterparty exposure",
-        tabs=tabs,
-        alerts=alerts,
+        tab_contents=tab_contents,
         summary_kpis=summary_kpis,
     )
 
@@ -430,15 +464,13 @@ def render_regulatory(cfg):
     chart on the left, compliance status donut on the right, and bottom
     summary stats."""
 
-    tabs = ["Capital", "Reporting", "Audit"]
-
     banner_text = (
         "All Basel III / IV capital ratios are above regulatory minimums "
         "as of the latest quarterly filing.  Next CCAR submission due in "
         "18 days — pre-filing review is 94% complete."
     )
 
-    # ── Left panel: stacked bar of capital ratios over time ───────────
+    # ── TAB 1: Capital ───────────────────────────────────────────────
     quarters = ["Q1 '25", "Q2 '25", "Q3 '25", "Q4 '25"]
     cet1 = [13.2, 13.5, 13.8, 14.1]
     tier1 = [1.8, 1.7, 1.9, 1.8]
@@ -464,25 +496,125 @@ def render_regulatory(cfg):
         xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
         legend=dict(orientation="h", y=-0.2, x=0.5, xanchor="center"),
     ))
-    # Add regulatory minimum line
     cap_fig.add_hline(y=10.5, line_dash="dash",
                       line_color=COLORS["red"], opacity=0.6,
                       annotation_text="Min Total Capital (10.5%)",
                       annotation_font_color=COLORS["red"],
                       annotation_font_size=10)
+    cap_left = dcc.Graph(figure=cap_fig, config=CHART_CONFIG, style={"width": "100%"})
 
-    left_chart = dcc.Graph(figure=cap_fig, config=CHART_CONFIG,
-                           style={"width": "100%"})
+    comp_fig = donut_figure(
+        ["Compliant", "Under Review", "Remediation", "Past Due"],
+        [142, 18, 7, 3],
+        [COLORS["green"], COLORS["blue"], COLORS["yellow"], COLORS["red"]],
+        center_text="170", title="Compliance Items",
+    )
+    cap_right = dcc.Graph(figure=comp_fig, config=CHART_CONFIG, style={"width": "100%"})
 
-    # ── Right panel: compliance status donut ──────────────────────────
-    comp_labels = ["Compliant", "Under Review", "Remediation", "Past Due"]
-    comp_values = [142, 18, 7, 3]
-    comp_colors = [COLORS["green"], COLORS["blue"], COLORS["yellow"],
-                   COLORS["red"]]
-    comp_fig = donut_figure(comp_labels, comp_values, comp_colors,
-                            center_text="170", title="Compliance Items")
-    right_chart = dcc.Graph(figure=comp_fig, config=CHART_CONFIG,
-                            style={"width": "100%"})
+    tab_capital = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Capital Ratios Over Time", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), cap_left], padding="20px"),
+            _card([html.Div("Compliance Status", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), cap_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 2: Reporting ─────────────────────────────────────────────
+    report_types = ["CCAR / DFAST", "Basel III Pillar 3", "Call Reports",
+                    "MiFID II RTS", "AML / SAR", "ESG / SFDR"]
+    report_status = [94, 100, 88, 78, 82, 65]
+    fig_report = go.Figure()
+    fig_report.add_trace(go.Bar(
+        y=report_types, x=report_status,
+        orientation="h",
+        marker_color=[COLORS["green"] if v >= 90 else COLORS["yellow"] if v >= 70
+                      else COLORS["red"] for v in report_status],
+        text=[f"{v}%" for v in report_status],
+        textposition="outside",
+        textfont=dict(color=COLORS["white"], size=10),
+    ))
+    fig_report.add_vline(x=100, line_dash="dash", line_color=COLORS["green"],
+                         opacity=0.4)
+    fig_report.update_layout(**dark_chart_layout(
+        height=300, showlegend=False,
+        margin=dict(l=140, r=60, t=24, b=24),
+        xaxis=dict(title="Completion %", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], range=[0, 110]),
+        yaxis=dict(showgrid=False),
+    ))
+    report_left = dcc.Graph(figure=fig_report, config=CHART_CONFIG)
+
+    # Submission timeline
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+    fig_timeline = go.Figure()
+    fig_timeline.add_trace(go.Bar(
+        x=months, y=[8, 12, 6, 14, 10, 8], name="Reports Filed",
+        marker_color=COLORS["blue"],
+    ))
+    fig_timeline.add_trace(go.Scatter(
+        x=months, y=[1, 0, 2, 1, 0, 0], name="Late Submissions",
+        mode="lines+markers", line=dict(color=COLORS["red"], width=2),
+        marker=dict(size=6), yaxis="y2",
+    ))
+    fig_timeline.update_layout(**dark_chart_layout(
+        height=300,
+        yaxis=dict(title="Filed Count", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        yaxis2=dict(title="Late", overlaying="y", side="right",
+                    showgrid=False, color=COLORS["red"], range=[0, 5]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    report_right = dcc.Graph(figure=fig_timeline, config=CHART_CONFIG)
+
+    tab_reporting = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Regulatory Report Completion", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), report_left], padding="20px"),
+            _card([html.Div("Filing Timeline & Late Submissions", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), report_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 3: Audit ─────────────────────────────────────────────────
+    audit_donut = dcc.Graph(
+        figure=donut_figure(
+            labels=["Closed", "In Progress", "Not Started", "Overdue"],
+            values=[84, 12, 6, 3],
+            colors=[COLORS["green"], COLORS["blue"], COLORS["text_muted"], COLORS["red"]],
+            center_text="105", title="Audit Findings",
+        ),
+        config=CHART_CONFIG,
+    )
+
+    # Audit score by department
+    departments = ["Risk", "Trading", "Operations", "IT", "Legal"]
+    scores = [96, 88, 92, 78, 94]
+    fig_audit = go.Figure(go.Bar(
+        x=departments, y=scores,
+        marker_color=[COLORS["green"] if s >= 90 else COLORS["yellow"] if s >= 80
+                      else COLORS["red"] for s in scores],
+        text=[f"{s}%" for s in scores],
+        textposition="outside",
+        textfont=dict(color=COLORS["white"], size=11),
+    ))
+    fig_audit.add_hline(y=90, line_dash="dash", line_color=COLORS["green"],
+                        opacity=0.5, annotation_text="Target (90%)",
+                        annotation_font_color=COLORS["green"],
+                        annotation_font_size=10)
+    fig_audit.update_layout(**dark_chart_layout(
+        height=300, showlegend=False,
+        yaxis=dict(title="Audit Score %", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], range=[0, 105]),
+        margin=dict(l=48, r=24, t=24, b=48),
+    ))
+    audit_right = dcc.Graph(figure=fig_audit, config=CHART_CONFIG)
+
+    tab_audit = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Audit Findings Status", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), audit_donut], padding="20px"),
+            _card([html.Div("Audit Score by Department", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), audit_right], padding="20px"),
+        ],
+    )
 
     # ── Bottom stats ──────────────────────────────────────────────────
     bottom_stats = [
@@ -497,10 +629,12 @@ def render_regulatory(cfg):
         title="Regulatory & Compliance",
         subtitle="Capital adequacy, regulatory reporting, and audit "
                  "readiness across all jurisdictions",
-        tabs=tabs,
+        tab_contents=[
+            ("Capital", tab_capital),
+            ("Reporting", tab_reporting),
+            ("Audit", tab_audit),
+        ],
         banner_text=banner_text,
-        left_panel=("Capital Ratios Over Time", left_chart),
-        right_panel=("Compliance Status", right_chart),
         bottom_stats=bottom_stats,
     )
 

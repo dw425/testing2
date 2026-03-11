@@ -23,7 +23,7 @@ from app.page_styles import (
     layout_executive, layout_table, layout_split, layout_alerts,
     layout_forecast, layout_grid,
     gauge_figure, sparkline_figure, metric_with_sparkline,
-    _card, _hex_to_rgb,
+    _card, _hex_to_rgb, data_table,
 )
 from app.theme import COLORS, FONT_FAMILY
 from dash import dcc, html
@@ -207,9 +207,6 @@ def render_know_player(cfg):
 def render_grow_playerbase(cfg):
     """Acquisition analytics with channel mix and campaign insights."""
 
-    # ── Tabs ──────────────────────────────────────────────────────────────
-    tabs = ["Acquisition", "Viral Growth", "Campaigns"]
-
     # ── Info banner ───────────────────────────────────────────────────────
     banner_text = (
         "TikTok install volume surged 34% this week while CPI dropped to $1.82. "
@@ -217,14 +214,24 @@ def render_grow_playerbase(cfg):
         "Organic installs are trending up driven by recent App Store featuring."
     )
 
-    # ── Left panel: Stacked bar chart (installs by channel) ───────────────
+    # ── Bottom stats ──────────────────────────────────────────────────────
+    bottom_stats = [
+        ("Total Installs", "162K", "blue"),
+        ("Avg CPI", "$2.14", "green"),
+        ("Organic Share", "34.6%", "purple"),
+        ("D1 Install Retention", "48%", "yellow"),
+    ]
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  Tab 1: Acquisition  —  stacked bar (installs by channel) + donut
+    # ══════════════════════════════════════════════════════════════════════
     weeks = ["W1 Feb", "W2 Feb", "W3 Feb", "W4 Feb", "W1 Mar"]
     channels = {
-        "Organic":   [42, 45, 48, 51, 56],
+        "Organic":    [42, 45, 48, 51, 56],
         "Google UAC": [38, 36, 34, 33, 31],
-        "TikTok":    [18, 22, 26, 31, 42],
-        "Unity Ads": [15, 14, 16, 14, 15],
-        "Facebook":  [24, 22, 20, 19, 18],
+        "TikTok":     [18, 22, 26, 31, 42],
+        "Unity Ads":  [15, 14, 16, 14, 15],
+        "Facebook":   [24, 22, 20, 19, 18],
     }
     ch_colors = {
         "Organic": COLORS["green"],
@@ -247,31 +254,142 @@ def render_grow_playerbase(cfg):
         legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center",
                     font=dict(size=11)),
     ))
-    left_chart = dcc.Graph(figure=fig_bar, config=CHART_CONFIG)
+    acq_bar_chart = dcc.Graph(figure=fig_bar, config=CHART_CONFIG)
 
-    # ── Right panel: Donut (channel mix this week) ────────────────────────
     mix_labels = list(channels.keys())
     mix_values = [ch[-1] for ch in channels.values()]
     mix_colors = [ch_colors[n] for n in mix_labels]
     fig_donut = donut_figure(mix_labels, mix_values, mix_colors,
                              center_text="162K", title="This Week")
-    right_chart = dcc.Graph(figure=fig_donut, config=CHART_CONFIG)
+    acq_donut_chart = dcc.Graph(figure=fig_donut, config=CHART_CONFIG)
 
-    # ── Bottom stats ──────────────────────────────────────────────────────
-    bottom_stats = [
-        ("Total Installs", "162K", "blue"),
-        ("Avg CPI", "$2.14", "green"),
-        ("Organic Share", "34.6%", "purple"),
-        ("D1 Install Retention", "48%", "yellow"),
+    _title_style = {
+        "fontSize": "14px", "fontWeight": "600",
+        "color": COLORS["white"], "marginBottom": "12px",
+    }
+
+    tab_acquisition = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([
+                html.Div("Installs by Channel  —  Weekly", style=_title_style),
+                acq_bar_chart,
+            ], padding="20px"),
+            _card([
+                html.Div("Channel Mix  —  Current Week", style=_title_style),
+                acq_donut_chart,
+            ], padding="20px"),
+        ],
+    )
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  Tab 2: Viral Growth  —  K-factor line chart + viral channel breakdown
+    # ══════════════════════════════════════════════════════════════════════
+    viral_weeks = ["W1 Jan", "W2 Jan", "W3 Jan", "W4 Jan",
+                   "W1 Feb", "W2 Feb", "W3 Feb", "W4 Feb", "W1 Mar"]
+    k_factor = [0.62, 0.65, 0.68, 0.71, 0.74, 0.78, 0.82, 0.86, 0.91]
+
+    fig_kfactor = go.Figure()
+    fig_kfactor.add_trace(go.Scatter(
+        x=viral_weeks, y=k_factor, name="K-Factor",
+        mode="lines+markers",
+        line=dict(color=COLORS["green"], width=2),
+        marker=dict(size=6),
+        fill="tozeroy",
+        fillcolor=f"rgba({_hex_to_rgb(COLORS['green'])}, 0.10)",
+    ))
+    fig_kfactor.add_trace(go.Scatter(
+        x=viral_weeks, y=[1.0] * len(viral_weeks), name="Viral Threshold",
+        mode="lines",
+        line=dict(color=COLORS["yellow"], width=1, dash="dash"),
+    ))
+    fig_kfactor.update_layout(**dark_chart_layout(
+        height=320,
+        yaxis=dict(title="K-Factor", showgrid=True, range=[0, 1.3],
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    kfactor_chart = dcc.Graph(figure=fig_kfactor, config=CHART_CONFIG)
+
+    viral_channels = breakdown_list([
+        {"label": "Friend Invites", "value": "28.4K", "pct": 38, "color": COLORS["blue"]},
+        {"label": "Social Sharing", "value": "18.2K", "pct": 24, "color": COLORS["green"]},
+        {"label": "Clan Referrals", "value": "12.8K", "pct": 17, "color": COLORS["purple"]},
+        {"label": "Streamer Codes", "value": "9.6K", "pct": 13, "color": COLORS["yellow"]},
+        {"label": "App Store WoM", "value": "5.9K", "pct": 8, "color": COLORS["red"]},
+    ])
+
+    tab_viral = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([
+                html.Div("Viral Coefficient (K-Factor)  —  Trend", style=_title_style),
+                kfactor_chart,
+            ], padding="20px"),
+            _card([
+                html.Div("Viral Channel Breakdown", style=_title_style),
+                viral_channels,
+            ], padding="20px"),
+        ],
+    )
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  Tab 3: Campaigns  —  DataTable of campaign performance
+    # ══════════════════════════════════════════════════════════════════════
+    campaign_columns = [
+        {"name": "Campaign", "id": "campaign"},
+        {"name": "Channel", "id": "channel"},
+        {"name": "Spend", "id": "spend"},
+        {"name": "Installs", "id": "installs"},
+        {"name": "CPI", "id": "cpi"},
+        {"name": "D7 Retention", "id": "d7_retention"},
+        {"name": "ROAS", "id": "roas"},
+        {"name": "Status", "id": "status"},
+    ]
+    campaign_data = [
+        {"campaign": "Spring Launch NA", "channel": "TikTok", "spend": "$24,800",
+         "installs": "13,620", "cpi": "$1.82", "d7_retention": "42%",
+         "roas": "2.4x", "status": "Active"},
+        {"campaign": "Retarget Lapsed EU", "channel": "Google UAC", "spend": "$18,400",
+         "installs": "7,080", "cpi": "$2.60", "d7_retention": "51%",
+         "roas": "3.1x", "status": "Active"},
+        {"campaign": "Brand Awareness APAC", "channel": "Facebook", "spend": "$12,600",
+         "installs": "5,400", "cpi": "$2.33", "d7_retention": "36%",
+         "roas": "1.6x", "status": "Active"},
+        {"campaign": "Clash Arena S14", "channel": "Unity Ads", "spend": "$8,200",
+         "installs": "4,100", "cpi": "$2.00", "d7_retention": "38%",
+         "roas": "1.9x", "status": "Active"},
+        {"campaign": "Farm Empire Cross-Promo", "channel": "Organic", "spend": "$0",
+         "installs": "9,800", "cpi": "$0.00", "d7_retention": "55%",
+         "roas": "N/A", "status": "Active"},
+        {"campaign": "Valentine's Event", "channel": "TikTok", "spend": "$31,200",
+         "installs": "18,900", "cpi": "$1.65", "d7_retention": "44%",
+         "roas": "2.8x", "status": "Ended"},
+        {"campaign": "Holiday Retarget", "channel": "Google UAC", "spend": "$22,000",
+         "installs": "8,800", "cpi": "$2.50", "d7_retention": "48%",
+         "roas": "2.6x", "status": "Ended"},
+        {"campaign": "Space Drift Beta", "channel": "Facebook", "spend": "$6,400",
+         "installs": "2,560", "cpi": "$2.50", "d7_retention": "31%",
+         "roas": "1.2x", "status": "Paused"},
     ]
 
+    tab_campaigns = html.Div([
+        _card([
+            html.Div("Campaign Performance", style=_title_style),
+            data_table(campaign_columns, campaign_data, page_size=8),
+        ], padding="20px"),
+    ])
+
+    # ── Assemble with new tab_contents API ────────────────────────────────
     return layout_split(
         title=cfg.get("title", "Grow Your Playerbase"),
         subtitle=cfg.get("subtitle", "Acquisition channels, viral loops, and campaign performance"),
-        tabs=tabs,
+        tab_contents=[
+            ("Acquisition", tab_acquisition),
+            ("Viral Growth", tab_viral),
+            ("Campaigns", tab_campaigns),
+        ],
         banner_text=banner_text,
-        left_panel=("Installs by Channel  —  Weekly", left_chart),
-        right_panel=("Channel Mix  —  Current Week", right_chart),
         bottom_stats=bottom_stats,
     )
 
@@ -362,9 +480,6 @@ def render_grow_revenue(cfg):
 def render_build_games(cfg):
     """Build health dashboard showing failures, crashes, QA issues."""
 
-    # ── Tabs ──────────────────────────────────────────────────────────────
-    tabs = ["Active Issues", "Resolved", "All"]
-
     # ── Summary KPIs ──────────────────────────────────────────────────────
     summary_kpis = [
         {"label": "Open Issues", "value": "14", "accent": "red"},
@@ -373,103 +488,160 @@ def render_build_games(cfg):
         {"label": "Avg Fix Time", "value": "3.2h", "accent": "blue"},
     ]
 
-    # ── Alert cards ───────────────────────────────────────────────────────
-    alerts = [
-        {
-            "severity": "critical",
-            "title": "Clash Arena  —  Android Build Failure",
-            "description": (
-                "The release/2.8.1 branch fails during the NDK linking step. "
-                "Affected modules: libgame_core.so, libnetwork.so. The CI pipeline "
-                "has been blocked for 4 hours. Rollback to 2.8.0 recommended if "
-                "unresolved within 1 hour."
-            ),
-            "impact": "Est. revenue loss: $18K/hr (blocked release)",
-            "details": [
-                ("Build ID", "CA-20260310-7841"),
-                ("Pipeline", "android-release-arm64"),
-                ("Failing Step", "ndk-link-r26b"),
-                ("Logs", "/ci/clash-arena/build-7841.log"),
-                ("Assigned", "Platform Team — J. Martinez"),
-            ],
-            "timestamp": "2h 14m ago",
-        },
-        {
-            "severity": "critical",
-            "title": "Farm Empire  —  Crash Spike (iOS 18.3)",
-            "description": (
-                "Crash rate jumped from 0.08% to 1.2% after iOS 18.3 update. "
-                "Stack traces point to Metal shader compilation in the rendering "
-                "pipeline. Affects iPhone 15 Pro and iPad Pro M4 devices."
-            ),
-            "impact": "~42K users impacted — 1-star reviews increasing",
-            "details": [
-                ("Crash Group", "FE-CRASH-9182"),
-                ("OS Version", "iOS 18.3 (22D60)"),
-                ("Devices", "iPhone 15 Pro, iPad Pro M4"),
-                ("Top Frame", "MetalShaderCompiler::linkProgram()"),
-                ("Sessions Affected", "42,381"),
-            ],
-            "timestamp": "48m ago",
-        },
-        {
-            "severity": "warning",
-            "title": "Space Drift  —  QA Regression in Matchmaking",
-            "description": (
-                "Automated QA suite detected 12 failing tests in the matchmaking "
-                "module after the skill-based ranking refactor. Players may be "
-                "matched with opponents 3+ tiers apart, leading to poor experience."
-            ),
-            "impact": "Est. DAU impact: -2.4% if shipped",
-            "details": [
-                ("Test Suite", "matchmaking_integration_v4"),
-                ("Failing Tests", "12 / 87"),
-                ("Branch", "feature/sbmm-v3"),
-                ("Regression Since", "commit a3f821c"),
-            ],
-            "timestamp": "1h 32m ago",
-        },
-        {
-            "severity": "warning",
-            "title": "Clash Arena  —  Memory Leak in Replay System",
-            "description": (
-                "Long sessions (>45 min) show increasing heap allocation in the "
-                "replay buffer. Memory grows ~8 MB/min after the 30-minute mark. "
-                "Low-end Android devices trigger OOM kills."
-            ),
-            "impact": "Session length capped; affects 18% of Android DAU",
-            "details": [
-                ("Issue", "CA-MEM-4421"),
-                ("Repro Rate", "100% after 45m"),
-                ("Heap Growth", "~8 MB/min"),
-                ("Affected Devices", "RAM <= 4 GB"),
-            ],
-            "timestamp": "3h 5m ago",
-        },
-        {
-            "severity": "info",
-            "title": "Farm Empire  —  Asset Bundle Size Exceeds Target",
-            "description": (
-                "The Spring Festival asset bundle is 124 MB, exceeding the 100 MB "
-                "target. This may increase download abandonment on cellular. "
-                "Texture compression and mesh LOD pass recommended."
-            ),
-            "impact": "Projected +3.8% download abandonment",
-            "details": [
-                ("Bundle", "spring_festival_2026_v2"),
-                ("Current Size", "124 MB"),
-                ("Target", "100 MB"),
-                ("Largest Assets", "env_blossom_4k.ktx2 (31 MB)"),
-            ],
-            "timestamp": "5h 18m ago",
-        },
-    ]
+    # ── Active alert cards (critical + warning) ──────────────────────────
+    card_build_failure = alert_card(
+        severity="critical",
+        title="Clash Arena  —  Android Build Failure",
+        description=(
+            "The release/2.8.1 branch fails during the NDK linking step. "
+            "Affected modules: libgame_core.so, libnetwork.so. The CI pipeline "
+            "has been blocked for 4 hours. Rollback to 2.8.0 recommended if "
+            "unresolved within 1 hour."
+        ),
+        impact="Est. revenue loss: $18K/hr (blocked release)",
+        details=[
+            ("Build ID", "CA-20260310-7841"),
+            ("Pipeline", "android-release-arm64"),
+            ("Failing Step", "ndk-link-r26b"),
+            ("Logs", "/ci/clash-arena/build-7841.log"),
+            ("Assigned", "Platform Team — J. Martinez"),
+        ],
+        timestamp="2h 14m ago",
+    )
+
+    card_crash_spike = alert_card(
+        severity="critical",
+        title="Farm Empire  —  Crash Spike (iOS 18.3)",
+        description=(
+            "Crash rate jumped from 0.08% to 1.2% after iOS 18.3 update. "
+            "Stack traces point to Metal shader compilation in the rendering "
+            "pipeline. Affects iPhone 15 Pro and iPad Pro M4 devices."
+        ),
+        impact="~42K users impacted — 1-star reviews increasing",
+        details=[
+            ("Crash Group", "FE-CRASH-9182"),
+            ("OS Version", "iOS 18.3 (22D60)"),
+            ("Devices", "iPhone 15 Pro, iPad Pro M4"),
+            ("Top Frame", "MetalShaderCompiler::linkProgram()"),
+            ("Sessions Affected", "42,381"),
+        ],
+        timestamp="48m ago",
+    )
+
+    card_matchmaking = alert_card(
+        severity="warning",
+        title="Space Drift  —  QA Regression in Matchmaking",
+        description=(
+            "Automated QA suite detected 12 failing tests in the matchmaking "
+            "module after the skill-based ranking refactor. Players may be "
+            "matched with opponents 3+ tiers apart, leading to poor experience."
+        ),
+        impact="Est. DAU impact: -2.4% if shipped",
+        details=[
+            ("Test Suite", "matchmaking_integration_v4"),
+            ("Failing Tests", "12 / 87"),
+            ("Branch", "feature/sbmm-v3"),
+            ("Regression Since", "commit a3f821c"),
+        ],
+        timestamp="1h 32m ago",
+    )
+
+    card_memory_leak = alert_card(
+        severity="warning",
+        title="Clash Arena  —  Memory Leak in Replay System",
+        description=(
+            "Long sessions (>45 min) show increasing heap allocation in the "
+            "replay buffer. Memory grows ~8 MB/min after the 30-minute mark. "
+            "Low-end Android devices trigger OOM kills."
+        ),
+        impact="Session length capped; affects 18% of Android DAU",
+        details=[
+            ("Issue", "CA-MEM-4421"),
+            ("Repro Rate", "100% after 45m"),
+            ("Heap Growth", "~8 MB/min"),
+            ("Affected Devices", "RAM <= 4 GB"),
+        ],
+        timestamp="3h 5m ago",
+    )
+
+    # ── Resolved alert cards ─────────────────────────────────────────────
+    card_asset_bundle = alert_card(
+        severity="info",
+        title="Farm Empire  —  Asset Bundle Size Optimized",
+        description=(
+            "The Spring Festival asset bundle was compressed from 124 MB to "
+            "92 MB using texture compression and mesh LOD passes. Now under "
+            "the 100 MB target. Download abandonment projected to normalize."
+        ),
+        impact="Resolved — bundle size reduced 26%",
+        details=[
+            ("Bundle", "spring_festival_2026_v3"),
+            ("Previous Size", "124 MB"),
+            ("Current Size", "92 MB"),
+            ("Resolved By", "Asset Team — L. Chen"),
+        ],
+        timestamp="1h 42m ago",
+    )
+
+    card_auth_timeout = alert_card(
+        severity="healthy",
+        title="Space Drift  —  Auth Service Timeout Fixed",
+        description=(
+            "Intermittent 504 errors on the authentication service were traced "
+            "to a misconfigured connection pool in the EU-West region. Pool size "
+            "increased from 50 to 200 connections and retry logic added."
+        ),
+        impact="Resolved — login success rate restored to 99.97%",
+        details=[
+            ("Incident", "SD-AUTH-3301"),
+            ("Region", "EU-West-1"),
+            ("Duration", "2h 15m"),
+            ("Root Cause", "Connection pool exhaustion"),
+            ("Resolved By", "Backend Team — A. Novak"),
+        ],
+        timestamp="6h 30m ago",
+    )
+
+    card_localization = alert_card(
+        severity="healthy",
+        title="Clash Arena  —  Localization Build Errors Cleared",
+        description=(
+            "Missing translation keys for Japanese and Korean locales caused "
+            "build warnings in the i18n pipeline. All 47 missing keys have been "
+            "added and verified by the localization team."
+        ),
+        impact="Resolved — 0 localization warnings remaining",
+        details=[
+            ("Issue", "CA-I18N-882"),
+            ("Locales Fixed", "ja-JP, ko-KR"),
+            ("Keys Added", "47"),
+            ("Resolved By", "Localization Team — M. Tanaka"),
+        ],
+        timestamp="8h 12m ago",
+    )
+
+    # ── Assemble tab contents ────────────────────────────────────────────
+    tab_active = html.Div([
+        card_build_failure, card_crash_spike, card_matchmaking, card_memory_leak,
+    ])
+
+    tab_resolved = html.Div([
+        card_asset_bundle, card_auth_timeout, card_localization,
+    ])
+
+    tab_all = html.Div([
+        card_build_failure, card_crash_spike, card_matchmaking, card_memory_leak,
+        card_asset_bundle, card_auth_timeout, card_localization,
+    ])
 
     return layout_alerts(
         title=cfg.get("title", "Build Games"),
         subtitle=cfg.get("subtitle", "Build health, crash reports, and QA pipeline status"),
-        tabs=tabs,
-        alerts=alerts,
+        tab_contents=[
+            ("Active Issues", tab_active),
+            ("Resolved", tab_resolved),
+            ("All", tab_all),
+        ],
         summary_kpis=summary_kpis,
     )
 

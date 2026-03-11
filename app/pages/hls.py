@@ -514,11 +514,37 @@ def render_supply_chain(cfg):
         {"label": "Supply Risk Score", "value": "72 / 100", "accent": "blue"},
     ]
 
+    # ── Build tab contents using new API ───────────────────────────────
+    critical_cards = [alert_card(**a) for a in alerts
+                      if a["severity"] == "critical"]
+    warning_cards = [alert_card(**a) for a in alerts
+                     if a["severity"] == "warning"]
+    normal_cards = [alert_card(**a) for a in alerts
+                    if a["severity"] == "info"] + [
+        alert_card(severity="healthy",
+                   title="PPE Inventory Levels — Fully Stocked",
+                   description="All PPE categories (N95 masks, gloves, gowns, face shields) are above 90-day safety stock thresholds across all 14 hospitals and 38 clinics.",
+                   timestamp="Updated daily"),
+        alert_card(severity="healthy",
+                   title="Pharmaceutical Distribution — On Schedule",
+                   description="All scheduled pharmaceutical shipments for the current week have been delivered on time. Cold chain integrity verified for all temperature-sensitive items.",
+                   timestamp="12 hours ago"),
+        alert_card(severity="healthy",
+                   title="Surgical Supply Contract Renewed — Ethicon",
+                   description="Annual contract for sutures and wound closure products renewed with 3.1% volume discount. Delivery reliability at 99.4% over the past 12 months.",
+                   timestamp="2 days ago"),
+    ]
+
+    tab_contents = [
+        ("Critical", html.Div(critical_cards)),
+        ("Warning", html.Div(warning_cards)),
+        ("Normal", html.Div(normal_cards)),
+    ]
+
     return layout_alerts(
         title="Supply Chain & Manufacturing",
         subtitle="Drug shortages, equipment logistics, cold chain, and supplier monitoring",
-        tabs=tabs,
-        alerts=alerts,
+        tab_contents=tab_contents,
         summary_kpis=summary_kpis,
     )
 
@@ -531,15 +557,13 @@ def render_medtech_surgery(cfg):
     """Split view of surgical outcomes, device utilization, and training
     metrics with tabs, info banner, and bottom stats."""
 
-    tabs = ["Outcomes", "Devices", "Training"]
-
     banner_text = (
         "Robotic-assisted procedures show 23% reduction in average length "
         "of stay and 31% fewer post-operative complications compared to "
         "traditional approaches across Q4 2025 cohort (n=4,218)."
     )
 
-    # ── Left panel: procedure outcomes bar chart ──────────────────────
+    # ── TAB 1: Outcomes ──────────────────────────────────────────────
     procedures = ["Cardiac\nBypass", "Hip\nReplacement", "Spinal\nFusion",
                   "Knee\nArthroscopy", "Lap\nCholecystectomy",
                   "Robotic\nProstatectomy"]
@@ -564,10 +588,42 @@ def render_medtech_surgery(cfg):
                    color=COLORS["text_muted"], title="%", range=[0, 105]),
         legend=dict(orientation="h", y=-0.25, x=0.5, xanchor="center"),
     ))
-    left_chart = dcc.Graph(figure=outcome_fig, config=CHART_CONFIG,
-                           style={"height": "300px"})
+    outcomes_left = dcc.Graph(figure=outcome_fig, config=CHART_CONFIG,
+                              style={"height": "300px"})
 
-    # ── Right panel: device utilization donut ─────────────────────────
+    # Average length of stay trend
+    months = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+              "Jan", "Feb", "Mar"]
+    fig_los = go.Figure()
+    fig_los.add_trace(go.Scatter(
+        x=months, y=[5.8, 5.6, 5.4, 5.2, 4.9, 4.7, 4.5, 4.3, 4.1],
+        name="Robotic-Assisted", mode="lines+markers",
+        line=dict(color=COLORS["green"], width=2), marker=dict(size=5),
+    ))
+    fig_los.add_trace(go.Scatter(
+        x=months, y=[7.2, 7.1, 7.0, 6.9, 6.8, 6.8, 6.7, 6.6, 6.5],
+        name="Traditional", mode="lines+markers",
+        line=dict(color=COLORS["text_muted"], width=2, dash="dash"),
+        marker=dict(size=4),
+    ))
+    fig_los.update_layout(**dark_chart_layout(
+        height=300,
+        yaxis=dict(title="Avg LOS (days)", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    outcomes_right = dcc.Graph(figure=fig_los, config=CHART_CONFIG,
+                               style={"height": "300px"})
+
+    tab_outcomes = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Procedure Outcomes by Type", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), outcomes_left], padding="20px"),
+            _card([html.Div("Length of Stay: Robotic vs Traditional", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), outcomes_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 2: Devices ───────────────────────────────────────────────
     device_labels = ["Da Vinci Xi", "Mako SmartRobotics",
                      "ROSA Spine", "Ion Bronchoscopy",
                      "Monarch Platform"]
@@ -576,8 +632,91 @@ def render_medtech_surgery(cfg):
                      COLORS["yellow"], COLORS["red"]]
     device_fig = donut_figure(device_labels, device_values, device_colors,
                               center_text="2,847", title="Procedures by Device")
-    right_chart = dcc.Graph(figure=device_fig, config=CHART_CONFIG,
-                            style={"height": "300px"})
+    devices_left = dcc.Graph(figure=device_fig, config=CHART_CONFIG,
+                             style={"height": "300px"})
+
+    # Device uptime & utilization bar chart
+    devices = ["Da Vinci Xi", "Mako", "ROSA Spine", "Ion", "Monarch"]
+    fig_uptime = go.Figure()
+    fig_uptime.add_trace(go.Bar(
+        x=devices, y=[99.4, 98.8, 97.2, 99.1, 96.5], name="Uptime %",
+        marker_color=COLORS["green"],
+    ))
+    fig_uptime.add_trace(go.Bar(
+        x=devices, y=[82, 76, 68, 71, 58], name="Utilization %",
+        marker_color=COLORS["blue"],
+    ))
+    fig_uptime.update_layout(**dark_chart_layout(
+        height=300, barmode="group",
+        yaxis=dict(title="%", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], range=[0, 110]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+        margin=dict(l=48, r=24, t=16, b=48),
+    ))
+    devices_right = dcc.Graph(figure=fig_uptime, config=CHART_CONFIG,
+                              style={"height": "300px"})
+
+    tab_devices = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Procedures by Device Platform", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), devices_left], padding="20px"),
+            _card([html.Div("Device Uptime & Utilization", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), devices_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 3: Training ──────────────────────────────────────────────
+    roles = ["Surgeons", "OR Nurses", "Technicians", "Residents", "Fellows"]
+    fig_training = go.Figure()
+    fig_training.add_trace(go.Bar(
+        y=roles,
+        x=[92, 88, 84, 72, 68],
+        orientation="h", name="Certified %",
+        marker_color=[COLORS["green"] if v >= 85 else COLORS["yellow"] if v >= 70
+                      else COLORS["red"] for v in [92, 88, 84, 72, 68]],
+        text=["92%", "88%", "84%", "72%", "68%"],
+        textposition="outside",
+        textfont=dict(color=COLORS["white"], size=10),
+    ))
+    fig_training.add_vline(x=85, line_dash="dash", line_color=COLORS["green"],
+                           opacity=0.5)
+    fig_training.update_layout(**dark_chart_layout(
+        height=300, showlegend=False,
+        margin=dict(l=100, r=60, t=24, b=24),
+        xaxis=dict(title="Certification %", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"],
+                   range=[0, 105]),
+        yaxis=dict(showgrid=False),
+    ))
+    training_left = dcc.Graph(figure=fig_training, config=CHART_CONFIG,
+                              style={"height": "300px"})
+
+    # Training hours trend
+    qtrs = ["Q1 '25", "Q2 '25", "Q3 '25", "Q4 '25", "Q1 '26"]
+    fig_hours = go.Figure()
+    fig_hours.add_trace(go.Bar(
+        x=qtrs, y=[1240, 1380, 1520, 1680, 1420], name="Simulation Hours",
+        marker_color=COLORS["purple"],
+    ))
+    fig_hours.add_trace(go.Bar(
+        x=qtrs, y=[680, 720, 810, 890, 760], name="Proctored Cases",
+        marker_color=COLORS["blue"],
+    ))
+    fig_hours.update_layout(**dark_chart_layout(
+        height=300, barmode="stack",
+        yaxis=dict(title="Hours", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    training_right = dcc.Graph(figure=fig_hours, config=CHART_CONFIG,
+                               style={"height": "300px"})
+
+    tab_training = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Certification by Role", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), training_left], padding="20px"),
+            _card([html.Div("Training Hours by Quarter", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), training_right], padding="20px"),
+        ],
+    )
 
     # ── Bottom stats ──────────────────────────────────────────────────
     bottom_stats = [
@@ -591,10 +730,12 @@ def render_medtech_surgery(cfg):
     return layout_split(
         title="MedTech & Digital Surgery",
         subtitle="Surgical outcomes, robotic device utilization, and training compliance",
-        tabs=tabs,
+        tab_contents=[
+            ("Outcomes", tab_outcomes),
+            ("Devices", tab_devices),
+            ("Training", tab_training),
+        ],
         banner_text=banner_text,
-        left_panel=("Procedure Outcomes by Type", left_chart),
-        right_panel=("Device Utilization", right_chart),
         bottom_stats=bottom_stats,
     )
 

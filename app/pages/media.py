@@ -139,7 +139,7 @@ def render_content_strategy(cfg):
     """Content strategy view with performance by genre, investment donut, and
     bottom stats."""
 
-    # -- left panel: stacked bar of content performance by genre -------------
+    # ── TAB 1: Performance ──────────────────────────────────────────────
     genres = ["Drama", "Comedy", "Sci-Fi", "Documentary", "Reality"]
     fig_perf = go.Figure()
     fig_perf.add_trace(go.Bar(
@@ -166,10 +166,9 @@ def render_content_strategy(cfg):
         yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
                    color=COLORS["text_muted"], title="Score"),
     ))
-    left_chart = dcc.Graph(figure=fig_perf, config=CHART_CONFIG)
+    perf_left = dcc.Graph(figure=fig_perf, config=CHART_CONFIG)
 
-    # -- right panel: donut of investment allocation ------------------------
-    right_donut = dcc.Graph(
+    perf_right_donut = dcc.Graph(
         figure=donut_figure(
             labels=["Original Series", "Licensed Content", "Live Sports",
                     "News & Talk", "Docs & Specials"],
@@ -180,6 +179,102 @@ def render_content_strategy(cfg):
             title="Investment Allocation",
         ),
         config=CHART_CONFIG,
+    )
+
+    tab_performance = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Content Performance by Genre", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), perf_left], padding="20px"),
+            _card([html.Div("Investment Allocation", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), perf_right_donut], padding="20px"),
+        ],
+    )
+
+    # ── TAB 2: Pipeline ─────────────────────────────────────────────────
+    stages = ["Concept", "Pre-Production", "In Production", "Post-Production", "Ready to Launch"]
+    stage_counts = [48, 32, 24, 18, 8]
+    fig_pipeline = go.Figure(go.Funnel(
+        y=stages, x=stage_counts,
+        marker=dict(color=[COLORS["blue"], COLORS["purple"], COLORS["green"],
+                           COLORS["yellow"], COLORS["red"]]),
+        textinfo="value+percent initial",
+        textfont=dict(color=COLORS["white"], size=12),
+    ))
+    fig_pipeline.update_layout(**dark_chart_layout(
+        height=320,
+        margin=dict(l=160, r=24, t=24, b=24),
+    ))
+    pipeline_left = dcc.Graph(figure=fig_pipeline, config=CHART_CONFIG)
+
+    # Pipeline timeline by quarter
+    quarters = ["Q1 '26", "Q2 '26", "Q3 '26", "Q4 '26"]
+    fig_timeline = go.Figure()
+    fig_timeline.add_trace(go.Bar(
+        x=quarters, y=[12, 18, 24, 14], name="New Titles",
+        marker_color=COLORS["blue"],
+    ))
+    fig_timeline.add_trace(go.Bar(
+        x=quarters, y=[6, 8, 10, 8], name="Renewals",
+        marker_color=COLORS["green"],
+    ))
+    fig_timeline.add_trace(go.Scatter(
+        x=quarters, y=[85, 92, 78, 88], name="Budget Utilization %",
+        mode="lines+markers", line=dict(color=COLORS["yellow"], width=2),
+        marker=dict(size=6), yaxis="y2",
+    ))
+    fig_timeline.update_layout(**dark_chart_layout(
+        height=320, barmode="stack",
+        yaxis=dict(title="Title Count", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        yaxis2=dict(title="Budget %", overlaying="y", side="right",
+                    showgrid=False, color=COLORS["yellow"], range=[0, 110]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    pipeline_right = dcc.Graph(figure=fig_timeline, config=CHART_CONFIG)
+
+    tab_pipeline = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Production Pipeline Funnel", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), pipeline_left], padding="20px"),
+            _card([html.Div("Release Schedule & Budget", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), pipeline_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 3: Licensing ────────────────────────────────────────────────
+    regions = ["North America", "Europe", "APAC", "LATAM", "MEA"]
+    fig_licensing = go.Figure()
+    fig_licensing.add_trace(go.Bar(
+        y=regions, x=[42, 28, 18, 8, 4], name="Revenue ($M)",
+        orientation="h", marker_color=COLORS["blue"],
+        text=["$42M", "$28M", "$18M", "$8M", "$4M"],
+        textposition="outside",
+        textfont=dict(color=COLORS["white"], size=10),
+    ))
+    fig_licensing.update_layout(**dark_chart_layout(
+        height=320, showlegend=False,
+        margin=dict(l=120, r=60, t=24, b=24),
+        xaxis=dict(title="Revenue ($M)", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        yaxis=dict(showgrid=False),
+    ))
+    licensing_left = dcc.Graph(figure=fig_licensing, config=CHART_CONFIG)
+
+    licensing_right_donut = dcc.Graph(
+        figure=donut_figure(
+            labels=["Exclusive", "Non-Exclusive", "Co-Production", "Syndication"],
+            values=[38, 28, 22, 12],
+            colors=[COLORS["blue"], COLORS["green"], COLORS["purple"], COLORS["yellow"]],
+            center_text="$100M",
+            title="License Type Mix",
+        ),
+        config=CHART_CONFIG,
+    )
+
+    tab_licensing = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Licensing Revenue by Region", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), licensing_left], padding="20px"),
+            _card([html.Div("License Type Distribution", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), licensing_right_donut], padding="20px"),
+        ],
     )
 
     # -- bottom stats -------------------------------------------------------
@@ -193,14 +288,16 @@ def render_content_strategy(cfg):
     return layout_split(
         title="Content Strategy",
         subtitle="Performance, pipeline, and investment analysis",
-        tabs=["Performance", "Pipeline", "Licensing"],
+        tab_contents=[
+            ("Performance", tab_performance),
+            ("Pipeline", tab_pipeline),
+            ("Licensing", tab_licensing),
+        ],
         banner_text=(
             "Original series drive 3.4x higher subscriber retention than "
             "licensed content. Consider increasing original slate by 15% "
             "next quarter to maximize LTV."
         ),
-        left_panel=("Content Performance by Genre", left_chart),
-        right_panel=("Investment Allocation", right_donut),
         bottom_stats=bottom,
     )
 
@@ -582,11 +679,39 @@ def render_platform_delivery(cfg):
         },
     ]
 
+    # ── Build tab contents using new API ───────────────────────────────
+    active_cards = [alert_card(**a) for a in alerts
+                    if a["severity"] in ("critical", "warning")]
+    resolved_cards = [
+        alert_card(severity="healthy", title="DDoS Mitigation Completed — APAC CDN",
+                   description="Volumetric DDoS attack on APAC edge nodes successfully mitigated. Traffic scrubbing returned to baseline within 22 minutes. No viewer impact observed.",
+                   timestamp="4 hours ago"),
+        alert_card(severity="healthy", title="Origin Shield Capacity Restored — US-West",
+                   description="Additional origin shield nodes provisioned in US-West region. Capacity headroom now at 40% above peak observed load. Live sports SLA restored.",
+                   timestamp="6 hours ago"),
+        alert_card(severity="healthy", title="DNS Resolution Latency Fixed — Global",
+                   description="Root cause identified as stale CNAME records in secondary DNS provider. Records flushed and TTL reduced. p99 DNS resolution back to 12ms.",
+                   timestamp="1 day ago"),
+    ]
+    monitoring_cards = [alert_card(**a) for a in alerts if a["severity"] == "info"] + [
+        alert_card(severity="info", title="Auto-Scaling Rule Update — EU-West",
+                   description="Pre-configured auto-scaling rules activated for upcoming Champions League broadcast. Expected 3.2M concurrent viewers. CDN pre-warming scheduled.",
+                   timestamp="Upcoming"),
+        alert_card(severity="info", title="TLS Certificate Renewal — *.cdn.streamco.io",
+                   description="Wildcard TLS certificate for CDN endpoints expires in 14 days. Automated renewal via Let's Encrypt is configured. Monitoring for completion.",
+                   timestamp="14 days"),
+    ]
+
+    tab_contents = [
+        ("Active", html.Div(active_cards)),
+        ("Resolved", html.Div(resolved_cards)),
+        ("Monitoring", html.Div(monitoring_cards)),
+    ]
+
     return layout_alerts(
         title="Platform & Delivery",
         subtitle="Infrastructure health, CDN performance, and incident tracking",
-        tabs=["Active", "Resolved", "Monitoring"],
-        alerts=alerts,
+        tab_contents=tab_contents,
         summary_kpis=summary_kpis,
     )
 
@@ -599,7 +724,7 @@ def render_personalization_ai(cfg):
     """Personalization & AI view with A/B test results, recommendation engine
     click-through donut, and model performance stats."""
 
-    # -- left panel: bar chart of A/B test results --------------------------
+    # ── TAB 1: A/B Tests ────────────────────────────────────────────────
     tests = ["Hero Carousel\nv2", "Autoplay\nThreshold", "Thumbnail\nAI",
              "Row Ordering\nML", "Skip Intro\nTiming"]
     control = [4.2, 12.8, 6.1, 18.4, 32.0]
@@ -608,8 +733,7 @@ def render_personalization_ai(cfg):
     fig_ab = go.Figure()
     fig_ab.add_trace(go.Bar(
         name="Control",
-        x=tests,
-        y=control,
+        x=tests, y=control,
         marker_color=COLORS["text_muted"],
         text=[f"{v}%" for v in control],
         textposition="outside",
@@ -617,16 +741,14 @@ def render_personalization_ai(cfg):
     ))
     fig_ab.add_trace(go.Bar(
         name="Variant",
-        x=tests,
-        y=variant,
+        x=tests, y=variant,
         marker_color=COLORS["blue"],
         text=[f"{v}%" for v in variant],
         textposition="outside",
         textfont=dict(color=COLORS["blue"], size=10),
     ))
     fig_ab.update_layout(**dark_chart_layout(
-        height=320,
-        barmode="group",
+        height=320, barmode="group",
         legend=dict(orientation="h", y=-0.25, x=0.5, xanchor="center"),
         yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
                    color=COLORS["text_muted"], title="Conversion %",
@@ -634,10 +756,40 @@ def render_personalization_ai(cfg):
         xaxis=dict(tickangle=0),
         margin=dict(l=48, r=24, t=36, b=60),
     ))
-    left_chart = dcc.Graph(figure=fig_ab, config=CHART_CONFIG)
+    ab_left = dcc.Graph(figure=fig_ab, config=CHART_CONFIG)
 
-    # -- right panel: donut of recommendation engine clicks -----------------
-    right_donut = dcc.Graph(
+    # Statistical significance chart
+    fig_sig = go.Figure()
+    test_names = ["Carousel v2", "Autoplay", "Thumbnail AI", "Row ML", "Skip Intro"]
+    p_values = [0.002, 0.018, 0.001, 0.004, 0.12]
+    lifts = [38.1, 13.3, 45.9, 20.1, -10.6]
+    fig_sig.add_trace(go.Bar(
+        x=test_names, y=lifts,
+        marker_color=[COLORS["green"] if p < 0.05 and l > 0 else COLORS["red"] if l < 0 else COLORS["yellow"]
+                      for p, l in zip(p_values, lifts)],
+        text=[f"{l:+.1f}%" for l in lifts],
+        textposition="outside",
+        textfont=dict(color=COLORS["white"], size=10),
+    ))
+    fig_sig.add_hline(y=0, line_color=COLORS["border"], line_width=1)
+    fig_sig.update_layout(**dark_chart_layout(
+        height=320, showlegend=False,
+        yaxis=dict(title="Lift %", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        margin=dict(l=48, r=24, t=24, b=48),
+    ))
+    ab_right = dcc.Graph(figure=fig_sig, config=CHART_CONFIG)
+
+    tab_ab = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Control vs Variant Conversion", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), ab_left], padding="20px"),
+            _card([html.Div("Statistical Lift & Significance", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), ab_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 2: Recommendations ──────────────────────────────────────────
+    rec_donut = dcc.Graph(
         figure=donut_figure(
             labels=["Collaborative Filter", "Content-Based", "Trending",
                     "Editorial Picks", "Deep Learning"],
@@ -648,6 +800,85 @@ def render_personalization_ai(cfg):
             title="Recommendation Click-Through",
         ),
         config=CHART_CONFIG,
+    )
+
+    # CTR trend over time
+    weeks = [f"W{w}" for w in range(1, 13)]
+    fig_ctr = go.Figure()
+    fig_ctr.add_trace(go.Scatter(
+        x=weeks, y=[72, 73, 74, 75, 76, 77, 78, 79, 80, 80, 81, 81],
+        name="Overall CTR %", mode="lines+markers",
+        line=dict(color=COLORS["blue"], width=2),
+        marker=dict(size=5),
+        fill="tozeroy",
+        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
+    ))
+    fig_ctr.add_trace(go.Scatter(
+        x=weeks, y=[45, 48, 50, 52, 55, 58, 60, 62, 64, 66, 68, 70],
+        name="Cold Start CTR %", mode="lines+markers",
+        line=dict(color=COLORS["purple"], width=2, dash="dash"),
+        marker=dict(size=4),
+    ))
+    fig_ctr.update_layout(**dark_chart_layout(
+        height=320,
+        yaxis=dict(title="Click-Through %", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], range=[0, 100]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    rec_trend = dcc.Graph(figure=fig_ctr, config=CHART_CONFIG)
+
+    tab_rec = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Algorithm Click-Through Split", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), rec_donut], padding="20px"),
+            _card([html.Div("CTR Trend (12 Weeks)", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), rec_trend], padding="20px"),
+        ],
+    )
+
+    # ── TAB 3: Segments ─────────────────────────────────────────────────
+    seg_labels = ["Binge Watchers", "Casual Viewers", "Sports Fans",
+                  "Family", "News Seekers"]
+    fig_seg = go.Figure()
+    fig_seg.add_trace(go.Bar(
+        y=seg_labels,
+        x=[94, 52, 78, 70, 61],
+        name="Engagement %",
+        orientation="h", marker_color=COLORS["green"],
+    ))
+    fig_seg.add_trace(go.Bar(
+        y=seg_labels,
+        x=[88, 45, 72, 65, 48],
+        name="Personalization Lift %",
+        orientation="h", marker_color=COLORS["blue"],
+    ))
+    fig_seg.update_layout(**dark_chart_layout(
+        height=320, barmode="group",
+        margin=dict(l=120, r=24, t=24, b=48),
+        xaxis=dict(title="%", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        yaxis=dict(showgrid=False),
+        legend=dict(orientation="h", y=-0.2, x=0.5, xanchor="center"),
+    ))
+    seg_left = dcc.Graph(figure=fig_seg, config=CHART_CONFIG)
+
+    seg_donut = dcc.Graph(
+        figure=donut_figure(
+            labels=["18-24", "25-34", "35-44", "45-54", "55+"],
+            values=[22, 31, 24, 14, 9],
+            colors=[COLORS["blue"], COLORS["green"], COLORS["purple"],
+                    COLORS["yellow"], COLORS["red"]],
+            center_text="42.6M",
+            title="Audience by Age Group",
+        ),
+        config=CHART_CONFIG,
+    )
+
+    tab_seg = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Segment Engagement & Lift", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), seg_left], padding="20px"),
+            _card([html.Div("Audience Demographics", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), seg_donut], padding="20px"),
+        ],
     )
 
     # -- bottom stats -------------------------------------------------------
@@ -661,14 +892,16 @@ def render_personalization_ai(cfg):
     return layout_split(
         title="Personalization & AI",
         subtitle="A/B testing, recommendation engines, and ML model performance",
-        tabs=["A/B Tests", "Recommendations", "Segments"],
+        tab_contents=[
+            ("A/B Tests", tab_ab),
+            ("Recommendations", tab_rec),
+            ("Segments", tab_seg),
+        ],
         banner_text=(
             "ML-driven personalization is delivering an 18.6% lift in "
             "engagement over rule-based recommendations.  The v3 deep-learning "
             "model shows 94.2% accuracy on next-watch prediction, up from "
             "89.7% on the prior version."
         ),
-        left_panel=("A/B Test Results", left_chart),
-        right_panel=("Recommendation Engine Clicks", right_donut),
         bottom_stats=bottom,
     )

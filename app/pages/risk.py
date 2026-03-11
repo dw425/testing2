@@ -136,8 +136,6 @@ def render_dashboard(cfg):
 def render_enterprise_risk(cfg):
     """Enterprise risk view with heatmap tabs, stacked bar, and donut."""
 
-    tabs = ["Heatmap", "Trends", "Controls"]
-
     banner_text = (
         "Enterprise risk posture is ELEVATED. 3 risk categories exceed appetite "
         "thresholds: Credit concentration in commercial real estate (+12% over "
@@ -145,7 +143,7 @@ def render_enterprise_risk(cfg):
         "level raised to HIGH following Q1 threat intelligence briefing."
     )
 
-    # --- Left panel: stacked bar by category --------------------------------
+    # ── TAB 1: Heatmap ──────────────────────────────────────────────────
     categories = ["Strategic", "Financial", "Operational", "Compliance", "Reputational"]
     high_vals   = [8, 12, 6, 4, 3]
     medium_vals = [15, 18, 14, 10, 7]
@@ -169,10 +167,9 @@ def render_enterprise_risk(cfg):
         yaxis=dict(title="Risk Events", showgrid=True, gridcolor=COLORS["border"]),
         legend=dict(orientation="h", y=-0.2, x=0.5, xanchor="center"),
     ))
-    left_chart = dcc.Graph(figure=fig_bar, config=CHART_CONFIG,
-                           style={"height": "300px"})
+    heatmap_left = dcc.Graph(figure=fig_bar, config=CHART_CONFIG,
+                             style={"height": "300px"})
 
-    # --- Right panel: donut by severity -------------------------------------
     donut_sev = donut_figure(
         labels=["Critical", "High", "Medium", "Low", "Informational"],
         values=[8, 33, 64, 80, 25],
@@ -181,8 +178,121 @@ def render_enterprise_risk(cfg):
         center_text="210",
         title="Risks by Severity",
     )
-    right_chart = dcc.Graph(figure=donut_sev, config=CHART_CONFIG,
+    heatmap_right = dcc.Graph(figure=donut_sev, config=CHART_CONFIG,
+                              style={"height": "300px"})
+
+    tab_heatmap = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Risk Events by Category", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), heatmap_left], padding="20px"),
+            _card([html.Div("Severity Distribution", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), heatmap_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 2: Trends ────────────────────────────────────────────────────
+    months = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+              "Jan", "Feb", "Mar"]
+    fig_trends = go.Figure()
+    fig_trends.add_trace(go.Scatter(
+        x=months, y=[180, 190, 195, 200, 205, 198, 208, 212, 210],
+        name="Total Risk Events", mode="lines+markers",
+        line=dict(color=COLORS["blue"], width=2), marker=dict(size=5),
+        fill="tozeroy",
+        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
+    ))
+    fig_trends.add_trace(go.Scatter(
+        x=months, y=[28, 32, 30, 35, 38, 36, 40, 42, 41],
+        name="High + Critical", mode="lines+markers",
+        line=dict(color=COLORS["red"], width=2),
+        marker=dict(size=5),
+    ))
+    fig_trends.update_layout(**dark_chart_layout(
+        height=300,
+        yaxis=dict(title="Count", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    trends_left = dcc.Graph(figure=fig_trends, config=CHART_CONFIG,
                             style={"height": "300px"})
+
+    # Risk appetite utilization by category
+    fig_appetite = go.Figure()
+    appetite_cats = ["Credit", "Market", "Operational", "Compliance", "Cyber"]
+    utilization = [112, 94, 78, 65, 88]
+    fig_appetite.add_trace(go.Bar(
+        x=appetite_cats, y=utilization,
+        marker_color=[COLORS["red"] if v > 100 else COLORS["yellow"] if v > 80
+                      else COLORS["green"] for v in utilization],
+        text=[f"{v}%" for v in utilization],
+        textposition="outside",
+        textfont=dict(color=COLORS["white"], size=10),
+    ))
+    fig_appetite.add_hline(y=100, line_dash="dash", line_color=COLORS["red"],
+                           opacity=0.6, annotation_text="Appetite Limit (100%)",
+                           annotation_font_color=COLORS["red"],
+                           annotation_font_size=10)
+    fig_appetite.update_layout(**dark_chart_layout(
+        height=300, showlegend=False,
+        yaxis=dict(title="Appetite Utilization %", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"],
+                   range=[0, 130]),
+        margin=dict(l=48, r=24, t=24, b=48),
+    ))
+    trends_right = dcc.Graph(figure=fig_appetite, config=CHART_CONFIG,
+                             style={"height": "300px"})
+
+    tab_trends = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Risk Event Trend (9 Months)", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), trends_left], padding="20px"),
+            _card([html.Div("Risk Appetite Utilization", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), trends_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 3: Controls ──────────────────────────────────────────────────
+    control_donut = dcc.Graph(
+        figure=donut_figure(
+            labels=["Effective", "Partially Effective", "Ineffective", "Not Tested"],
+            values=[128, 38, 12, 6],
+            colors=[COLORS["green"], COLORS["yellow"], COLORS["red"],
+                    COLORS["text_muted"]],
+            center_text="184",
+            title="Control Effectiveness",
+        ),
+        config=CHART_CONFIG,
+        style={"height": "300px"},
+    )
+
+    # Control testing progress by quarter
+    qtrs = ["Q1 '25", "Q2 '25", "Q3 '25", "Q4 '25", "Q1 '26"]
+    fig_ctrl = go.Figure()
+    fig_ctrl.add_trace(go.Bar(
+        x=qtrs, y=[42, 48, 45, 49, 38], name="Controls Tested",
+        marker_color=COLORS["blue"],
+    ))
+    fig_ctrl.add_trace(go.Scatter(
+        x=qtrs, y=[88, 90, 92, 94, 93], name="Pass Rate %",
+        mode="lines+markers", line=dict(color=COLORS["green"], width=2),
+        marker=dict(size=6), yaxis="y2",
+    ))
+    fig_ctrl.update_layout(**dark_chart_layout(
+        height=300,
+        yaxis=dict(title="Tests Conducted", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+        yaxis2=dict(title="Pass Rate %", overlaying="y", side="right",
+                    showgrid=False, color=COLORS["green"], range=[70, 100]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    controls_right = dcc.Graph(figure=fig_ctrl, config=CHART_CONFIG,
+                               style={"height": "300px"})
+
+    tab_controls = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Control Effectiveness Distribution", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), control_donut], padding="20px"),
+            _card([html.Div("Control Testing & Pass Rate", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), controls_right], padding="20px"),
+        ],
+    )
 
     # --- Bottom stats -------------------------------------------------------
     bottom_stats = [
@@ -196,10 +306,12 @@ def render_enterprise_risk(cfg):
     return layout_split(
         title="Enterprise Risk Management",
         subtitle="Consolidated risk register and control effectiveness",
-        tabs=tabs,
+        tab_contents=[
+            ("Heatmap", tab_heatmap),
+            ("Trends", tab_trends),
+            ("Controls", tab_controls),
+        ],
         banner_text=banner_text,
-        left_panel=("Risk Events by Category", left_chart),
-        right_panel=("Severity Distribution", right_chart),
         bottom_stats=bottom_stats,
     )
 
@@ -469,11 +581,49 @@ def render_operational_risk(cfg):
         },
     ]
 
+    # ── Build tab contents using new API ───────────────────────────────
+    active_cards = [alert_card(**a) for a in alerts
+                    if a["severity"] in ("critical", "warning")]
+    investigating_cards = [alert_card(**a) for a in alerts
+                           if a["severity"] == "warning"] + [
+        alert_card(severity="warning",
+                   title="Suspicious Login Pattern — Wealth Management Portal",
+                   description="Anomalous login activity detected from 3 IP addresses in Eastern Europe targeting high-net-worth client accounts. MFA challenges triggered; no successful breaches confirmed yet.",
+                   timestamp="18 hours ago"),
+        alert_card(severity="info",
+                   title="Reconciliation Discrepancy — Custody Accounts",
+                   description="Automated reconciliation identified $2.4M discrepancy across 12 custody accounts. Preliminary analysis points to timing differences in cross-border settlement. Under review.",
+                   timestamp="1 day ago"),
+    ]
+    closed_cards = [
+        alert_card(severity="healthy",
+                   title="Payment Gateway Timeout — Resolved",
+                   description="Intermittent timeouts on payment processing gateway traced to expired connection pool settings. Configuration updated and validated. No customer impact after fix deployed.",
+                   timestamp="3 days ago"),
+        alert_card(severity="healthy",
+                   title="Data Center Power Event — Resolved",
+                   description="Brief UPS switchover at secondary data center completed without service interruption. Generator tested and confirmed operational. Root cause: scheduled utility maintenance.",
+                   timestamp="5 days ago"),
+        alert_card(severity="healthy",
+                   title="Regulatory Report Resubmission — Complete",
+                   description="Corrected CCAR supplemental data submission accepted by the Federal Reserve. Original error was a rounding issue in projected loss estimates. No further action required.",
+                   timestamp="1 week ago"),
+        alert_card(severity="info",
+                   title="Vendor Risk Assessment Cycle — Completed",
+                   description="Annual vendor risk assessment for all Tier-1 and Tier-2 vendors completed on schedule. 3 vendors flagged for enhanced monitoring; remediation plans in place.",
+                   timestamp="2 weeks ago"),
+    ]
+
+    tab_contents = [
+        ("Active Incidents", html.Div(active_cards)),
+        ("Investigating", html.Div(investigating_cards)),
+        ("Closed", html.Div(closed_cards)),
+    ]
+
     return layout_alerts(
         title="Operational Risk",
         subtitle="Active incidents, investigations, and operational loss tracking",
-        tabs=tabs,
-        alerts=alerts,
+        tab_contents=tab_contents,
         summary_kpis=summary_kpis,
     )
 

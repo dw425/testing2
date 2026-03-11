@@ -207,17 +207,13 @@ def render_production_analytics(cfg):
 def render_quality_control(cfg):
     """Quality control view with defect analysis, SPC, and tolerance tabs."""
 
-    # ── Tabs ──────────────────────────────────────────────────────────────
-    tabs = ["Defects", "SPC", "Tolerance"]
-
-    # ── Info banner ───────────────────────────────────────────────────────
     banner_text = (
         "Quality insight: Welding-C1 line in Tokyo shows a 34% increase in "
         "surface finish defects over the past 2 weeks. Root cause analysis "
         "suggests worn tooling on station WC1-07. Recommend immediate inspection."
     )
 
-    # ── Left panel: stacked bar of defect types by line ───────────────────
+    # ── TAB 1: Defects ───────────────────────────────────────────────────
     defect_lines = ["CNC-A1", "Assembly-B1", "Welding-C1", "Stamping-D1", "Paint-E1"]
     dimensional = [12, 8, 5, 18, 3]
     surface_finish = [6, 4, 22, 7, 15]
@@ -249,17 +245,144 @@ def render_quality_control(cfg):
                    title=dict(text="Defect Count", font=dict(size=11))),
         yaxis=dict(showgrid=False),
     ))
-    left_chart = dcc.Graph(figure=fig_defects, config=CHART_CONFIG,
-                           style={"height": "300px"})
+    defects_left = dcc.Graph(figure=fig_defects, config=CHART_CONFIG,
+                             style={"height": "300px"})
 
-    # ── Right panel: pass / fail / rework donut ───────────────────────────
     qc_labels = ["Pass", "Fail", "Rework"]
     qc_values = [8940, 312, 498]
     qc_colors = [COLORS["green"], COLORS["red"], COLORS["yellow"]]
     fig_qc = donut_figure(qc_labels, qc_values, qc_colors,
                           center_text="94.8%", title="Inspection Results")
-    right_chart = dcc.Graph(figure=fig_qc, config=CHART_CONFIG,
-                            style={"height": "300px"})
+    defects_right = dcc.Graph(figure=fig_qc, config=CHART_CONFIG,
+                              style={"height": "300px"})
+
+    tab_defects = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Defect Types by Production Line", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), defects_left], padding="20px"),
+            _card([html.Div("Inspection Result Distribution", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), defects_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 2: SPC ───────────────────────────────────────────────────────
+    import random
+    random.seed(42)
+    samples = list(range(1, 31))
+    ucl, lcl, target = 10.05, 9.95, 10.00
+    measurements = [10.00 + (random.gauss(0, 0.015)) for _ in samples]
+    # Introduce two out-of-control points
+    measurements[12] = 10.06
+    measurements[22] = 9.93
+
+    fig_spc = go.Figure()
+    fig_spc.add_trace(go.Scatter(
+        x=samples, y=measurements, name="Measurement",
+        mode="lines+markers",
+        line=dict(color=COLORS["blue"], width=2),
+        marker=dict(
+            size=6,
+            color=[COLORS["red"] if m > ucl or m < lcl else COLORS["blue"]
+                   for m in measurements],
+        ),
+    ))
+    fig_spc.add_hline(y=ucl, line_dash="dash", line_color=COLORS["red"],
+                      opacity=0.7, annotation_text="UCL (10.05)",
+                      annotation_font_color=COLORS["red"],
+                      annotation_font_size=10)
+    fig_spc.add_hline(y=lcl, line_dash="dash", line_color=COLORS["red"],
+                      opacity=0.7, annotation_text="LCL (9.95)",
+                      annotation_font_color=COLORS["red"],
+                      annotation_font_size=10)
+    fig_spc.add_hline(y=target, line_dash="dot", line_color=COLORS["green"],
+                      opacity=0.5)
+    fig_spc.update_layout(**dark_chart_layout(
+        height=300,
+        yaxis=dict(title="Dimension (mm)", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"],
+                   range=[9.92, 10.08]),
+        xaxis=dict(title="Sample #", showgrid=False, color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    spc_left = dcc.Graph(figure=fig_spc, config=CHART_CONFIG,
+                         style={"height": "300px"})
+
+    # Cpk trend over time
+    weeks = [f"W{w}" for w in range(1, 13)]
+    cpk_vals = [1.42, 1.38, 1.45, 1.33, 1.28, 1.35, 1.40, 1.31, 1.44, 1.37, 1.46, 1.41]
+    fig_cpk = go.Figure()
+    fig_cpk.add_trace(go.Scatter(
+        x=weeks, y=cpk_vals, name="Cpk",
+        mode="lines+markers", line=dict(color=COLORS["purple"], width=2),
+        marker=dict(size=5),
+        fill="tozeroy",
+        fillcolor=f"rgba({_hex_to_rgb(COLORS['purple'])}, 0.08)",
+    ))
+    fig_cpk.add_hline(y=1.33, line_dash="dash", line_color=COLORS["yellow"],
+                      opacity=0.6, annotation_text="Min Cpk (1.33)",
+                      annotation_font_color=COLORS["yellow"],
+                      annotation_font_size=10)
+    fig_cpk.update_layout(**dark_chart_layout(
+        height=300,
+        yaxis=dict(title="Cpk Value", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], range=[1.0, 1.6]),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+    ))
+    spc_right = dcc.Graph(figure=fig_cpk, config=CHART_CONFIG,
+                          style={"height": "300px"})
+
+    tab_spc = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("X-bar Control Chart (CNC-A1)", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), spc_left], padding="20px"),
+            _card([html.Div("Process Capability (Cpk) Trend", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), spc_right], padding="20px"),
+        ],
+    )
+
+    # ── TAB 3: Tolerance ─────────────────────────────────────────────────
+    features = ["Bore Diameter", "Surface Flatness", "Thread Pitch",
+                "Wall Thickness", "Concentricity"]
+    within_tol = [96.2, 93.8, 98.1, 91.4, 94.7]
+    out_of_tol = [3.8, 6.2, 1.9, 8.6, 5.3]
+
+    fig_tol = go.Figure()
+    fig_tol.add_trace(go.Bar(
+        x=features, y=within_tol, name="Within Tolerance %",
+        marker_color=COLORS["green"],
+    ))
+    fig_tol.add_trace(go.Bar(
+        x=features, y=out_of_tol, name="Out of Tolerance %",
+        marker_color=COLORS["red"],
+    ))
+    fig_tol.update_layout(**dark_chart_layout(
+        height=300, barmode="stack",
+        yaxis=dict(title="%", showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.22, x=0.5, xanchor="center"),
+        margin=dict(l=48, r=24, t=16, b=48),
+    ))
+    tol_left = dcc.Graph(figure=fig_tol, config=CHART_CONFIG,
+                         style={"height": "300px"})
+
+    tol_donut = dcc.Graph(
+        figure=donut_figure(
+            labels=["GD&T Pass", "Minor Deviation", "Major Deviation", "Reject"],
+            values=[82, 10, 5, 3],
+            colors=[COLORS["green"], COLORS["yellow"], COLORS["red"], COLORS["text_muted"]],
+            center_text="82%",
+            title="GD&T Compliance",
+        ),
+        config=CHART_CONFIG,
+        style={"height": "300px"},
+    )
+
+    tab_tolerance = html.Div(
+        style={"display": "grid", "gridTemplateColumns": "1fr 1fr", "gap": "16px"},
+        children=[
+            _card([html.Div("Tolerance Analysis by Feature", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), tol_left], padding="20px"),
+            _card([html.Div("GD&T Compliance Distribution", style={"fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "12px"}), tol_donut], padding="20px"),
+        ],
+    )
 
     # ── Bottom stats ──────────────────────────────────────────────────────
     bottom_stats = [
@@ -273,10 +396,12 @@ def render_quality_control(cfg):
     return layout_split(
         title="Quality Control",
         subtitle="Defect analysis and statistical process control",
-        tabs=tabs,
+        tab_contents=[
+            ("Defects", tab_defects),
+            ("SPC", tab_spc),
+            ("Tolerance", tab_tolerance),
+        ],
         banner_text=banner_text,
-        left_panel=("Defect Types by Production Line", left_chart),
-        right_panel=("Inspection Result Distribution", right_chart),
         bottom_stats=bottom_stats,
     )
 
@@ -402,11 +527,38 @@ def render_supply_chain(cfg):
         {"label": "Avg Lead Time", "value": "18.4 days", "accent": "purple"},
     ]
 
+    # ── Build tab contents using new API ───────────────────────────────
+    critical_cards = [alert_card(**a) for a in alerts
+                      if a["severity"] == "critical"]
+    delayed_cards = [alert_card(**a) for a in alerts
+                     if a["severity"] == "warning"] + [
+        alert_card(severity="warning",
+                   title="Tooling Delivery Delayed \u2014 Sandvik Coromant",
+                   description="Replacement carbide inserts for CNC-A2 lathe turret delayed by 8 days due to customs hold in Rotterdam. Current inserts at 85% wear limit.",
+                   timestamp="3 days ago"),
+    ]
+    on_track_cards = [alert_card(**a) for a in alerts
+                      if a["severity"] in ("info", "healthy")] + [
+        alert_card(severity="healthy",
+                   title="Bearing Supply Stable \u2014 SKF Contract Active",
+                   description="Quarterly delivery of precision bearings arrived on schedule. All 1,200 units passed incoming inspection. Next shipment: W18.",
+                   timestamp="1 week ago"),
+        alert_card(severity="healthy",
+                   title="Hydraulic Fluid Inventory \u2014 Above Safety Stock",
+                   description="ISO VG 46 hydraulic fluid reserves at 142% of safety stock across all facilities. Consumption rate trending 3% below forecast.",
+                   timestamp="5 days ago"),
+    ]
+
+    tab_contents = [
+        ("Critical", html.Div(critical_cards)),
+        ("Delayed", html.Div(delayed_cards)),
+        ("On Track", html.Div(on_track_cards)),
+    ]
+
     return layout_alerts(
         title="Supply Chain Risk Monitor",
         subtitle="Supplier disruptions, material shortages, and logistics alerts",
-        tabs=tabs,
-        alerts=alerts,
+        tab_contents=tab_contents,
         summary_kpis=summary_kpis,
     )
 
