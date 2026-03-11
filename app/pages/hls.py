@@ -1,472 +1,695 @@
 """
-Page renderers for the Health & Life Sciences vertical of Blueprint IQ v2.
+Page renderers for the Healthcare & Life Sciences (HLS) vertical.
 
-Covers four sub-verticals: Providers, Health Plans, BioPharma, and MedTech.
-Each public ``render_*`` function accepts a ``cfg`` dict (parsed from
-hls.yaml) and returns an ``html.Div`` that can be dropped into the
-main content area.
+Covers sub-verticals: Healthcare Ops, Network & Quality, BioPharma Intelligence,
+Supply Chain & Manufacturing, MedTech & Digital Surgery, and Patient Outcomes.
+Each public ``render_*`` function accepts a ``cfg`` dict and returns an
+``html.Div`` that can be dropped into the main content area.
 """
 
+from app.page_styles import (
+    dark_chart_layout, CHART_CONFIG, ACCENT_ICONS,
+    page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
+    tab_bar, info_banner, alert_card, progress_row, stat_card,
+    rich_table, td, status_td, progress_td, breakdown_list,
+    trend_indicator, use_case_badges, donut_figure,
+    layout_executive, layout_table, layout_split, layout_alerts,
+    layout_forecast, layout_grid,
+    gauge_figure, sparkline_figure, metric_with_sparkline,
+    _card, _hex_to_rgb,
+)
+from app.theme import COLORS, FONT_FAMILY
 from dash import dcc, html
 import plotly.graph_objects as go
-from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS
-
-# ---------------------------------------------------------------------------
-# Shared helper utilities
-# ---------------------------------------------------------------------------
-
-_ACCENT_ICONS = {
-    "blue": "fa-chart-line",
-    "purple": "fa-bolt",
-    "green": "fa-arrow-trend-up",
-    "red": "fa-triangle-exclamation",
-    "yellow": "fa-circle-exclamation",
-}
 
 
-def _build_kpi_card(title, value_str, accent, icon, alert=False):
-    accent_class = f"accent-{accent}"
-    children = [
-        html.Div(
-            style={"display": "flex", "justifyContent": "space-between", "alignItems": "center"},
-            children=[
-                html.Span(title, className="card-title"),
-                html.I(className=f"fa-solid {icon}", style={"color": COLORS["text_muted"], "fontSize": "14px"}),
-            ],
-        ),
-        html.Div(value_str, className=f"card-value {accent_class}"),
-        html.Div("Live", className="card-subtitle"),
-    ]
-    if alert:
-        children.insert(1, html.Div(
-            style={"position": "absolute", "top": "12px", "right": "12px"},
-            children=html.Span(
-                "ALERT",
-                style={
-                    "fontSize": "9px", "fontWeight": "700", "color": COLORS["red"],
-                    "backgroundColor": "rgba(239, 68, 68, 0.12)", "padding": "2px 6px",
-                    "borderRadius": "4px", "letterSpacing": "0.5px",
-                },
-            ),
-        ))
-    return html.Div(className="card", style={"position": "relative"}, children=children)
-
-
-def _build_table(headers, rows):
-    th_style = {
-        "padding": "10px 14px", "fontSize": "11px", "color": COLORS["text_muted"],
-        "textAlign": "left", "borderBottom": f"1px solid {COLORS['border']}",
-        "textTransform": "uppercase", "letterSpacing": "0.5px",
-    }
-    return html.Table(
-        style={"width": "100%", "borderCollapse": "collapse"},
-        children=[
-            html.Thead(html.Tr([html.Th(h, style=th_style) for h in headers])),
-            html.Tbody(rows),
-        ],
-    )
-
-
-def _td(text, bold=False, mono=False, color=None):
-    style = {"padding": "10px 14px", "fontSize": "13px"}
-    if bold:
-        style["fontWeight"] = "500"
-    if mono:
-        style["fontFamily"] = "monospace"
-        style["fontWeight"] = "600"
-    if color:
-        style["color"] = color
-    return html.Td(str(text), style=style)
-
-
-def _status_td(status_text, status_key=None):
-    key = status_key or status_text
-    sc = STATUS_COLORS.get(key, STATUS_COLORS["Healthy"])
-    return html.Td(
-        html.Span(
-            status_text,
-            className="status-badge",
-            style={"backgroundColor": sc["bg"], "color": sc["text"], "border": f"1px solid {sc['border']}"},
-        ),
-        style={"padding": "10px 14px"},
-    )
-
-
-def _detail_row(label, value):
-    return html.Div(
-        style={"display": "flex", "justifyContent": "space-between", "padding": "6px 0",
-               "borderBottom": f"1px solid {COLORS['border']}"},
-        children=[
-            html.Span(label, style={"fontSize": "13px", "color": COLORS["text_muted"]}),
-            html.Span(str(value), style={"fontSize": "13px", "fontWeight": "500"}),
-        ],
-    )
-
-
-# ---------------------------------------------------------------------------
-# 1. HLS Command Center (Dashboard)
-# ---------------------------------------------------------------------------
+# ═══════════════════════════════════════════════════════════════════════════
+#  1. DASHBOARD  (Style A — layout_executive)
+# ═══════════════════════════════════════════════════════════════════════════
 
 def render_dashboard(cfg):
-    """Render the HLS Command Center dashboard page."""
+    """Executive HLS dashboard with hero metrics, patient volume trend,
+    department revenue donut and readmission trend chart."""
 
-    # -- KPI cards --
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("Bed Utilization", "87.3%", "blue", "fa-bed"),
-        _build_kpi_card("Readmission Rate", "8.2%", "purple", "fa-rotate-left"),
-        _build_kpi_card("Star Rating", "4.2", "green", "fa-star"),
-        _build_kpi_card("Claims FWA Rate", "4.7%", "red", "fa-triangle-exclamation", alert=True),
-    ])
+    # ── Hero metrics ──────────────────────────────────────────────────
+    heroes = [
+        hero_metric("Patient Outcomes Score", "94.2%",
+                     trend_text="+2.1% vs last quarter", trend_dir="up",
+                     accent="green"),
+        hero_metric("Bed Utilization", "87.6%",
+                     trend_text="+3.4% vs last month", trend_dir="up",
+                     accent="blue"),
+        hero_metric("Clinical Trial Success", "68.3%",
+                     trend_text="+5.7% vs prior year", trend_dir="up",
+                     accent="purple"),
+    ]
 
-    # -- Key metrics by sub-vertical bar chart --
-    sub_verticals = ["Providers", "Health Plans", "BioPharma", "MedTech"]
-    metric_values = [87.3, 84.2, 78.0, 96.8]
+    # ── Main chart: patient volume trend ──────────────────────────────
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    inpatient = [4120, 4350, 4580, 4410, 4720, 4950,
+                 5100, 5280, 5060, 5340, 5520, 5680]
+    outpatient = [6800, 7100, 7350, 7200, 7580, 7900,
+                  8150, 8400, 8100, 8550, 8780, 9020]
+    emergency = [2100, 2250, 2180, 2320, 2450, 2380,
+                 2520, 2600, 2480, 2700, 2650, 2810]
 
-    fig = go.Figure(
-        data=[
-            go.Bar(
-                x=sub_verticals,
-                y=metric_values,
-                marker_color=[COLORS["blue"], COLORS["purple"], COLORS["green"], COLORS["yellow"]],
-                text=[f"{v}%" for v in metric_values],
-                textposition="outside",
-                textfont=dict(color=COLORS["white"], size=12),
-            ),
-        ],
-    )
-    fig.update_layout(
-        title=dict(text="Key Metrics by Sub-Vertical", font=dict(size=14, color=COLORS["white"])),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family=FONT_FAMILY, color=COLORS["text_muted"]),
-        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
-        yaxis=dict(
-            showgrid=True, gridcolor=COLORS["border"], color=COLORS["text_muted"],
-            title="Performance (%)",
-        ),
-        margin=dict(l=48, r=24, t=48, b=40),
+    vol_fig = go.Figure()
+    vol_fig.add_trace(go.Scatter(
+        x=months, y=inpatient, name="Inpatient",
+        mode="lines+markers", line=dict(color=COLORS["blue"], width=2),
+        marker=dict(size=5),
+    ))
+    vol_fig.add_trace(go.Scatter(
+        x=months, y=outpatient, name="Outpatient",
+        mode="lines+markers", line=dict(color=COLORS["green"], width=2),
+        marker=dict(size=5),
+    ))
+    vol_fig.add_trace(go.Scatter(
+        x=months, y=emergency, name="Emergency",
+        mode="lines+markers", line=dict(color=COLORS["red"], width=2),
+        marker=dict(size=5),
+    ))
+    vol_fig.update_layout(**dark_chart_layout(
         height=320,
+        title=dict(text="Patient Volume Trends (2025)",
+                   font=dict(size=14, color=COLORS["white"]),
+                   x=0.5, xanchor="center"),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+        yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], title="Patients"),
+    ))
+    main_chart = dcc.Graph(figure=vol_fig, config=CHART_CONFIG,
+                           style={"height": "320px"})
+
+    # ── Panel 1: department revenue donut ─────────────────────────────
+    dept_labels = ["Cardiology", "Oncology", "Orthopedics",
+                   "Neurology", "Pediatrics", "Other"]
+    dept_values = [28, 22, 18, 14, 10, 8]
+    dept_colors = [COLORS["blue"], COLORS["green"], COLORS["purple"],
+                   COLORS["red"], COLORS["yellow"], COLORS["text_muted"]]
+    dept_fig = donut_figure(dept_labels, dept_values, dept_colors,
+                            center_text="$248M", title="Revenue by Department")
+    dept_chart = dcc.Graph(figure=dept_fig, config=CHART_CONFIG,
+                           style={"height": "280px"})
+
+    # ── Panel 2: readmission trend ────────────────────────────────────
+    readmit_fig = go.Figure()
+    readmit_rates = [12.4, 11.8, 11.2, 10.9, 10.5, 10.1,
+                     9.8, 9.4, 9.1, 8.7, 8.5, 8.2]
+    readmit_fig.add_trace(go.Scatter(
+        x=months, y=readmit_rates, name="Readmission %",
+        mode="lines", line=dict(color=COLORS["red"], width=2),
+        fill="tozeroy",
+        fillcolor=f"rgba({_hex_to_rgb(COLORS['red'])}, 0.08)",
+    ))
+    target_line = [10.0] * 12
+    readmit_fig.add_trace(go.Scatter(
+        x=months, y=target_line, name="Target",
+        mode="lines", line=dict(color=COLORS["yellow"], width=1, dash="dash"),
+    ))
+    readmit_fig.update_layout(**dark_chart_layout(
+        height=280,
+        title=dict(text="30-Day Readmission Rate",
+                   font=dict(size=14, color=COLORS["white"]),
+                   x=0.5, xanchor="center"),
+        yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], title="%", range=[0, 15]),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+    ))
+    readmit_chart = dcc.Graph(figure=readmit_fig, config=CHART_CONFIG,
+                              style={"height": "280px"})
+
+    panels = [
+        ("Department Revenue", dept_chart),
+        ("Readmission Trend", readmit_chart),
+    ]
+
+    return layout_executive(
+        title="Healthcare & Life Sciences Dashboard",
+        subtitle="Executive overview of clinical performance, utilization, and financials",
+        heroes=heroes,
+        main_chart=main_chart,
+        panels=panels,
     )
 
-    chart_card = html.Div(className="card", children=[
-        dcc.Graph(figure=fig, config={"displayModeBar": False}),
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  2. HEALTHCARE OPS  (Style F — layout_grid)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_healthcare_ops(cfg):
+    """Multi-panel operations grid: bed occupancy gauge, ER wait sparkline,
+    surgeries completed, staff utilization, equipment uptime, patient
+    throughput."""
+
+    # ── Bed Occupancy gauge ───────────────────────────────────────────
+    bed_gauge = gauge_figure(87.6, 100, title="Bed Occupancy %",
+                             color=COLORS["blue"])
+    bed_panel = html.Div([
+        dcc.Graph(figure=bed_gauge, config=CHART_CONFIG,
+                  style={"height": "180px"}),
+        html.Div(
+            style={"textAlign": "center", "marginTop": "6px"},
+            children=[
+                html.Span("1,314 / 1,500 beds occupied",
+                           style={"fontSize": "12px",
+                                  "color": COLORS["text_muted"]}),
+            ],
+        ),
     ])
 
-    # -- Cross-Sub-Vertical Summary table --
-    summary_data = [
-        ("Providers",    "Bed Util 87.3%", "Good",         "Stable",    "Healthy"),
-        ("Health Plans", "MLR 84.2%",      "Good",         "Improving", "Healthy"),
-        ("BioPharma",    "Trial Enrollment 78%", "Below Target", "Declining", "Low"),
-        ("MedTech",      "Mfg Yield 96.8%", "Excellent",   "Stable",    "Healthy"),
+    # ── ER Wait Time sparkline ────────────────────────────────────────
+    er_vals = [42, 38, 45, 51, 47, 39, 36, 41, 44, 38, 35, 33,
+               37, 40, 43, 39, 36, 34, 31, 29, 32, 35, 30, 28]
+    er_panel = metric_with_sparkline("ER Wait Time", "28 min",
+                                      er_vals, accent="green")
+
+    # ── Surgeries Completed ───────────────────────────────────────────
+    surg_vals = [82, 91, 87, 95, 88, 93, 97, 102, 99, 105, 108, 112]
+    surg_panel = metric_with_sparkline("Surgeries This Month", "1,247",
+                                        surg_vals, accent="blue")
+
+    # ── Staff Utilization ─────────────────────────────────────────────
+    staff_panel = html.Div([
+        html.Div("Staff Utilization", style={
+            "fontSize": "11px", "color": COLORS["text_muted"],
+            "textTransform": "uppercase", "letterSpacing": "0.4px",
+            "marginBottom": "12px"}),
+        progress_row("Physicians", "92%", 92, COLORS["blue"]),
+        progress_row("Nurses", "96%", 96, COLORS["green"]),
+        progress_row("Technicians", "84%", 84, COLORS["purple"]),
+        progress_row("Support Staff", "78%", 78, COLORS["yellow"]),
+    ])
+
+    # ── Equipment Uptime ──────────────────────────────────────────────
+    equip_gauge = gauge_figure(98.4, 100, title="Equipment Uptime %",
+                               color=COLORS["green"])
+    equip_panel = html.Div([
+        dcc.Graph(figure=equip_gauge, config=CHART_CONFIG,
+                  style={"height": "180px"}),
+        html.Div(
+            style={"display": "flex", "justifyContent": "space-around",
+                    "marginTop": "8px"},
+            children=[
+                html.Div([
+                    html.Div("MRI", style={"fontSize": "11px",
+                                            "color": COLORS["text_muted"]}),
+                    html.Div("99.1%", style={"fontSize": "14px",
+                                              "fontWeight": "600",
+                                              "color": COLORS["green"]}),
+                ]),
+                html.Div([
+                    html.Div("CT", style={"fontSize": "11px",
+                                           "color": COLORS["text_muted"]}),
+                    html.Div("97.8%", style={"fontSize": "14px",
+                                              "fontWeight": "600",
+                                              "color": COLORS["green"]}),
+                ]),
+                html.Div([
+                    html.Div("Ventilators", style={"fontSize": "11px",
+                                                     "color": COLORS["text_muted"]}),
+                    html.Div("98.2%", style={"fontSize": "14px",
+                                              "fontWeight": "600",
+                                              "color": COLORS["yellow"]}),
+                ]),
+            ],
+        ),
+    ])
+
+    # ── Patient Throughput ────────────────────────────────────────────
+    tp_months = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    tp_admits = [4850, 5120, 4980, 5280, 5450, 5680]
+    tp_discharges = [4720, 4980, 5050, 5190, 5380, 5610]
+    tp_fig = go.Figure()
+    tp_fig.add_trace(go.Bar(
+        x=tp_months, y=tp_admits, name="Admissions",
+        marker_color=COLORS["blue"], opacity=0.85,
+    ))
+    tp_fig.add_trace(go.Bar(
+        x=tp_months, y=tp_discharges, name="Discharges",
+        marker_color=COLORS["green"], opacity=0.85,
+    ))
+    tp_fig.update_layout(**dark_chart_layout(
+        height=220, barmode="group",
+        title=dict(text="Patient Throughput", font=dict(size=12,
+                   color=COLORS["text_muted"]), x=0.5, xanchor="center"),
+        margin=dict(l=40, r=16, t=36, b=28),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+        yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+    ))
+    tp_panel = dcc.Graph(figure=tp_fig, config=CHART_CONFIG,
+                         style={"height": "220px"})
+
+    grid_items = [
+        {"col_span": 1, "row_span": 1, "content": bed_panel},
+        {"col_span": 1, "row_span": 1, "content": er_panel},
+        {"col_span": 1, "row_span": 2, "content": staff_panel},
+        {"col_span": 2, "row_span": 1, "content": tp_panel},
+        {"col_span": 1, "row_span": 1, "content": surg_panel},
+        {"col_span": 1, "row_span": 1, "content": equip_panel},
     ]
 
-    summary_rows = []
-    for sv, metric, perf, trend, status in summary_data:
-        trend_color = COLORS["green"] if trend == "Improving" else (COLORS["red"] if trend == "Declining" else None)
-        summary_rows.append(html.Tr([
-            _td(sv, bold=True),
-            _td(metric, mono=True),
-            _td(perf),
-            _td(trend, color=trend_color),
-            _status_td(status),
-        ]))
-
-    table_card = html.Div(className="card", children=[
-        html.H3("Cross-Sub-Vertical Summary", style={
-            "fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px",
-        }),
-        _build_table(["Sub-Vertical", "Key Metric", "Performance", "Trend", "Status"], summary_rows),
-    ])
-
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("HLS Command Center"),
-            html.P("Real-time operational overview across Providers, Health Plans, BioPharma, and MedTech"),
-        ]),
-        html.Div(className="content-area", children=[
-            kpi_cards,
-            chart_card,
-            table_card,
-        ]),
-    ])
+    return layout_grid(
+        title="Healthcare Operations",
+        subtitle="Real-time operational metrics across facilities",
+        grid_items=grid_items,
+    )
 
 
-# ---------------------------------------------------------------------------
-# 2. Provider Operations
-# ---------------------------------------------------------------------------
+# ═══════════════════════════════════════════════════════════════════════════
+#  3. NETWORK & QUALITY  (Style B — layout_table)
+# ═══════════════════════════════════════════════════════════════════════════
 
-def render_provider_ops(cfg):
-    """Render the Provider Operations page."""
+def render_network_quality(cfg):
+    """Provider network quality view with filters, KPI strip, and provider
+    performance table with quality progress bars."""
 
-    # -- KPI cards --
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("Bed Utilization", "87.3%", "blue", "fa-bed"),
-        _build_kpi_card("ED Wait Time", "34 min", "purple", "fa-clock"),
-        _build_kpi_card("Avg LOS", "4.2 days", "green", "fa-calendar-days"),
-        _build_kpi_card("Denial Rate", "6.8%", "red", "fa-ban"),
-    ])
-
-    # -- Facility Operations table --
-    facility_data = [
-        ("Metro General", 142, "28 min", "91.2%", "3.8 d", "5.4%"),
-        ("Westside",       98, "38 min", "84.1%", "4.4 d", "7.2%"),
-        ("Eastview",       45, "22 min", "72.5%", "4.8 d", "8.1%"),
+    # ── Filters ───────────────────────────────────────────────────────
+    filters = [
+        {"label": "Region", "options": ["All Regions", "Northeast",
+                                         "Southeast", "Midwest", "West"]},
+        {"label": "Facility", "options": ["All Facilities", "Acute Care",
+                                           "Ambulatory", "Rehab", "SNF"]},
+        {"label": "Specialty", "options": ["All Specialties", "Cardiology",
+                                            "Oncology", "Orthopedics",
+                                            "Primary Care"]},
     ]
 
-    facility_rows = []
-    for name, admissions, ed_wait, bed_util, los, denial in facility_data:
-        facility_rows.append(html.Tr([
-            _td(name, bold=True),
-            _td(admissions, mono=True),
-            _td(ed_wait, mono=True),
-            _td(bed_util, mono=True, color=COLORS["green"]),
-            _td(los, mono=True),
-            _td(denial, mono=True, color=COLORS["yellow"]),
-        ]))
-
-    facility_card = html.Div(className="card", children=[
-        html.H3("Facility Operations", style={
-            "fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px",
-        }),
-        _build_table(["Facility", "Admissions", "ED Wait", "Bed Util", "LOS", "Denial Rate"], facility_rows),
-    ])
-
-    # -- Revenue Cycle Summary card --
-    rev_cycle_card = html.Div(className="card", children=[
-        html.H3("Revenue Cycle Summary", style={
-            "fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px",
-        }),
-        _detail_row("A/R Days", "42"),
-        _detail_row("Clean Claim Rate", "91%"),
-        _detail_row("Denial Rate", "6.8%"),
-    ])
-
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("Provider Operations"),
-            html.P("Facility throughput, emergency department performance, and revenue cycle metrics"),
-        ]),
-        html.Div(className="content-area", children=[
-            kpi_cards,
-            facility_card,
-            rev_cycle_card,
-        ]),
-    ])
-
-
-# ---------------------------------------------------------------------------
-# 3. Clinical Quality & Outcomes
-# ---------------------------------------------------------------------------
-
-def render_clinical_quality(cfg):
-    """Render the Clinical Quality & Outcomes page."""
-
-    # -- KPI cards --
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("HCAHPS Score", "82/100", "blue", "fa-hospital"),
-        _build_kpi_card("Readmission Rate", "8.2%", "purple", "fa-rotate-left"),
-        _build_kpi_card("Sepsis Compliance", "91%", "green", "fa-shield-virus"),
-        _build_kpi_card("HAC Rate", "1.2%", "red", "fa-triangle-exclamation"),
-    ])
-
-    # -- Quality Measures table --
-    quality_data = [
-        ("Sepsis Bundle",    "91%",  "90%",  "Above", "Improving"),
-        ("HEDIS Diabetes",   "84%",  "85%",  "Below", "Stable"),
-        ("CMS Star Rating",  "4.2",  "4.0",  "Above", "Improving"),
-        ("HAC Prevention",   "98.8%", "98%", "Above", "Stable"),
-        ("Readmission",      "8.2%", "9.0%", "Above", "Improving"),
+    # ── KPI strip ─────────────────────────────────────────────────────
+    kpi_items = [
+        {"label": "Star Rating", "value": "4.6 / 5.0", "accent": "blue"},
+        {"label": "HEDIS Score", "value": "91.3%", "accent": "green"},
+        {"label": "Provider Count", "value": "2,847", "accent": "purple"},
+        {"label": "Member Satisfaction", "value": "88.7%", "accent": "blue"},
+        {"label": "Claims Ratio", "value": "82.4%", "accent": "yellow"},
     ]
 
-    quality_rows = []
-    for measure, compliance, benchmark, vs_bench, trend in quality_data:
-        vs_color = COLORS["green"] if vs_bench == "Above" else COLORS["red"]
-        trend_color = COLORS["green"] if trend == "Improving" else None
-        quality_rows.append(html.Tr([
-            _td(measure, bold=True),
-            _td(compliance, mono=True),
-            _td(benchmark, mono=True),
-            _td(vs_bench, color=vs_color),
-            _td(trend, color=trend_color),
-        ]))
+    # ── Provider table ────────────────────────────────────────────────
+    headers = ["Provider Network", "Region", "Providers", "Star Rating",
+               "HEDIS", "Quality Score", "Status"]
+    col_widths = ["22%", "12%", "10%", "12%", "10%", "20%", "14%"]
 
-    table_card = html.Div(className="card", children=[
-        html.H3("Quality Measures", style={
-            "fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px",
-        }),
-        _build_table(["Measure", "Compliance", "Benchmark", "vs Benchmark", "Trend"], quality_rows),
-    ])
-
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("Clinical Quality & Outcomes"),
-            html.P("HCAHPS scores, readmission rates, sepsis compliance, and hospital-acquired conditions"),
-        ]),
-        html.Div(className="content-area", children=[
-            kpi_cards,
-            table_card,
-        ]),
-    ])
-
-
-# ---------------------------------------------------------------------------
-# 4. Health Plan Analytics
-# ---------------------------------------------------------------------------
-
-def render_health_plans(cfg):
-    """Render the Health Plan Analytics page."""
-
-    # -- KPI cards --
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("MLR", "84.2%", "blue", "fa-chart-pie"),
-        _build_kpi_card("Claims Processing", "4.8 days", "purple", "fa-file-invoice"),
-        _build_kpi_card("Prior Auth", "18 hrs", "green", "fa-clock"),
-        _build_kpi_card("FWA Detection", "4.7%", "red", "fa-triangle-exclamation"),
-    ])
-
-    # -- Plan Performance table --
-    plan_data = [
-        ("HMO",                "2.4M", "82.1%", "4,200", "3.2 d", "4.4"),
-        ("PPO",                "3.8M", "86.4%", "6,800", "5.1 d", "4.0"),
-        ("Medicare Advantage", "1.2M", "85.2%", "3,100", "4.4 d", "4.2"),
-        ("Medicaid",           "0.8M", "88.1%", "2,400", "6.2 d", "3.8"),
+    network_data = [
+        ("Northeast Health Alliance", "Northeast", "412",
+         "4.8", "94.1%", 94, "Healthy"),
+        ("Southeast Medical Group", "Southeast", "387",
+         "4.5", "91.8%", 88, "Healthy"),
+        ("Midwest Care Partners", "Midwest", "298",
+         "4.3", "89.2%", 82, "Healthy"),
+        ("Pacific Provider Network", "West", "524",
+         "4.7", "93.5%", 91, "Healthy"),
+        ("Great Lakes Health System", "Midwest", "345",
+         "4.1", "86.7%", 76, "Warning"),
+        ("Southern Specialty Associates", "Southeast", "276",
+         "3.9", "84.3%", 71, "Warning"),
+        ("Mountain West Medical", "West", "189",
+         "4.4", "90.6%", 85, "Healthy"),
+        ("Atlantic Primary Care", "Northeast", "416",
+         "4.6", "92.4%", 89, "Healthy"),
     ]
 
-    plan_rows = []
-    for plan, members, mlr, claims_day, proc_time, star in plan_data:
-        plan_rows.append(html.Tr([
-            _td(plan, bold=True),
-            _td(members, mono=True),
-            _td(mlr, mono=True, color=COLORS["green"]),
-            _td(claims_day, mono=True),
-            _td(proc_time, mono=True),
-            _td(star, mono=True, color=COLORS["purple"]),
+    rows = []
+    for name, region, provs, star, hedis, q_pct, status in network_data:
+        q_color = (COLORS["green"] if q_pct >= 85
+                   else COLORS["yellow"] if q_pct >= 70
+                   else COLORS["red"])
+        rows.append(html.Tr([
+            td(name, bold=True),
+            td(region),
+            td(provs, mono=True),
+            td(star, mono=True, color=COLORS["blue"]),
+            td(hedis, mono=True),
+            progress_td(q_pct, q_color),
+            status_td(status),
         ]))
 
-    table_card = html.Div(className="card", children=[
-        html.H3("Plan Performance", style={
-            "fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px",
-        }),
-        _build_table(["Plan Type", "Members", "MLR", "Claims/Day", "Processing Time", "Star Rating"], plan_rows),
-    ])
+    table = rich_table(headers, rows, col_widths=col_widths)
 
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("Health Plan Analytics"),
-            html.P("Medical loss ratios, claims processing efficiency, prior authorization, and fraud detection"),
-        ]),
-        html.Div(className="content-area", children=[
-            kpi_cards,
-            table_card,
-        ]),
-    ])
+    return layout_table(
+        title="Network & Quality",
+        subtitle="Provider network performance, HEDIS compliance, and quality metrics",
+        filters=filters,
+        kpi_items=kpi_items,
+        table_component=table,
+    )
 
 
-# ---------------------------------------------------------------------------
-# 5. BioPharma Intelligence
-# ---------------------------------------------------------------------------
+# ═══════════════════════════════════════════════════════════════════════════
+#  4. BIOPHARMA INTELLIGENCE  (Style E — layout_forecast)
+# ═══════════════════════════════════════════════════════════════════════════
 
-def render_biopharma(cfg):
-    """Render the BioPharma Intelligence page."""
+def render_biopharma_intel(cfg):
+    """BioPharma pipeline analysis with hero value, dual-axis trial
+    progression chart, and therapeutic area breakdown."""
 
-    # -- KPI cards --
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("Trial Enrollment", "78%", "blue", "fa-flask"),
-        _build_kpi_card("Time to Market", "14.2 mo", "purple", "fa-clock"),
-        _build_kpi_card("Mfg Yield", "94.6%", "green", "fa-industry"),
-        _build_kpi_card("HCP Engagement", "3.8/5", "yellow", "fa-user-doctor"),
-    ])
-
-    # -- Clinical Trials table --
-    trial_data = [
-        ("ONCO-2024",   "Phase III", "Oncology",    "82%", 42, "2.1%"),
-        ("CARDIO-2024", "Phase II",  "Cardiology",  "74%", 28, "1.8%"),
-        ("NEURO-2025",  "Phase I",   "Neurology",   "68%", 14, "3.2%"),
-        ("IMMUNO-2024", "Phase III", "Immunology",  "91%", 56, "1.4%"),
+    # ── KPIs ──────────────────────────────────────────────────────────
+    kpi_items = [
+        {"label": "Pipeline Value", "value": "$4.2B", "accent": "blue"},
+        {"label": "Trials Active", "value": "147", "accent": "green"},
+        {"label": "Approval Rate", "value": "23.6%", "accent": "purple"},
+        {"label": "Time-to-Market", "value": "8.2 yrs", "accent": "yellow"},
     ]
 
-    trial_rows = []
-    for trial, phase, area, enrollment, sites, ae_rate in trial_data:
-        enroll_val = int(enrollment.replace("%", ""))
-        enroll_color = COLORS["green"] if enroll_val >= 80 else (COLORS["yellow"] if enroll_val >= 70 else COLORS["red"])
-        trial_rows.append(html.Tr([
-            _td(trial, bold=True),
-            _td(phase),
-            _td(area),
-            _td(enrollment, mono=True, color=enroll_color),
-            _td(sites, mono=True),
-            _td(ae_rate, mono=True),
-        ]))
+    # ── Dual-axis trial progression chart ─────────────────────────────
+    phases = ["Preclinical", "Phase I", "Phase II", "Phase III",
+              "NDA/BLA", "Approved"]
+    trial_counts = [42, 38, 31, 22, 8, 6]
+    success_rates = [100, 63.2, 48.4, 30.7, 18.5, 14.1]
 
-    table_card = html.Div(className="card", children=[
-        html.H3("Clinical Trials", style={
-            "fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px",
-        }),
-        _build_table(["Trial", "Phase", "Therapeutic Area", "Enrollment %", "Sites", "AE Rate"], trial_rows),
-    ])
+    trial_fig = go.Figure()
+    trial_fig.add_trace(go.Bar(
+        x=phases, y=trial_counts, name="Active Trials",
+        marker_color=COLORS["blue"], opacity=0.85, yaxis="y",
+    ))
+    trial_fig.add_trace(go.Scatter(
+        x=phases, y=success_rates, name="Cumulative Success %",
+        mode="lines+markers", line=dict(color=COLORS["green"], width=2),
+        marker=dict(size=7, color=COLORS["green"]),
+        yaxis="y2",
+    ))
+    trial_fig.update_layout(**dark_chart_layout(
+        height=300,
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+        yaxis=dict(title="Trial Count", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+        yaxis2=dict(title="Success Rate %", overlaying="y", side="right",
+                    showgrid=False, color=COLORS["green"],
+                    range=[0, 110]),
+        legend=dict(orientation="h", y=-0.2, x=0.5, xanchor="center"),
+        margin=dict(l=48, r=48, t=16, b=60),
+    ))
+    main_chart = dcc.Graph(figure=trial_fig, config=CHART_CONFIG,
+                           style={"height": "300px"})
 
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("BioPharma Intelligence"),
-            html.P("Clinical trial enrollment, time-to-market tracking, manufacturing yield, and HCP engagement"),
+    # ── Side breakdown by therapeutic area ────────────────────────────
+    side = html.Div([
+        html.Div("Pipeline by Therapeutic Area", style={
+            "fontSize": "14px", "fontWeight": "600",
+            "color": COLORS["white"], "marginBottom": "16px"}),
+        breakdown_list([
+            {"label": "Oncology", "value": "$1.4B", "pct": 33,
+             "color": COLORS["blue"]},
+            {"label": "Immunology", "value": "$890M", "pct": 21,
+             "color": COLORS["green"]},
+            {"label": "Neuroscience", "value": "$720M", "pct": 17,
+             "color": COLORS["purple"]},
+            {"label": "Rare Disease", "value": "$540M", "pct": 13,
+             "color": COLORS["yellow"]},
+            {"label": "Cardiovascular", "value": "$410M", "pct": 10,
+             "color": COLORS["red"]},
+            {"label": "Infectious Disease", "value": "$240M", "pct": 6,
+             "color": COLORS["text_muted"]},
         ]),
-        html.Div(className="content-area", children=[
-            kpi_cards,
-            table_card,
-        ]),
     ])
 
+    return layout_forecast(
+        title="BioPharma Intelligence",
+        subtitle="Drug pipeline analytics, clinical trial tracking, and market forecast",
+        kpi_items=kpi_items,
+        hero_value="$4.2B",
+        hero_label="Total Pipeline Value",
+        hero_trend_text="+12.8% vs prior year",
+        main_chart=main_chart,
+        side_component=side,
+    )
 
-# ---------------------------------------------------------------------------
-# 6. MedTech & Supply Chain
-# ---------------------------------------------------------------------------
 
-def render_medtech(cfg):
-    """Render the MedTech & Supply Chain page."""
+# ═══════════════════════════════════════════════════════════════════════════
+#  5. SUPPLY CHAIN  (Style D — layout_alerts)
+# ═══════════════════════════════════════════════════════════════════════════
 
-    # -- KPI cards --
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("Pipeline Value", "$1.2B", "blue", "fa-chart-line"),
-        _build_kpi_card("Mfg Yield", "96.8%", "green", "fa-industry"),
-        _build_kpi_card("Field Service", "4.2 hrs", "purple", "fa-wrench"),
-        _build_kpi_card("Procedure Growth", "12% YoY", "yellow", "fa-arrow-trend-up"),
-    ])
+def render_supply_chain(cfg):
+    """Supply chain alert view with critical drug shortages, equipment
+    delays, cold chain breaks, and supplier issues."""
 
-    # -- Product Portfolio table --
-    product_data = [
-        ("Surgical",       42, "Launched",     "97.2%", 3,  "14%"),
-        ("Diagnostic",     28, "Launched",     "96.4%", 5,  "11%"),
-        ("Implant",        18, "Regulatory",   "95.8%", 8,  "8%"),
-        ("Digital Health", 12, "Development",  "98.1%", 2,  "22%"),
+    tabs = ["Critical", "Warning", "Normal"]
+
+    alerts = [
+        {
+            "severity": "critical",
+            "title": "Epinephrine Auto-Injector Shortage",
+            "description": ("National supply of epinephrine auto-injectors "
+                            "has dropped below 30-day safety threshold. "
+                            "Manufacturer reports production line maintenance "
+                            "causing 6-week delay in resupply."),
+            "impact": "Cost Impact: $2.4M | 847 patients affected",
+            "timestamp": "2 hours ago",
+            "details": [
+                ("Current Stock", "12,400 units (18 days)"),
+                ("Reorder ETA", "March 28, 2026"),
+                ("Affected Facilities", "14 hospitals, 38 clinics"),
+                ("Backup Supplier", "Pending qualification"),
+            ],
+        },
+        {
+            "severity": "critical",
+            "title": "MRI Coil Replacement Delayed",
+            "description": ("Critical MRI gradient coil replacement for "
+                            "Northeast Regional Medical Center delayed due "
+                            "to component shortage from primary manufacturer."),
+            "impact": "Cost Impact: $890K | 120 scans/week affected",
+            "timestamp": "5 hours ago",
+            "details": [
+                ("Equipment", "Siemens MAGNETOM Vida 3T"),
+                ("Original ETA", "Feb 15, 2026"),
+                ("Revised ETA", "Apr 10, 2026"),
+                ("Workaround", "Redirecting to satellite facility"),
+            ],
+        },
+        {
+            "severity": "warning",
+            "title": "Cold Chain Deviation — Vaccine Shipment",
+            "description": ("Temperature excursion detected in mRNA vaccine "
+                            "shipment ID VX-20260308. Sensors recorded 2.1C "
+                            "above threshold for 47 minutes during transit."),
+            "impact": "Cost Impact: $340K | 5,200 doses at risk",
+            "timestamp": "8 hours ago",
+            "details": [
+                ("Shipment ID", "VX-20260308"),
+                ("Max Temp Recorded", "-67.9C (limit: -70C)"),
+                ("Duration", "47 min excursion"),
+                ("QA Decision", "Pending potency analysis"),
+            ],
+        },
+        {
+            "severity": "warning",
+            "title": "Surgical Glove Supplier Quality Issue",
+            "description": ("Lot GL-2026-1142 from Medline Industries failed "
+                            "AQL sampling — pinhole defect rate at 3.2%% "
+                            "exceeds the 1.5%% acceptance threshold."),
+            "impact": "Cost Impact: $156K | 280K gloves quarantined",
+            "timestamp": "12 hours ago",
+            "details": [
+                ("Supplier", "Medline Industries"),
+                ("Lot Number", "GL-2026-1142"),
+                ("Defect Rate", "3.2% (limit: 1.5%)"),
+                ("Action", "Lot quarantined, CAPA initiated"),
+            ],
+        },
+        {
+            "severity": "info",
+            "title": "Infusion Pump Firmware Update Available",
+            "description": ("Baxter SIGMA Spectrum pumps eligible for "
+                            "firmware v4.8.2 addressing drug library sync "
+                            "latency. Non-critical but recommended within "
+                            "60-day window."),
+            "impact": "218 pumps across 6 facilities",
+            "timestamp": "1 day ago",
+            "details": [
+                ("Model", "Baxter SIGMA Spectrum"),
+                ("Firmware", "v4.7.1 -> v4.8.2"),
+                ("Deadline", "May 10, 2026"),
+                ("Estimated Downtime", "12 min per unit"),
+            ],
+        },
     ]
 
-    product_rows = []
-    for category, products, stage, yield_pct, capa, rev_growth in product_data:
-        growth_val = int(rev_growth.replace("%", ""))
-        growth_color = COLORS["green"] if growth_val >= 10 else COLORS["yellow"]
-        product_rows.append(html.Tr([
-            _td(category, bold=True),
-            _td(products, mono=True),
-            _td(stage),
-            _td(yield_pct, mono=True, color=COLORS["green"]),
-            _td(capa, mono=True, color=COLORS["yellow"] if capa >= 5 else None),
-            _td(rev_growth, mono=True, color=growth_color),
+    summary_kpis = [
+        {"label": "Open Alerts", "value": "23", "accent": "red"},
+        {"label": "Critical Items", "value": "5", "accent": "red"},
+        {"label": "Avg Resolution", "value": "4.2 days", "accent": "yellow"},
+        {"label": "Supply Risk Score", "value": "72 / 100", "accent": "blue"},
+    ]
+
+    return layout_alerts(
+        title="Supply Chain & Manufacturing",
+        subtitle="Drug shortages, equipment logistics, cold chain, and supplier monitoring",
+        tabs=tabs,
+        alerts=alerts,
+        summary_kpis=summary_kpis,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  6. MEDTECH & DIGITAL SURGERY  (Style C — layout_split)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_medtech_surgery(cfg):
+    """Split view of surgical outcomes, device utilization, and training
+    metrics with tabs, info banner, and bottom stats."""
+
+    tabs = ["Outcomes", "Devices", "Training"]
+
+    banner_text = (
+        "Robotic-assisted procedures show 23% reduction in average length "
+        "of stay and 31% fewer post-operative complications compared to "
+        "traditional approaches across Q4 2025 cohort (n=4,218)."
+    )
+
+    # ── Left panel: procedure outcomes bar chart ──────────────────────
+    procedures = ["Cardiac\nBypass", "Hip\nReplacement", "Spinal\nFusion",
+                  "Knee\nArthroscopy", "Lap\nCholecystectomy",
+                  "Robotic\nProstatectomy"]
+    success_rates = [96.2, 97.8, 94.5, 98.1, 99.2, 97.4]
+    complication_rates = [3.8, 2.2, 5.5, 1.9, 0.8, 2.6]
+
+    outcome_fig = go.Figure()
+    outcome_fig.add_trace(go.Bar(
+        x=procedures, y=success_rates, name="Success Rate %",
+        marker_color=COLORS["green"], opacity=0.85,
+    ))
+    outcome_fig.add_trace(go.Bar(
+        x=procedures, y=complication_rates, name="Complication Rate %",
+        marker_color=COLORS["red"], opacity=0.85,
+    ))
+    outcome_fig.update_layout(**dark_chart_layout(
+        height=300, barmode="group",
+        margin=dict(l=48, r=24, t=16, b=60),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"],
+                   tickfont=dict(size=10)),
+        yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], title="%", range=[0, 105]),
+        legend=dict(orientation="h", y=-0.25, x=0.5, xanchor="center"),
+    ))
+    left_chart = dcc.Graph(figure=outcome_fig, config=CHART_CONFIG,
+                           style={"height": "300px"})
+
+    # ── Right panel: device utilization donut ─────────────────────────
+    device_labels = ["Da Vinci Xi", "Mako SmartRobotics",
+                     "ROSA Spine", "Ion Bronchoscopy",
+                     "Monarch Platform"]
+    device_values = [34, 26, 18, 12, 10]
+    device_colors = [COLORS["blue"], COLORS["green"], COLORS["purple"],
+                     COLORS["yellow"], COLORS["red"]]
+    device_fig = donut_figure(device_labels, device_values, device_colors,
+                              center_text="2,847", title="Procedures by Device")
+    right_chart = dcc.Graph(figure=device_fig, config=CHART_CONFIG,
+                            style={"height": "300px"})
+
+    # ── Bottom stats ──────────────────────────────────────────────────
+    bottom_stats = [
+        ("Procedures YTD", "12,483", "blue"),
+        ("Avg Op Time", "142 min", "purple"),
+        ("Complication Rate", "2.4%", "green"),
+        ("Training Certified", "89%", "blue"),
+        ("Device Uptime", "99.1%", "green"),
+    ]
+
+    return layout_split(
+        title="MedTech & Digital Surgery",
+        subtitle="Surgical outcomes, robotic device utilization, and training compliance",
+        tabs=tabs,
+        banner_text=banner_text,
+        left_panel=("Procedure Outcomes by Type", left_chart),
+        right_panel=("Device Utilization", right_chart),
+        bottom_stats=bottom_stats,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  7. PATIENT OUTCOMES  (Style B variant — layout_table)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_patient_outcomes(cfg):
+    """Patient outcomes table view with filters for department, condition,
+    and timeframe, KPI strip, and outcomes table with progress bars."""
+
+    # ── Filters ───────────────────────────────────────────────────────
+    filters = [
+        {"label": "Department", "options": ["All Departments", "Cardiology",
+                                             "Oncology", "Orthopedics",
+                                             "Neurology", "Pulmonology"]},
+        {"label": "Condition", "options": ["All Conditions", "Heart Failure",
+                                            "COPD", "Pneumonia", "Sepsis",
+                                            "Stroke", "Hip Fracture"]},
+        {"label": "Timeframe", "options": ["Last 12 Months", "Last 6 Months",
+                                            "Last Quarter", "YTD"]},
+    ]
+
+    # ── KPI strip ─────────────────────────────────────────────────────
+    kpi_items = [
+        {"label": "Mortality Rate", "value": "1.8%", "accent": "green"},
+        {"label": "Readmission", "value": "8.2%", "accent": "blue"},
+        {"label": "Satisfaction", "value": "92.4%", "accent": "blue"},
+        {"label": "Avg LOS", "value": "4.1 days", "accent": "purple"},
+        {"label": "Infection Rate", "value": "0.6%", "accent": "green"},
+    ]
+
+    # ── Outcomes table ────────────────────────────────────────────────
+    headers = ["Condition", "Cases", "Mortality", "Readmit %",
+               "Avg LOS", "Recovery Score", "Trend"]
+    col_widths = ["20%", "10%", "10%", "12%", "10%", "22%", "16%"]
+
+    condition_data = [
+        ("Acute MI", "1,842", "2.1%", "9.4%", "5.2 days", 91,
+         "up", "+2.3%"),
+        ("Heart Failure", "2,364", "3.4%", "12.1%", "6.8 days", 78,
+         "up", "+1.8%"),
+        ("COPD Exacerbation", "1,567", "1.2%", "14.6%", "4.3 days", 82,
+         "down", "-0.5%"),
+        ("Community Pneumonia", "2,108", "1.8%", "7.2%", "3.9 days", 88,
+         "up", "+3.1%"),
+        ("Sepsis", "987", "8.7%", "6.3%", "9.4 days", 72,
+         "up", "+4.2%"),
+        ("Ischemic Stroke", "1,243", "4.2%", "8.8%", "7.1 days", 76,
+         "up", "+1.4%"),
+        ("Hip Fracture", "892", "1.9%", "5.1%", "5.6 days", 85,
+         "up", "+2.7%"),
+        ("Knee Replacement", "1,456", "0.3%", "2.8%", "2.4 days", 94,
+         "up", "+1.1%"),
+        ("Coronary Bypass", "634", "2.8%", "7.6%", "8.2 days", 83,
+         "up", "+3.5%"),
+        ("Appendectomy", "1,120", "0.1%", "1.4%", "1.8 days", 97,
+         "up", "+0.4%"),
+    ]
+
+    rows = []
+    for (cond, cases, mort, readmit, los,
+         recovery, trend_dir, trend_pct) in condition_data:
+        rec_color = (COLORS["green"] if recovery >= 85
+                     else COLORS["yellow"] if recovery >= 70
+                     else COLORS["red"])
+        rows.append(html.Tr([
+            td(cond, bold=True),
+            td(cases, mono=True),
+            td(mort, mono=True,
+               color=COLORS["green"] if float(mort.strip("%")) < 2.0
+               else COLORS["yellow"] if float(mort.strip("%")) < 5.0
+               else COLORS["red"]),
+            td(readmit, mono=True,
+               color=COLORS["green"] if float(readmit.strip("%")) < 8.0
+               else COLORS["yellow"] if float(readmit.strip("%")) < 12.0
+               else COLORS["red"]),
+            td(los, mono=True),
+            progress_td(recovery, rec_color),
+            html.Td(
+                html.Div(
+                    style={"display": "flex", "alignItems": "center"},
+                    children=[trend_indicator(trend_dir, trend_pct)],
+                ),
+                style={"padding": "12px 14px",
+                        "borderBottom": f"1px solid {COLORS['border']}"},
+            ),
         ]))
 
-    table_card = html.Div(className="card", children=[
-        html.H3("Product Portfolio", style={
-            "fontSize": "14px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px",
-        }),
-        _build_table(["Category", "Products", "Pipeline Stage", "Yield", "CAPA Open", "Revenue Growth"], product_rows),
-    ])
+    table = rich_table(headers, rows, col_widths=col_widths)
 
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("MedTech & Supply Chain"),
-            html.P("Product pipeline, manufacturing yield, field service response, and procedure volume growth"),
-        ]),
-        html.Div(className="content-area", children=[
-            kpi_cards,
-            table_card,
-        ]),
-    ])
+    return layout_table(
+        title="Patient Outcomes",
+        subtitle="Condition-level outcome analysis with recovery scoring and trend tracking",
+        filters=filters,
+        kpi_items=kpi_items,
+        table_component=table,
+    )

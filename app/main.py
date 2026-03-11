@@ -1,9 +1,10 @@
 """
-Multi-vertical Dash application entry point -- Blueprint IQ Demo Hub (v2).
+Multi-vertical Dash application entry point -- Blueprint IQ Demo Hub (v3).
 
 Creates the Dash server, loads the layout, registers page callbacks,
 and wires up URL routing plus the Genie panel toggle.
-Supports verticals: gaming, telecom, media, financial_services, hls.
+Supports verticals: gaming, telecom, media, financial_services, hls,
+manufacturing, risk.
 
 The app serves three kinds of pages:
   - Landing  (/)      -- full-screen splash
@@ -39,7 +40,7 @@ from app.data_access import (  # noqa: E402
     set_active_vertical,
 )
 from app.genie_backend import ask_genie  # noqa: E402
-from app.layout import build_layout, build_sidebar, build_genie_panel  # noqa: E402
+from app.layout import build_layout, build_sidebar  # noqa: E402
 from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS, get_base_stylesheet  # noqa: E402
 
 # Per-vertical page renderers
@@ -48,6 +49,8 @@ from app.pages import telecom as pages_telecom  # noqa: E402
 from app.pages import media as pages_media  # noqa: E402
 from app.pages import financial_services as pages_finserv  # noqa: E402
 from app.pages import hls as pages_hls  # noqa: E402
+from app.pages import manufacturing as pages_manufacturing  # noqa: E402
+from app.pages import risk as pages_risk  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # App-level constants
@@ -63,32 +66,44 @@ _VERTICALS = [
     {
         "key": "gaming",
         "icon": "fa-gamepad",
-        "color": "#EAB308",
+        "color": "#FBBF24",
         "stats": [("Tables", "6"), ("Models", "3"), ("KPIs", "17")],
     },
     {
         "key": "telecom",
         "icon": "fa-tower-cell",
-        "color": "#22C55E",
+        "color": "#34D399",
         "stats": [("Tables", "5"), ("Models", "2"), ("KPIs", "17")],
     },
     {
         "key": "media",
         "icon": "fa-film",
-        "color": "#8B5CF6",
+        "color": "#A78BFA",
         "stats": [("Tables", "5"), ("Models", "2"), ("KPIs", "17")],
     },
     {
         "key": "financial_services",
         "icon": "fa-building-columns",
-        "color": "#EF4444",
+        "color": "#F87171",
         "stats": [("Tables", "7"), ("Models", "3"), ("KPIs", "29")],
     },
     {
         "key": "hls",
         "icon": "fa-heart-pulse",
-        "color": "#233ED8",
+        "color": "#4B7BF5",
         "stats": [("Tables", "6"), ("Models", "2"), ("KPIs", "22")],
+    },
+    {
+        "key": "manufacturing",
+        "icon": "fa-industry",
+        "color": "#FB923C",
+        "stats": [("Tables", "6"), ("Models", "2"), ("KPIs", "16")],
+    },
+    {
+        "key": "risk",
+        "icon": "fa-shield-halved",
+        "color": "#F472B6",
+        "stats": [("Tables", "5"), ("Models", "2"), ("KPIs", "18")],
     },
 ]
 
@@ -182,7 +197,7 @@ def _build_kpi_card(title, value_str, accent, icon, alert=False):
                 "ALERT",
                 style={
                     "fontSize": "9px", "fontWeight": "700", "color": COLORS["red"],
-                    "backgroundColor": "rgba(239, 68, 68, 0.12)", "padding": "2px 6px",
+                    "backgroundColor": "rgba(248, 113, 113, 0.12)", "padding": "2px 6px",
                     "borderRadius": "4px", "letterSpacing": "0.5px",
                 },
             ),
@@ -233,7 +248,7 @@ def _render_landing():
             html.Div(
                 className="landing-title",
                 children=[
-                    html.Span("Blueprint", style={"color": "#233ED8"}),
+                    html.Span("Blueprint", style={"color": COLORS["blue"]}),
                     " AI Demo Hub",
                 ],
             ),
@@ -506,43 +521,66 @@ def _render_generic_page(page_id):
 _VERTICAL_PAGES = {
     "gaming": {
         "dashboard": pages_gaming.render_dashboard,
-        "player_intel": pages_gaming.render_player_intel,
-        "revenue": pages_gaming.render_revenue,
-        "ua_growth": pages_gaming.render_ua_growth,
-        "game_dev": pages_gaming.render_game_dev,
-        "infrastructure": pages_gaming.render_infrastructure,
+        "know_player": pages_gaming.render_know_player,
+        "grow_playerbase": pages_gaming.render_grow_playerbase,
+        "grow_revenue": pages_gaming.render_grow_revenue,
+        "build_games": pages_gaming.render_build_games,
+        "live_ops": pages_gaming.render_live_ops,
+        "efficient_ops": pages_gaming.render_efficient_ops,
     },
     "telecom": {
         "dashboard": pages_telecom.render_dashboard,
-        "customer": pages_telecom.render_customer,
-        "revenue": pages_telecom.render_revenue,
-        "fraud": pages_telecom.render_fraud,
-        "field_ops": pages_telecom.render_field_ops,
-        "b2b_iot": pages_telecom.render_b2b_iot,
+        "consumer_cx": pages_telecom.render_consumer_cx,
+        "b2b_enterprise": pages_telecom.render_b2b_enterprise,
+        "network_ops": pages_telecom.render_network_ops,
+        "field_energy": pages_telecom.render_field_energy,
+        "fraud_prevention": pages_telecom.render_fraud_prevention,
+        "cyber_security": pages_telecom.render_cyber_security,
     },
     "media": {
         "dashboard": pages_media.render_dashboard,
-        "content": pages_media.render_content,
-        "subscriptions": pages_media.render_subscriptions,
-        "advertising": pages_media.render_advertising,
-        "creative": pages_media.render_creative,
-        "platform": pages_media.render_platform,
+        "content_strategy": pages_media.render_content_strategy,
+        "audience_intel": pages_media.render_audience_intel,
+        "subscription_intel": pages_media.render_subscription_intel,
+        "ad_yield": pages_media.render_ad_yield,
+        "platform_delivery": pages_media.render_platform_delivery,
+        "personalization_ai": pages_media.render_personalization_ai,
     },
     "financial_services": {
         "dashboard": pages_finserv.render_dashboard,
-        "banking": pages_finserv.render_banking,
-        "capital_markets": pages_finserv.render_capital_markets,
-        "insurance": pages_finserv.render_insurance,
-        "fraud_compliance": pages_finserv.render_fraud_compliance,
-        "customer": pages_finserv.render_customer,
+        "investment_alpha": pages_finserv.render_investment_alpha,
+        "trading_advisory": pages_finserv.render_trading_advisory,
+        "risk_management": pages_finserv.render_risk_management,
+        "regulatory": pages_finserv.render_regulatory,
+        "fraud_cyber": pages_finserv.render_fraud_cyber,
+        "operations": pages_finserv.render_operations,
     },
     "hls": {
         "dashboard": pages_hls.render_dashboard,
-        "provider_ops": pages_hls.render_provider_ops,
-        "clinical_quality": pages_hls.render_clinical_quality,
-        "health_plans": pages_hls.render_health_plans,
-        "biopharma": pages_hls.render_biopharma,
-        "medtech": pages_hls.render_medtech,
+        "healthcare_ops": pages_hls.render_healthcare_ops,
+        "network_quality": pages_hls.render_network_quality,
+        "biopharma_intel": pages_hls.render_biopharma_intel,
+        "supply_chain": pages_hls.render_supply_chain,
+        "medtech_surgery": pages_hls.render_medtech_surgery,
+        "patient_outcomes": pages_hls.render_patient_outcomes,
+    },
+    "manufacturing": {
+        "dashboard": pages_manufacturing.render_dashboard,
+        "production_analytics": pages_manufacturing.render_production_analytics,
+        "quality_control": pages_manufacturing.render_quality_control,
+        "supply_chain": pages_manufacturing.render_supply_chain,
+        "predictive_maintenance": pages_manufacturing.render_predictive_maintenance,
+        "energy_sustainability": pages_manufacturing.render_energy_sustainability,
+        "workforce_ops": pages_manufacturing.render_workforce_ops,
+    },
+    "risk": {
+        "dashboard": pages_risk.render_dashboard,
+        "enterprise_risk": pages_risk.render_enterprise_risk,
+        "credit_risk": pages_risk.render_credit_risk,
+        "market_risk": pages_risk.render_market_risk,
+        "operational_risk": pages_risk.render_operational_risk,
+        "compliance": pages_risk.render_compliance,
+        "cyber_risk": pages_risk.render_cyber_risk,
     },
 }
 
@@ -579,21 +617,18 @@ def _get_renderer(vertical, page_id):
     Output("page-content", "children"),
     Output("sidebar-container", "children"),
     Output("sidebar-container", "style"),
-    Output("genie-panel-container", "children"),
-    Output("genie-panel-container", "style"),
     Output("active-vertical", "data"),
     Input("url", "pathname"),
-    Input("interval-refresh", "n_intervals"),
 )
-def route_page(pathname, n_intervals):
-    """Route URL to the correct page, updating sidebar and genie panel per vertical."""
-    if pathname is None or pathname == "/":
-        return (_render_landing(), [], {"display": "none"}, [], {"display": "none"}, None)
+def route_page(pathname):
+    """Route URL to the correct page and update sidebar per vertical."""
+    if pathname is None or pathname == "/" or pathname == "":
+        return (_render_hub(), [], {"display": "none"}, None)
 
     parts = pathname.strip("/").split("/")
 
     if parts[0] == "hub":
-        return (_render_hub(), [], {"display": "none"}, [], {"display": "none"}, None)
+        return (_render_hub(), [], {"display": "none"}, None)
 
     vertical = parts[0]
     page_id = parts[1] if len(parts) > 1 else "dashboard"
@@ -619,51 +654,58 @@ def route_page(pathname, n_intervals):
         )
 
     sidebar_children = build_sidebar(vertical, page_id)
-    genie_children = build_genie_panel(vertical)
-
     sidebar_style = {"width": "220px", "minWidth": "220px", "flexShrink": "0", "position": "relative"}
-    genie_style = {"width": "280px", "minWidth": "280px", "flexShrink": "0"}
 
-    return (
-        content,
-        sidebar_children,
-        sidebar_style,
-        genie_children,
-        genie_style,
-        vertical,
-    )
+    return (content, sidebar_children, sidebar_style, vertical)
 
 
 @app.callback(
-    Output("genie-panel-container", "style", allow_duplicate=True),
-    Output("genie-open-wrapper", "style"),
-    Input("genie-close-btn", "n_clicks"),
-    Input("genie-open-btn", "n_clicks"),
-    State("genie-panel-container", "style"),
+    Output("chat-modal", "style"),
+    Output("chat-fab", "style"),
+    Input("chat-fab", "n_clicks"),
+    Input("chat-close-btn", "n_clicks"),
+    State("chat-modal", "style"),
     prevent_initial_call=True,
 )
-def toggle_genie_panel(close_clicks, open_clicks, current_style):
-    """Show/hide the Genie AI panel."""
+def toggle_chat_modal(fab_clicks, close_clicks, current_style):
+    """Toggle the floating chat modal open/closed."""
     ctx = callback_context
     if not ctx.triggered:
-        return current_style, {"display": "none"}
+        raise dash.exceptions.PreventUpdate
 
     trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    is_open = (current_style or {}).get("display") == "flex"
 
-    if trigger_id == "genie-close-btn":
-        hidden_style = dict(current_style or {})
-        hidden_style["width"] = "0px"
-        hidden_style["minWidth"] = "0px"
-        hidden_style["overflow"] = "hidden"
-        hidden_style["borderRight"] = "none"
-        return hidden_style, {"display": "block"}
+    fab_base = {
+        "position": "fixed",
+        "bottom": "24px",
+        "right": "24px",
+        "width": "56px",
+        "height": "56px",
+        "borderRadius": "50%",
+        "backgroundColor": COLORS["blue"],
+        "color": "#FFFFFF",
+        "border": "none",
+        "cursor": "pointer",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center",
+        "boxShadow": "0 4px 16px rgba(75, 123, 245, 0.4)",
+        "zIndex": "1000",
+        "transition": "transform 0.2s ease, box-shadow 0.2s ease",
+    }
+
+    modal_base = dict(current_style or {})
+
+    if trigger_id == "chat-close-btn" or (trigger_id == "chat-fab" and is_open):
+        # Close
+        modal_base["display"] = "none"
+        return modal_base, fab_base
     else:
-        visible_style = dict(current_style or {})
-        visible_style["width"] = "280px"
-        visible_style["minWidth"] = "280px"
-        visible_style["overflow"] = "hidden"
-        visible_style["borderRight"] = "1px solid #E5E7EB"
-        return visible_style, {"display": "none"}
+        # Open
+        modal_base["display"] = "flex"
+        fab_base["display"] = "none"
+        return modal_base, fab_base
 
 
 @app.callback(
@@ -779,15 +821,13 @@ def _render_chat_messages(history):
     Output("genie-chat-history", "data"),
     Input("genie-send-btn", "n_clicks"),
     Input("genie-input", "n_submit"),
-    Input({"type": "genie-q", "index": ALL}, "n_clicks"),
     State("genie-input", "value"),
-    State({"type": "genie-q", "index": ALL}, "children"),
     State("genie-chat-history", "data"),
     State("active-vertical", "data"),
     prevent_initial_call=True,
 )
-def handle_genie_query(send_clicks, n_submit, q_clicks, input_value, q_labels, chat_history, active_vertical):
-    """Handle a Genie chat query from the send button, Enter key, or a question card."""
+def handle_genie_query(send_clicks, n_submit, input_value, chat_history, active_vertical):
+    """Handle a Genie chat query from the send button or Enter key."""
     ctx = callback_context
     if not ctx.triggered:
         raise dash.exceptions.PreventUpdate
@@ -795,28 +835,7 @@ def handle_genie_query(send_clicks, n_submit, q_clicks, input_value, q_labels, c
     if chat_history is None:
         chat_history = []
 
-    trigger = ctx.triggered[0]
-    trigger_id = trigger["prop_id"]
-    question = None
-
-    if "genie-send-btn" in trigger_id or "genie-input" in trigger_id:
-        question = input_value
-    else:
-        triggered_id = ctx.triggered_id
-        if isinstance(triggered_id, dict) and triggered_id.get("type") == "genie-q":
-            clicked_index = triggered_id.get("index", "")
-            for i, label in enumerate(q_labels or []):
-                label_text = label if isinstance(label, str) else str(label)
-                if label_text[:20] == clicked_index:
-                    question = label_text
-                    break
-
-        if question is None:
-            for i, clicks in enumerate(q_clicks or []):
-                if clicks and clicks > 0 and i < len(q_labels):
-                    question = q_labels[i] if isinstance(q_labels[i], str) else str(q_labels[i])
-                    break
-
+    question = input_value
     if not question or (isinstance(question, str) and not question.strip()):
         raise dash.exceptions.PreventUpdate
 
@@ -850,4 +869,4 @@ def handle_genie_query(send_clicks, n_submit, q_clicks, input_value, q_labels, c
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8050, debug=True)
+    app.run(host="0.0.0.0", port=8050, debug=False)

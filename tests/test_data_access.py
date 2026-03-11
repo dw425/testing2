@@ -10,7 +10,7 @@ os.environ["USE_CASE"] = "gaming"
 
 def test_get_config_for_all_verticals():
     from app.data_access import get_config_for
-    verticals = ["gaming", "telecom", "media", "financial_services", "hls"]
+    verticals = ["gaming", "telecom", "media", "financial_services", "hls", "manufacturing", "risk"]
     for v in verticals:
         cfg = get_config_for(v)
         assert cfg is not None
@@ -29,7 +29,7 @@ def test_set_active_vertical():
 
 def test_config_has_app_metadata():
     from app.data_access import get_config_for
-    for v in ["gaming", "telecom", "media", "financial_services", "hls"]:
+    for v in ["gaming", "telecom", "media", "financial_services", "hls", "manufacturing", "risk"]:
         cfg = get_config_for(v)
         assert "name" in cfg["app"]
         assert "title" in cfg["app"]
@@ -38,7 +38,7 @@ def test_config_has_app_metadata():
 
 def test_config_has_ml_models():
     from app.data_access import get_config_for
-    for v in ["gaming", "telecom", "media", "financial_services", "hls"]:
+    for v in ["gaming", "telecom", "media", "financial_services", "hls", "manufacturing", "risk"]:
         cfg = get_config_for(v)
         ml = cfg.get("ml", {})
         assert len(ml) >= 2, f"{v} should have at least 2 ML models"
@@ -46,18 +46,18 @@ def test_config_has_ml_models():
 
 def test_config_has_genie_questions():
     from app.data_access import get_config_for
-    for v in ["gaming", "telecom", "media", "financial_services", "hls"]:
+    for v in ["gaming", "telecom", "media", "financial_services", "hls", "manufacturing", "risk"]:
         cfg = get_config_for(v)
         questions = cfg["genie"].get("sample_questions", [])
-        assert len(questions) == 10, f"{v} should have 10 sample questions"
+        assert len(questions) == 100, f"{v} should have 100 sample questions"
 
 
 def test_config_has_six_pages():
     from app.data_access import get_config_for
-    for v in ["gaming", "telecom", "media", "financial_services", "hls"]:
+    for v in ["gaming", "telecom", "media", "financial_services", "hls", "manufacturing", "risk"]:
         cfg = get_config_for(v)
         pages = cfg.get("pages", [])
-        assert len(pages) == 6, f"{v} should have 6 pages, got {len(pages)}"
+        assert len(pages) == 7, f"{v} should have 7 pages, got {len(pages)}"
 
 
 def test_is_demo_mode():

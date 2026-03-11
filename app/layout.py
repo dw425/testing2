@@ -1,15 +1,15 @@
 """
-Master 3-panel layout for Blueprint IQ.
+Master layout for Blueprint IQ.
 
 Creates the outer shell of the application:
-  - Left: collapsible Genie AI chat panel (white background, matching HTML mockup)
-  - Middle: sidebar navigation
+  - Left: sidebar navigation
   - Right: routed page content area
+  - Floating: chat icon button (bottom-right) that opens a popup modal
 
 The layout is built once at startup via ``build_layout()`` which creates a
-dynamic skeleton with placeholder containers.  The genie panel and sidebar
-content are populated at runtime by callbacks in ``main.py`` using the
-public helpers ``build_genie_panel()`` and ``build_sidebar()``.
+dynamic skeleton with placeholder containers.  The sidebar content is
+populated at runtime by callbacks in ``main.py`` using ``build_sidebar()``.
+The Genie chat modal is toggled via a floating button.
 """
 
 from dash import dcc, html
@@ -28,241 +28,45 @@ _USE_CASE_ICONS = {
     "media": "fa-film",
     "financial_services": "fa-building-columns",
     "hls": "fa-heart-pulse",
-}
-
-_USE_CASE_GENIE_DESC = {
-    "gaming": "Ask questions about player and game analytics",
-    "telecom": "Ask questions about network and subscriber data",
-    "media": "Ask questions about audience and content analytics",
-    "financial_services": "Ask questions about banking, markets, and insurance data",
-    "hls": "Ask questions about clinical, health plan, and pharma data",
+    "manufacturing": "fa-industry",
+    "risk": "fa-shield-halved",
 }
 
 
 # ---------------------------------------------------------------------------
-# Public helpers -- called by main.py callbacks to build panel content
+# Public helpers -- called by main.py callbacks
 # ---------------------------------------------------------------------------
-
-
-def build_genie_panel(use_case: str = "manufacturing") -> html.Div:
-    """Build the Genie AI chat panel content for the given vertical.
-
-    White background, blue header text, bordered question cards,
-    scrollable chat area, and pill-shaped input bar with send button.
-
-    Parameters
-    ----------
-    use_case:
-        The vertical identifier (e.g. ``"manufacturing"``).
-
-    Returns
-    -------
-    html.Div
-        The fully-styled genie panel with that vertical's suggested questions.
-    """
-    cfg = get_config_for(use_case)
-    questions = cfg.get("genie", {}).get("sample_questions", [])
-
-    # Question cards -- styled like the HTML mockup: blue border, uppercase, bold
-    question_cards = []
-    for q in questions:
-        question_cards.append(
-            html.Button(
-                q,
-                id={"type": "genie-q", "index": q[:20]},
-                n_clicks=0,
-                className="genie-question-card",
-                style={
-                    "width": "100%",
-                    "textAlign": "left",
-                    "fontSize": "11px",
-                    "fontWeight": "700",
-                    "color": COLORS["blue"],
-                    "border": f"2px solid rgba(35, 62, 216, 0.30)",
-                    "borderRadius": "6px",
-                    "padding": "14px",
-                    "marginBottom": "10px",
-                    "backgroundColor": "transparent",
-                    "cursor": "pointer",
-                    "textTransform": "uppercase",
-                    "lineHeight": "1.5",
-                    "letterSpacing": "0.3px",
-                    "fontFamily": FONT_FAMILY,
-                    "transition": "background-color 0.15s ease",
-                },
-            )
-        )
-
-    return html.Div(
-        id="genie-panel",
-        className="genie-panel-mockup",
-        style={
-            "width": "288px",
-            "minWidth": "288px",
-            "flexShrink": "0",
-            "backgroundColor": "#FFFFFF",
-            "borderRight": "1px solid #E5E7EB",
-            "height": "100vh",
-            "display": "flex",
-            "flexDirection": "column",
-            "overflow": "hidden",
-            "transition": "width 0.3s ease, opacity 0.3s ease",
-        },
-        children=[
-            # ---- Chat Header ----
-            html.Div(
-                style={
-                    "padding": "24px 20px 16px 20px",
-                    "display": "flex",
-                    "justifyContent": "space-between",
-                    "alignItems": "center",
-                    "flexShrink": "0",
-                },
-                children=[
-                    html.Span(
-                        "Genie AI",
-                        style={
-                            "fontWeight": "700",
-                            "color": COLORS["blue"],
-                            "fontSize": "18px",
-                            "fontFamily": FONT_FAMILY,
-                        },
-                    ),
-                    html.Button(
-                        html.I(className="fa-solid fa-chevron-down", style={"fontSize": "11px"}),
-                        id="genie-close-btn",
-                        n_clicks=0,
-                        style={
-                            "backgroundColor": "#F3F4F6",
-                            "border": "none",
-                            "borderRadius": "6px",
-                            "padding": "8px 10px",
-                            "color": "#6B7280",
-                            "cursor": "pointer",
-                            "transition": "background-color 0.15s",
-                            "display": "flex",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                        },
-                    ),
-                ],
-            ),
-
-            # ---- Scrollable chat area: questions + response history ----
-            html.Div(
-                id="genie-chat-area",
-                style={
-                    "flex": "1",
-                    "overflowY": "auto",
-                    "padding": "0 16px 16px 16px",
-                },
-                children=[
-                    # Suggested question cards
-                    html.Div(
-                        id="genie-questions-container",
-                        children=question_cards,
-                    ),
-                    # Chat response area (messages will be appended here)
-                    html.Div(
-                        id="genie-response",
-                        style={"marginTop": "12px"},
-                    ),
-                ],
-            ),
-
-            # ---- Input bar at bottom ----
-            html.Div(
-                style={
-                    "padding": "12px 16px",
-                    "backgroundColor": "#FFFFFF",
-                    "borderTop": "1px solid #F3F4F6",
-                    "flexShrink": "0",
-                },
-                children=[
-                    html.Div(
-                        style={
-                            "display": "flex",
-                            "alignItems": "center",
-                            "backgroundColor": "#F3F4F6",
-                            "borderRadius": "9999px",
-                            "border": "1px solid #D1D5DB",
-                            "padding": "3px 3px 3px 16px",
-                        },
-                        children=[
-                            dcc.Input(
-                                id="genie-input",
-                                type="text",
-                                placeholder="Ask a question...",
-                                debounce=True,
-                                n_submit=0,
-                                style={
-                                    "flex": "1",
-                                    "border": "none",
-                                    "outline": "none",
-                                    "backgroundColor": "transparent",
-                                    "fontSize": "13px",
-                                    "color": "#1F2937",
-                                    "fontFamily": FONT_FAMILY,
-                                    "padding": "6px 0",
-                                },
-                            ),
-                            html.Button(
-                                html.I(className="fa-solid fa-paper-plane", style={"fontSize": "11px"}),
-                                id="genie-send-btn",
-                                n_clicks=0,
-                                style={
-                                    "width": "32px",
-                                    "height": "32px",
-                                    "borderRadius": "50%",
-                                    "backgroundColor": "#FFFFFF",
-                                    "border": "1px solid #E5E7EB",
-                                    "color": "#9CA3AF",
-                                    "cursor": "pointer",
-                                    "display": "flex",
-                                    "alignItems": "center",
-                                    "justifyContent": "center",
-                                    "flexShrink": "0",
-                                    "boxShadow": "0 1px 2px rgba(0,0,0,0.05)",
-                                    "transition": "color 0.15s",
-                                    "padding": "0",
-                                },
-                            ),
-                        ],
-                    ),
-                ],
-            ),
-        ],
-    )
 
 
 def build_sidebar(vertical: str, active_page: str = "") -> html.Div:
-    """Build the sidebar navigation for the given *vertical*.
-
-    Includes a "Back to Demo Hub" link at the top when inside a vertical,
-    the vertical's app name, icon, pages from its config, and the standard
-    footer branding.
-
-    Parameters
-    ----------
-    vertical:
-        The vertical identifier (e.g. ``"manufacturing"``).
-    active_page:
-        The currently active page id, used for highlighting.
-
-    Returns
-    -------
-    html.Div
-        Sidebar content ready to be placed inside ``sidebar-container``.
-    """
+    """Build the sidebar navigation for the given *vertical*."""
     cfg = get_config_for(vertical)
     app_title = cfg["app"].get("title", "Blueprint IQ")
     app_subtitle = cfg["app"].get("subtitle", "")
     pages = cfg.get("pages", [])
 
     nav_links = []
+    current_group = None
     for page in pages:
         if not page.get("enabled", True):
             continue
+        group = page.get("group", "")
+        if group and group != current_group:
+            current_group = group
+            nav_links.append(
+                html.Div(
+                    group.upper(),
+                    style={
+                        "fontSize": "9px",
+                        "fontWeight": "700",
+                        "color": COLORS.get("text_muted", "#9CA3AF"),
+                        "textTransform": "uppercase",
+                        "letterSpacing": "1.2px",
+                        "padding": "14px 20px 4px 20px",
+                        "opacity": "0.7",
+                    },
+                )
+            )
         icon_class = f"fa-solid {page.get('icon', 'fa-circle')}"
         nav_links.append(
             dcc.Link(
@@ -329,18 +133,6 @@ def build_sidebar(vertical: str, active_page: str = "") -> html.Div:
                     html.P(app_subtitle),
                 ],
             ),
-            # Genie toggle button (shown when panel is hidden)
-            html.Div(
-                html.Button(
-                    [html.I(className="fa-solid fa-robot", style={"marginRight": "6px"}), "Genie"],
-                    id="genie-open-btn",
-                    className="genie-toggle",
-                    n_clicks=0,
-                    style={"width": "calc(100% - 32px)", "margin": "12px 16px", "textAlign": "left"},
-                ),
-                id="genie-open-wrapper",
-                style={"display": "none"},
-            ),
             # Nav links
             html.Nav(nav_links, style={"marginTop": "4px"}),
             # Footer
@@ -378,32 +170,22 @@ def build_sidebar(vertical: str, active_page: str = "") -> html.Div:
 
 
 def build_layout() -> html.Div:
-    """Construct the full application layout as a dynamic skeleton.
+    """Construct the full application layout.
 
-    The skeleton contains placeholder containers (``genie-panel-container``,
-    ``sidebar-container``, ``page-content``) that are populated at runtime by
-    callbacks in ``main.py``.  A ``dcc.Store(id="active-vertical")`` tracks
-    the currently selected vertical.
-
-    Returns
-    -------
-    html.Div
-        Root Div wrapping URL routing, interval timer, stores, and the
-        3-panel shell with placeholder containers.
+    Two-panel shell (sidebar + content) with a floating chat button
+    and popup modal for Genie AI.
     """
     return html.Div(
         style={"fontFamily": FONT_FAMILY},
         children=[
             # URL routing
             dcc.Location(id="url", refresh=False),
-            # Auto-refresh interval (5 seconds)
-            dcc.Interval(id="interval-refresh", interval=5_000, n_intervals=0),
-            # Store for genie panel visibility
-            dcc.Store(id="genie-visible", data=True),
             # Store for tracking the active vertical
             dcc.Store(id="active-vertical", data=None),
             # Store for genie chat history
             dcc.Store(id="genie-chat-history", data=[]),
+            # Store for chat modal visibility
+            dcc.Store(id="chat-modal-open", data=False),
             # Outer flex container
             html.Div(
                 style={
@@ -413,11 +195,9 @@ def build_layout() -> html.Div:
                     "backgroundColor": COLORS["dark"],
                 },
                 children=[
-                    # Genie panel placeholder (left) -- populated by callback
-                    html.Div(id="genie-panel-container"),
-                    # Sidebar placeholder (middle) -- populated by callback
+                    # Sidebar placeholder -- populated by callback
                     html.Div(id="sidebar-container"),
-                    # Content area (right)
+                    # Content area
                     html.Div(
                         id="page-content",
                         style={
@@ -425,6 +205,170 @@ def build_layout() -> html.Div:
                             "overflowY": "auto",
                             "backgroundColor": COLORS["dark"],
                         },
+                    ),
+                ],
+            ),
+
+            # ---- Floating chat button (bottom-right) ----
+            html.Button(
+                html.I(className="fa-solid fa-comment-dots", style={"fontSize": "22px"}),
+                id="chat-fab",
+                n_clicks=0,
+                style={
+                    "position": "fixed",
+                    "bottom": "24px",
+                    "right": "24px",
+                    "width": "56px",
+                    "height": "56px",
+                    "borderRadius": "50%",
+                    "backgroundColor": COLORS["blue"],
+                    "color": "#FFFFFF",
+                    "border": "none",
+                    "cursor": "pointer",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                    "boxShadow": "0 4px 16px rgba(35, 62, 216, 0.4)",
+                    "zIndex": "1000",
+                    "transition": "transform 0.2s ease, box-shadow 0.2s ease",
+                },
+            ),
+
+            # ---- Chat modal (hidden by default) ----
+            html.Div(
+                id="chat-modal",
+                style={
+                    "display": "none",
+                    "position": "fixed",
+                    "bottom": "92px",
+                    "right": "24px",
+                    "width": "380px",
+                    "height": "520px",
+                    "backgroundColor": "#FFFFFF",
+                    "borderRadius": "16px",
+                    "boxShadow": "0 8px 32px rgba(0, 0, 0, 0.2)",
+                    "zIndex": "1001",
+                    "flexDirection": "column",
+                    "overflow": "hidden",
+                    "fontFamily": FONT_FAMILY,
+                },
+                children=[
+                    # Modal header
+                    html.Div(
+                        style={
+                            "padding": "16px 20px",
+                            "display": "flex",
+                            "justifyContent": "space-between",
+                            "alignItems": "center",
+                            "borderBottom": "1px solid #E5E7EB",
+                            "backgroundColor": COLORS["blue"],
+                            "borderRadius": "16px 16px 0 0",
+                        },
+                        children=[
+                            html.Div(
+                                style={"display": "flex", "alignItems": "center", "gap": "8px"},
+                                children=[
+                                    html.I(
+                                        className="fa-solid fa-robot",
+                                        style={"fontSize": "16px", "color": "#FFFFFF"},
+                                    ),
+                                    html.Span(
+                                        "Genie AI",
+                                        style={
+                                            "fontWeight": "700",
+                                            "color": "#FFFFFF",
+                                            "fontSize": "15px",
+                                        },
+                                    ),
+                                ],
+                            ),
+                            html.Button(
+                                html.I(className="fa-solid fa-xmark", style={"fontSize": "14px"}),
+                                id="chat-close-btn",
+                                n_clicks=0,
+                                style={
+                                    "backgroundColor": "rgba(255,255,255,0.15)",
+                                    "border": "none",
+                                    "borderRadius": "6px",
+                                    "padding": "6px 8px",
+                                    "color": "#FFFFFF",
+                                    "cursor": "pointer",
+                                    "display": "flex",
+                                    "alignItems": "center",
+                                    "justifyContent": "center",
+                                },
+                            ),
+                        ],
+                    ),
+
+                    # Chat messages area (empty)
+                    html.Div(
+                        id="genie-response",
+                        style={
+                            "flex": "1",
+                            "overflowY": "auto",
+                            "padding": "16px",
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "gap": "8px",
+                        },
+                    ),
+
+                    # Input bar
+                    html.Div(
+                        style={
+                            "padding": "12px 16px",
+                            "borderTop": "1px solid #E5E7EB",
+                        },
+                        children=[
+                            html.Div(
+                                style={
+                                    "display": "flex",
+                                    "alignItems": "center",
+                                    "backgroundColor": "#F3F4F6",
+                                    "borderRadius": "24px",
+                                    "border": "1px solid #D1D5DB",
+                                    "padding": "3px 3px 3px 16px",
+                                },
+                                children=[
+                                    dcc.Input(
+                                        id="genie-input",
+                                        type="text",
+                                        placeholder="Ask a question...",
+                                        debounce=True,
+                                        n_submit=0,
+                                        style={
+                                            "flex": "1",
+                                            "border": "none",
+                                            "outline": "none",
+                                            "backgroundColor": "transparent",
+                                            "fontSize": "13px",
+                                            "color": "#1F2937",
+                                            "fontFamily": FONT_FAMILY,
+                                            "padding": "8px 0",
+                                        },
+                                    ),
+                                    html.Button(
+                                        html.I(className="fa-solid fa-paper-plane", style={"fontSize": "11px"}),
+                                        id="genie-send-btn",
+                                        n_clicks=0,
+                                        style={
+                                            "width": "34px",
+                                            "height": "34px",
+                                            "borderRadius": "50%",
+                                            "backgroundColor": COLORS["blue"],
+                                            "border": "none",
+                                            "color": "#FFFFFF",
+                                            "cursor": "pointer",
+                                            "display": "flex",
+                                            "alignItems": "center",
+                                            "justifyContent": "center",
+                                            "flexShrink": "0",
+                                        },
+                                    ),
+                                ],
+                            ),
+                        ],
                     ),
                 ],
             ),

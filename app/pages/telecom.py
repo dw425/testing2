@@ -1,450 +1,731 @@
 """Telecommunications vertical page renderers.
 
-Provides six page-level rendering functions for the Telecom dashboard:
-Network Command Center, Customer Intelligence, Revenue & Growth,
-Fraud & Security, Field Operations, and B2B & IoT.
+Provides seven public render functions for the Telecom dashboard:
+  1. render_dashboard        -- layout_executive  (Style A)
+  2. render_consumer_cx      -- layout_split      (Style C)
+  3. render_b2b_enterprise   -- layout_forecast   (Style E)
+  4. render_network_ops      -- layout_grid        (Style F)
+  5. render_field_energy      -- layout_table       (Style B)
+  6. render_fraud_prevention  -- layout_alerts      (Style D)
+  7. render_cyber_security    -- layout_grid        (Style F variant)
 """
 
+from app.page_styles import (
+    dark_chart_layout, CHART_CONFIG, ACCENT_ICONS,
+    page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
+    tab_bar, info_banner, alert_card, progress_row, stat_card,
+    rich_table, td, status_td, progress_td, breakdown_list,
+    trend_indicator, use_case_badges, donut_figure,
+    layout_executive, layout_table, layout_split, layout_alerts,
+    layout_forecast, layout_grid,
+    gauge_figure, sparkline_figure, metric_with_sparkline,
+    _card, _hex_to_rgb,
+)
+from app.theme import COLORS, FONT_FAMILY
 from dash import dcc, html
 import plotly.graph_objects as go
-from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS
-
-_ACCENT_ICONS = {
-    "blue": "fa-chart-line", "purple": "fa-bolt", "green": "fa-arrow-trend-up",
-    "red": "fa-triangle-exclamation", "yellow": "fa-circle-exclamation",
-}
-
-def _build_kpi_card(title, value_str, accent, icon, alert=False):
-    accent_class = f"accent-{accent}"
-    children = [
-        html.Div(style={"display": "flex", "justifyContent": "space-between", "alignItems": "center"}, children=[
-            html.Span(title, className="card-title"),
-            html.I(className=f"fa-solid {icon}", style={"color": COLORS["text_muted"], "fontSize": "14px"}),
-        ]),
-        html.Div(value_str, className=f"card-value {accent_class}"),
-        html.Div("Live", className="card-subtitle"),
-    ]
-    if alert:
-        children.insert(1, html.Div(style={"position": "absolute", "top": "12px", "right": "12px"},
-            children=html.Span("ALERT", style={"fontSize": "9px", "fontWeight": "700", "color": COLORS["red"],
-                "backgroundColor": "rgba(239, 68, 68, 0.12)", "padding": "2px 6px", "borderRadius": "4px", "letterSpacing": "0.5px"})))
-    return html.Div(className="card", style={"position": "relative"}, children=children)
-
-def _build_table(headers, rows):
-    th_style = {"padding": "10px 14px", "fontSize": "11px", "color": COLORS["text_muted"], "textAlign": "left",
-                "borderBottom": f"1px solid {COLORS['border']}", "textTransform": "uppercase", "letterSpacing": "0.5px"}
-    return html.Table(style={"width": "100%", "borderCollapse": "collapse"}, children=[
-        html.Thead(html.Tr([html.Th(h, style=th_style) for h in headers])), html.Tbody(rows)])
-
-def _td(text, bold=False, mono=False, color=None):
-    style = {"padding": "10px 14px", "fontSize": "13px"}
-    if bold: style["fontWeight"] = "500"
-    if mono: style["fontFamily"] = "monospace"; style["fontWeight"] = "600"
-    if color: style["color"] = color
-    return html.Td(str(text), style=style)
-
-def _status_td(status_text, status_key=None):
-    key = status_key or status_text
-    sc = STATUS_COLORS.get(key, STATUS_COLORS["Healthy"])
-    return html.Td(html.Span(status_text, className="status-badge",
-        style={"backgroundColor": sc["bg"], "color": sc["text"], "border": f"1px solid {sc['border']}"}),
-        style={"padding": "10px 14px"})
-
-def _detail_row(label, value):
-    return html.Div(style={"display": "flex", "justifyContent": "space-between", "padding": "6px 0",
-        "borderBottom": f"1px solid {COLORS['border']}"}, children=[
-        html.Span(label, style={"fontSize": "13px", "color": COLORS["text_muted"]}),
-        html.Span(str(value), style={"fontSize": "13px", "fontWeight": "500"})])
 
 
-# ---------------------------------------------------------------------------
-# Plot theme helper
-# ---------------------------------------------------------------------------
-_PLOT_LAYOUT = dict(
-    paper_bgcolor=COLORS["panel"],
-    plot_bgcolor=COLORS["dark"],
-    font=dict(color=COLORS["white"], family=FONT_FAMILY, size=12),
-    margin=dict(l=50, r=20, t=40, b=40),
-    xaxis=dict(gridcolor=COLORS["border"], zerolinecolor=COLORS["border"]),
-    yaxis=dict(gridcolor=COLORS["border"], zerolinecolor=COLORS["border"]),
-)
-
-# Table row border style
-_ROW_BORDER = {"borderBottom": f"1px solid {COLORS['border']}"}
-
-
-# ===================================================================
-# 1. Network Command Center
-# ===================================================================
+# ═══════════════════════════════════════════════════════════════════════════
+#  1. TELECOM OUTCOME HUB  (Style A -- layout_executive)
+# ═══════════════════════════════════════════════════════════════════════════
 
 def render_dashboard(cfg):
-    """Network Command Center dashboard with KPIs, uptime chart, and network overview table."""
+    """Executive dashboard with subscriber, NPS, and uptime heroes,
+    a subscriber-growth line chart, and two bottom panels (revenue donut
+    + churn trend)."""
 
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("Subscriber Base", "14.2M", "blue", "fa-users"),
-        _build_kpi_card("Network Uptime", "99.97%", "green", "fa-signal"),
-        _build_kpi_card("Monthly Churn", "1.8%", "yellow", "fa-arrow-right-from-bracket"),
-        _build_kpi_card("Fraud Blocked 24h", "229", "red", "fa-shield-halved", alert=True),
-    ])
+    # ── Hero metrics ──────────────────────────────────────────────────
+    heroes = [
+        hero_metric("Total Subscribers", "48.7M",
+                     trend_text="+3.2% YoY", trend_dir="up", accent="blue"),
+        hero_metric("Net Promoter Score", "62",
+                     trend_text="+4 pts vs Q3", trend_dir="up", accent="green"),
+        hero_metric("Network Uptime", "99.97%",
+                     trend_text="0.01% improvement", trend_dir="up", accent="purple"),
+    ]
 
-    # Bar chart — network uptime by region
-    regions = ["Northeast", "Southeast", "Midwest", "Southwest", "West"]
-    uptimes = [99.98, 99.96, 99.97, 99.94, 99.99]
-    bar_colors = [COLORS["green"] if u >= 99.97 else COLORS["yellow"] if u >= 99.95 else COLORS["red"]
-                  for u in uptimes]
+    # ── Main chart: subscriber growth (18 months) ─────────────────────
+    months = ["Jan '25", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+              "Jan '26", "Feb", "Mar"]
+    subs = [44.1, 44.5, 44.9, 45.2, 45.6, 46.0,
+            46.3, 46.8, 47.1, 47.5, 47.8, 48.0,
+            48.2, 48.5, 48.7]
 
-    fig = go.Figure(go.Bar(
-        x=regions, y=uptimes,
-        marker=dict(color=bar_colors, line=dict(width=0)),
-        text=[f"{u}%" for u in uptimes],
-        textposition="outside",
-        textfont=dict(color=COLORS["white"], size=11),
+    fig_growth = go.Figure()
+    fig_growth.add_trace(go.Scatter(
+        x=months, y=subs, mode="lines+markers",
+        name="Subscribers (M)",
+        line=dict(color=COLORS["blue"], width=3),
+        marker=dict(size=5, color=COLORS["blue"]),
+        fill="tozeroy",
+        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
     ))
-    fig.update_layout(
-        paper_bgcolor=COLORS["panel"],
-        plot_bgcolor=COLORS["dark"],
-        font=dict(color=COLORS["white"], family=FONT_FAMILY, size=12),
-        margin=dict(l=50, r=20, t=40, b=40),
-        title=dict(text="Network Uptime by Region", font=dict(size=15)),
-        yaxis=dict(range=[99.90, 100.0], gridcolor=COLORS["border"], zerolinecolor=COLORS["border"]),
-        xaxis=dict(gridcolor=COLORS["border"], zerolinecolor=COLORS["border"]),
-        height=340,
+    fig_growth.update_layout(**dark_chart_layout(
+        height=320,
+        title=dict(text="Subscriber Growth", font=dict(size=14, color=COLORS["white"])),
+        yaxis=dict(title="Subscribers (M)", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+    ))
+
+    main_chart = dcc.Graph(figure=fig_growth, config=CHART_CONFIG,
+                           style={"width": "100%"})
+
+    # ── Bottom panel 1: revenue by segment donut ──────────────────────
+    rev_labels = ["Consumer Mobile", "Enterprise", "Broadband", "Wholesale", "IoT"]
+    rev_values = [4200, 2800, 1900, 1100, 650]
+    rev_colors = [COLORS["blue"], COLORS["purple"], COLORS["green"],
+                  COLORS["yellow"], COLORS["red"]]
+    fig_rev = donut_figure(rev_labels, rev_values, rev_colors,
+                           center_text="$10.7B", title="Revenue by Segment")
+    panel_rev = dcc.Graph(figure=fig_rev, config=CHART_CONFIG)
+
+    # ── Bottom panel 2: churn trend line chart ────────────────────────
+    churn_months = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"]
+    churn_pct = [1.42, 1.38, 1.35, 1.31, 1.28, 1.25, 1.21]
+
+    fig_churn = go.Figure()
+    fig_churn.add_trace(go.Scatter(
+        x=churn_months, y=churn_pct, mode="lines+markers",
+        name="Monthly Churn %",
+        line=dict(color=COLORS["red"], width=2, dash="dot"),
+        marker=dict(size=6, color=COLORS["red"]),
+    ))
+    fig_churn.update_layout(**dark_chart_layout(
+        height=280,
+        title=dict(text="Churn Trend", font=dict(size=14, color=COLORS["white"])),
+        yaxis=dict(title="Churn %", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"],
+                   range=[1.0, 1.6]),
+    ))
+    panel_churn = dcc.Graph(figure=fig_churn, config=CHART_CONFIG)
+
+    # ── Assemble ──────────────────────────────────────────────────────
+    return layout_executive(
+        title="Telecom Outcome Hub",
+        subtitle="Enterprise-wide KPIs and performance trends",
+        heroes=heroes,
+        main_chart=main_chart,
+        panels=[
+            ("Revenue by Segment", panel_rev),
+            ("Churn Trend", panel_churn),
+        ],
     )
 
-    uptime_chart = html.Div(className="card", children=[
-        dcc.Graph(figure=fig, config={"displayModeBar": False}),
-    ])
 
-    # Network overview table
-    network_data = [
-        ("Northeast", "5G NR", "99.98%", "72%", "1.8 hrs", "1.2M"),
-        ("Northeast", "LTE", "99.99%", "68%", "2.1 hrs", "2.8M"),
-        ("Southeast", "5G NR", "99.96%", "78%", "2.4 hrs", "0.9M"),
-        ("Southeast", "LTE", "99.97%", "74%", "2.8 hrs", "2.4M"),
-        ("Midwest", "5G NR", "99.97%", "65%", "2.0 hrs", "0.8M"),
-        ("Midwest", "LTE", "99.98%", "62%", "2.3 hrs", "1.9M"),
-        ("Southwest", "5G NR", "99.94%", "81%", "3.1 hrs", "0.6M"),
-        ("Southwest", "LTE", "99.95%", "76%", "3.4 hrs", "1.4M"),
-        ("West", "5G NR", "99.99%", "70%", "1.5 hrs", "1.1M"),
-        ("West", "LTE", "99.99%", "66%", "1.7 hrs", "2.1M"),
+# ═══════════════════════════════════════════════════════════════════════════
+#  2. CONSUMER CX & GROWTH  (Style C -- layout_split)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_consumer_cx(cfg):
+    """Split view with satisfaction bar chart, complaint donut, tabs,
+    info banner, and bottom stat cards."""
+
+    # ── Left panel: satisfaction by touchpoint (bar chart) ────────────
+    touchpoints = ["Store Visit", "Call Center", "App", "Web Chat",
+                   "Social Media", "Self-Service", "Field Tech"]
+    scores = [82, 71, 88, 76, 69, 84, 79]
+    bar_colors = [COLORS["green"] if s >= 80 else
+                  COLORS["yellow"] if s >= 70 else COLORS["red"]
+                  for s in scores]
+
+    fig_sat = go.Figure()
+    fig_sat.add_trace(go.Bar(
+        x=touchpoints, y=scores,
+        marker=dict(color=bar_colors, cornerradius=4),
+        text=scores, textposition="outside",
+        textfont=dict(color=COLORS["white"], size=11),
+    ))
+    fig_sat.update_layout(**dark_chart_layout(
+        height=300,
+        yaxis=dict(title="CSAT Score", range=[0, 100],
+                   showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        xaxis=dict(tickangle=-30, color=COLORS["text_muted"]),
+    ))
+    left_chart = dcc.Graph(figure=fig_sat, config=CHART_CONFIG)
+
+    # ── Right panel: complaint category donut ─────────────────────────
+    comp_labels = ["Billing Errors", "Network Coverage", "Speed Issues",
+                   "Customer Service", "Contract Disputes", "Other"]
+    comp_values = [28, 22, 18, 15, 10, 7]
+    comp_colors = [COLORS["red"], COLORS["yellow"], COLORS["purple"],
+                   COLORS["blue"], COLORS["green"], COLORS["text_muted"]]
+    fig_comp = donut_figure(comp_labels, comp_values, comp_colors,
+                            center_text="4.2K", title="Complaint Categories")
+    right_chart = dcc.Graph(figure=fig_comp, config=CHART_CONFIG)
+
+    # ── Bottom stats ──────────────────────────────────────────────────
+    bottom = [
+        ("Avg CSAT", "78.4", "blue"),
+        ("First Contact Res.", "68%", "green"),
+        ("Avg Handle Time", "6.2 min", "yellow"),
+        ("Escalation Rate", "11.3%", "red"),
     ]
 
-    table_rows = []
-    for region, tech, uptime, cap_util, mttr, devices in network_data:
-        # Determine status for uptime
-        uptime_val = float(uptime.replace("%", ""))
-        if uptime_val >= 99.97:
-            status_key = "Healthy"
-        elif uptime_val >= 99.95:
-            status_key = "Low"
-        else:
-            status_key = "Critical"
-        table_rows.append(html.Tr(style=_ROW_BORDER, children=[
-            _td(region, bold=True),
-            _td(tech),
-            _status_td(uptime, status_key),
-            _td(cap_util, mono=True),
-            _td(mttr, mono=True),
-            _td(devices, mono=True),
-        ]))
-
-    network_table = html.Div(className="card", children=[
-        html.H3("Network Overview", style={"fontSize": "15px", "fontWeight": "600",
-                 "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(["Region", "Technology", "Uptime", "Capacity Util", "MTTR", "Connected Devices"], table_rows),
-    ])
-
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("Network Command Center"),
-            html.P("Real-time network performance and subscriber metrics"),
-        ]),
-        html.Div(className="content-area", children=[kpi_cards, uptime_chart, network_table]),
-    ])
+    return layout_split(
+        title="Consumer CX & Growth",
+        subtitle="Customer satisfaction, journey analytics, and NPS drivers",
+        tabs=["Satisfaction", "Journey", "NPS"],
+        banner_text=(
+            "CX Insight: App channel satisfaction rose 5 pts after the Q1 UX "
+            "refresh. Call center remains the lowest-scoring touchpoint -- "
+            "consider AI-assisted routing to reduce wait times."
+        ),
+        left_panel=("Satisfaction by Touchpoint", left_chart),
+        right_panel=("Complaint Breakdown", right_chart),
+        bottom_stats=bottom,
+    )
 
 
-# ===================================================================
-# 2. Customer Intelligence
-# ===================================================================
+# ═══════════════════════════════════════════════════════════════════════════
+#  3. B2B / SMB / ENTERPRISE  (Style E -- layout_forecast)
+# ═══════════════════════════════════════════════════════════════════════════
 
-def render_customer(cfg):
-    """Customer Intelligence page with segment analysis."""
+def render_b2b_enterprise(cfg):
+    """Forecast layout with KPI strip, hero quarterly revenue, dual-axis
+    chart (revenue + win rate), and side breakdown of revenue by service."""
 
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("NPS", "42", "blue", "fa-face-smile"),
-        _build_kpi_card("CSAT", "4.1/5.0", "green", "fa-star"),
-        _build_kpi_card("Churn Rate", "1.8%", "yellow", "fa-user-minus"),
-        _build_kpi_card("ARPU", "$52.30", "purple", "fa-dollar-sign"),
-    ])
-
-    # Customer segments table
-    segments = [
-        ("Consumer", "8.2M", "$42.10", "2.1%", "38", "0.34"),
-        ("SMB", "3.4M", "$68.40", "1.4%", "44", "0.52"),
-        ("Enterprise", "2.1M", "$124.80", "0.8%", "48", "0.61"),
-        ("Government", "0.5M", "$98.20", "0.4%", "52", "0.28"),
+    # ── KPIs ──────────────────────────────────────────────────────────
+    kpis = [
+        {"label": "Enterprise Revenue", "value": "$168M", "accent": "blue"},
+        {"label": "Deal Pipeline", "value": "$94M", "accent": "purple"},
+        {"label": "Win Rate", "value": "38.5%", "accent": "green"},
+        {"label": "Avg Contract Value", "value": "$2.4M", "accent": "yellow"},
     ]
 
-    table_rows = []
-    for segment, subs, arpu, churn, nps, upsell in segments:
-        churn_val = float(churn.replace("%", ""))
-        if churn_val <= 0.8:
-            churn_color = COLORS["green"]
-        elif churn_val <= 1.5:
-            churn_color = COLORS["yellow"]
-        else:
-            churn_color = COLORS["red"]
+    # ── Dual-axis chart: quarterly revenue bars + win-rate line ───────
+    quarters = ["Q2 '24", "Q3 '24", "Q4 '24", "Q1 '25", "Q2 '25",
+                "Q3 '25", "Q4 '25", "Q1 '26"]
+    revenue = [34, 36, 38, 39, 40, 41, 42, 42]
+    win_rate = [32.1, 33.5, 34.8, 35.6, 36.2, 37.0, 37.8, 38.5]
 
-        nps_val = int(nps)
-        if nps_val >= 50:
-            nps_color = COLORS["green"]
-        elif nps_val >= 40:
-            nps_color = COLORS["blue"]
-        else:
-            nps_color = COLORS["yellow"]
+    fig_dual = go.Figure()
+    fig_dual.add_trace(go.Bar(
+        x=quarters, y=revenue, name="Revenue ($M)",
+        marker=dict(color=COLORS["blue"], cornerradius=4),
+        yaxis="y",
+    ))
+    fig_dual.add_trace(go.Scatter(
+        x=quarters, y=win_rate, name="Win Rate %",
+        mode="lines+markers",
+        line=dict(color=COLORS["green"], width=2),
+        marker=dict(size=6, color=COLORS["green"]),
+        yaxis="y2",
+    ))
+    fig_dual.update_layout(**dark_chart_layout(
+        height=280,
+        yaxis=dict(title="Revenue ($M)", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+        yaxis2=dict(title="Win Rate %", overlaying="y", side="right",
+                    showgrid=False, color=COLORS["green"],
+                    range=[25, 45]),
+        legend=dict(orientation="h", y=-0.18, x=0.5, xanchor="center"),
+    ))
+    main_chart = dcc.Graph(figure=fig_dual, config=CHART_CONFIG)
 
-        table_rows.append(html.Tr(style=_ROW_BORDER, children=[
-            _td(segment, bold=True),
-            _td(subs, mono=True),
-            _td(arpu, mono=True),
-            _td(churn, mono=True, color=churn_color),
-            _td(nps, mono=True, color=nps_color),
-            _td(upsell, mono=True),
-        ]))
-
-    segments_table = html.Div(className="card", children=[
-        html.H3("Customer Segments", style={"fontSize": "15px", "fontWeight": "600",
-                 "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(["Segment", "Subscribers", "ARPU", "Churn Rate", "NPS", "Upsell Score"], table_rows),
+    # ── Side panel: revenue breakdown by service ──────────────────────
+    side = breakdown_list([
+        {"label": "MPLS / SD-WAN", "value": "$52M", "pct": 31, "color": COLORS["blue"]},
+        {"label": "Managed Security", "value": "$38M", "pct": 23, "color": COLORS["purple"]},
+        {"label": "Unified Comms", "value": "$29M", "pct": 17, "color": COLORS["green"]},
+        {"label": "Cloud Connect", "value": "$24M", "pct": 14, "color": COLORS["yellow"]},
+        {"label": "IoT Solutions", "value": "$15M", "pct": 9, "color": COLORS["red"]},
+        {"label": "Professional Svcs", "value": "$10M", "pct": 6, "color": COLORS["text_muted"]},
     ])
 
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("Customer Intelligence"),
-            html.P("Subscriber satisfaction, segmentation, and lifetime value analytics"),
+    return layout_forecast(
+        title="B2B / Enterprise",
+        subtitle="Enterprise revenue pipeline, win rates, and service mix",
+        kpi_items=kpis,
+        hero_value="$42M",
+        hero_label="Q1 2026 Enterprise Revenue",
+        hero_trend_text="+8.3% vs prior quarter",
+        main_chart=main_chart,
+        side_component=html.Div([
+            html.Div("Revenue by Service",
+                     style={"fontSize": "14px", "fontWeight": "600",
+                            "color": COLORS["white"], "marginBottom": "16px"}),
+            side,
         ]),
-        html.Div(className="content-area", children=[kpi_cards, segments_table]),
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  4. NETWORK OPERATIONS  (Style F -- layout_grid)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_network_ops(cfg):
+    """Multi-panel grid with gauge, sparkline, and assorted metric cards
+    covering availability, latency, throughput, cell sites, incidents,
+    and SLA compliance."""
+
+    # ── Panel 1: Network Availability gauge ───────────────────────────
+    fig_avail = gauge_figure(99.97, 100, title="Network Availability %",
+                             color=COLORS["green"])
+    panel_avail = html.Div([
+        dcc.Graph(figure=fig_avail, config=CHART_CONFIG,
+                  style={"height": "180px"}),
+        html.Div("Target: 99.95%",
+                 style={"textAlign": "center", "fontSize": "11px",
+                        "color": COLORS["text_muted"], "marginTop": "4px"}),
     ])
 
+    # ── Panel 2: Latency sparkline ────────────────────────────────────
+    latency_vals = [12, 14, 11, 13, 15, 12, 10, 11, 13, 14, 12, 11,
+                    10, 9, 11, 12, 10, 9, 10, 11, 10, 9, 8, 10]
+    panel_latency = metric_with_sparkline(
+        "Avg Latency", "10 ms", latency_vals, accent="blue",
+    )
 
-# ===================================================================
-# 3. Revenue & Growth
-# ===================================================================
+    # ── Panel 3: Throughput metric ────────────────────────────────────
+    throughput_vals = [320, 335, 340, 350, 345, 360, 370, 365,
+                      380, 390, 385, 395, 400, 410, 405, 420]
+    panel_throughput = metric_with_sparkline(
+        "Avg Throughput", "420 Gbps", throughput_vals, accent="purple",
+    )
 
-def render_revenue(cfg):
-    """Revenue & Growth page with plan-level revenue breakdown."""
-
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("Total ARPU", "$52.30", "blue", "fa-dollar-sign"),
-        _build_kpi_card("Subscriber Growth", "2.4% MoM", "green", "fa-arrow-trend-up"),
-        _build_kpi_card("Contract Renewals", "89%", "purple", "fa-file-contract"),
-        _build_kpi_card("Digital Adoption", "61%", "yellow", "fa-mobile-screen-button"),
+    # ── Panel 4: Cell Sites Active ────────────────────────────────────
+    panel_cells = html.Div([
+        html.Div("Cell Sites Active",
+                 style={"fontSize": "11px", "color": COLORS["text_muted"],
+                        "textTransform": "uppercase", "letterSpacing": "0.4px",
+                        "marginBottom": "4px"}),
+        html.Div("72,841",
+                 style={"fontSize": "28px", "fontWeight": "700",
+                        "color": COLORS["green"], "marginBottom": "8px"}),
+        html.Div(
+            style={"display": "flex", "gap": "16px", "marginTop": "12px"},
+            children=[
+                html.Div([
+                    html.Div("5G NR", style={"fontSize": "11px",
+                                              "color": COLORS["text_muted"]}),
+                    html.Div("18,420", style={"fontSize": "16px",
+                                               "fontWeight": "600",
+                                               "color": COLORS["blue"]}),
+                ]),
+                html.Div([
+                    html.Div("4G LTE", style={"fontSize": "11px",
+                                               "color": COLORS["text_muted"]}),
+                    html.Div("41,316", style={"fontSize": "16px",
+                                               "fontWeight": "600",
+                                               "color": COLORS["purple"]}),
+                ]),
+                html.Div([
+                    html.Div("3G/Other", style={"fontSize": "11px",
+                                                 "color": COLORS["text_muted"]}),
+                    html.Div("13,105", style={"fontSize": "16px",
+                                               "fontWeight": "600",
+                                               "color": COLORS["text_muted"]}),
+                ]),
+            ],
+        ),
     ])
 
-    # Revenue by plan type table
-    plans = [
-        ("Postpaid", "6.8M", "$58.40", "$397.1M", "+1.8%"),
-        ("Prepaid", "4.1M", "$32.20", "$132.0M", "+3.2%"),
-        ("Family", "1.9M", "$72.60", "$137.9M", "+2.1%"),
-        ("Business", "1.1M", "$112.50", "$123.8M", "+4.6%"),
-        ("IoT", "0.3M", "$18.90", "$5.7M", "+12.4%"),
+    # ── Panel 5: Incident Count ───────────────────────────────────────
+    panel_incidents = html.Div([
+        html.Div("Active Incidents",
+                 style={"fontSize": "11px", "color": COLORS["text_muted"],
+                        "textTransform": "uppercase", "letterSpacing": "0.4px",
+                        "marginBottom": "4px"}),
+        html.Div("23",
+                 style={"fontSize": "28px", "fontWeight": "700",
+                        "color": COLORS["red"], "marginBottom": "8px"}),
+        progress_row("P1 Critical", "3", 13, COLORS["red"]),
+        progress_row("P2 Major", "8", 35, COLORS["yellow"]),
+        progress_row("P3 Minor", "12", 52, COLORS["blue"]),
+    ])
+
+    # ── Panel 6: SLA Compliance ───────────────────────────────────────
+    fig_sla = gauge_figure(98.4, 100, title="SLA Compliance %",
+                           color=COLORS["blue"])
+    panel_sla = html.Div([
+        dcc.Graph(figure=fig_sla, config=CHART_CONFIG,
+                  style={"height": "180px"}),
+        html.Div(
+            style={"display": "flex", "justifyContent": "space-between",
+                   "marginTop": "8px"},
+            children=[
+                html.Span("Target: 98.0%",
+                           style={"fontSize": "11px",
+                                  "color": COLORS["text_muted"]}),
+                html.Span("Met",
+                           style={"fontSize": "11px", "fontWeight": "600",
+                                  "color": COLORS["green"]}),
+            ],
+        ),
+    ])
+
+    grid_items = [
+        {"col_span": 1, "row_span": 1, "content": panel_avail},
+        {"col_span": 1, "row_span": 1, "content": panel_latency},
+        {"col_span": 1, "row_span": 2, "content": panel_cells},
+        {"col_span": 1, "row_span": 1, "content": panel_throughput},
+        {"col_span": 1, "row_span": 1, "content": panel_incidents},
+        {"col_span": 1, "row_span": 1, "content": panel_sla},
     ]
 
-    table_rows = []
-    for plan, subs, arpu, revenue, growth in plans:
-        growth_val = float(growth.replace("%", "").replace("+", ""))
-        if growth_val >= 4.0:
-            growth_color = COLORS["green"]
-        elif growth_val >= 2.0:
-            growth_color = COLORS["blue"]
-        else:
-            growth_color = COLORS["yellow"]
-
-        table_rows.append(html.Tr(style=_ROW_BORDER, children=[
-            _td(plan, bold=True),
-            _td(subs, mono=True),
-            _td(arpu, mono=True),
-            _td(revenue, mono=True),
-            _td(growth, mono=True, color=growth_color),
-        ]))
-
-    revenue_table = html.Div(className="card", children=[
-        html.H3("Revenue by Plan Type", style={"fontSize": "15px", "fontWeight": "600",
-                 "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(["Plan", "Subscribers", "ARPU", "Revenue", "Growth"], table_rows),
-    ])
-
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("Revenue & Growth"),
-            html.P("Plan-level revenue performance and subscriber growth trends"),
-        ]),
-        html.Div(className="content-area", children=[kpi_cards, revenue_table]),
-    ])
+    return layout_grid(
+        title="Network Operations",
+        subtitle="Real-time network health, capacity, and incident monitoring",
+        grid_items=grid_items,
+    )
 
 
-# ===================================================================
-# 4. Fraud & Security
-# ===================================================================
+# ═══════════════════════════════════════════════════════════════════════════
+#  5. FIELD OPS & ENERGY  (Style B -- layout_table)
+# ═══════════════════════════════════════════════════════════════════════════
 
-def render_fraud(cfg):
-    """Fraud & Security page with detection metrics and event breakdown."""
+def render_field_energy(cfg):
+    """Table view with filters, KPI strip, and a rich work-order table
+    containing status badges and priority progress bars."""
 
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("Detection Rate", "96.2%", "green", "fa-magnifying-glass"),
-        _build_kpi_card("Loss Prevented", "$4.2M/mo", "blue", "fa-shield-halved"),
-        _build_kpi_card("SIM Swap Attempts", "142/day", "yellow", "fa-sim-card"),
-        _build_kpi_card("Subscription Fraud", "87/day", "red", "fa-user-secret", alert=True),
-    ])
-
-    # Fraud events table
-    fraud_events = [
-        ("SIM Swap", "142", "136", "95.8%", "$1,240"),
-        ("Subscription", "87", "79", "90.8%", "$3,420"),
-        ("IRSF", "64", "62", "96.9%", "$8,750"),
-        ("Device Fraud", "38", "37", "97.4%", "$890"),
+    # ── Filters ───────────────────────────────────────────────────────
+    filters = [
+        {"label": "Region", "options": ["All Regions", "Northeast", "Southeast",
+                                         "Midwest", "West", "Southwest"]},
+        {"label": "Priority", "options": ["All", "P1", "P2", "P3", "P4"]},
+        {"label": "Type", "options": ["All Types", "Install", "Repair",
+                                       "Maintenance", "Upgrade", "Emergency"]},
     ]
 
-    table_rows = []
-    for ftype, detected, blocked, block_rate, avg_amount in fraud_events:
-        rate_val = float(block_rate.replace("%", ""))
-        if rate_val >= 96.0:
-            rate_color = COLORS["green"]
-        elif rate_val >= 93.0:
-            rate_color = COLORS["yellow"]
-        else:
-            rate_color = COLORS["red"]
-
-        table_rows.append(html.Tr(style=_ROW_BORDER, children=[
-            _td(ftype, bold=True),
-            _td(detected, mono=True),
-            _td(blocked, mono=True),
-            _td(block_rate, mono=True, color=rate_color),
-            _td(avg_amount, mono=True),
-        ]))
-
-    fraud_table = html.Div(className="card", children=[
-        html.H3("Fraud Events", style={"fontSize": "15px", "fontWeight": "600",
-                 "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(["Type", "Detected", "Blocked", "Block Rate", "Avg Amount at Risk"], table_rows),
-    ])
-
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("Fraud & Security"),
-            html.P("Real-time fraud detection, prevention metrics, and threat intelligence"),
-        ]),
-        html.Div(className="content-area", children=[kpi_cards, fraud_table]),
-    ])
-
-
-# ===================================================================
-# 5. Field Operations
-# ===================================================================
-
-def render_field_ops(cfg):
-    """Field Operations page with regional work order and SLA tracking."""
-
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("MTTR", "3.2 hrs", "blue", "fa-clock"),
-        _build_kpi_card("FCR Rate", "78%", "green", "fa-check-double"),
-        _build_kpi_card("SLA Achievement", "97.8%", "purple", "fa-clipboard-check"),
-        _build_kpi_card("Truck Roll Rate", "32%", "yellow", "fa-truck"),
-    ])
-
-    # Field operations by region
-    field_data = [
-        ("Northeast", "1,842", "94.2%", "2.8 hrs", "98.1%", "81%"),
-        ("Southeast", "2,156", "92.8%", "3.1 hrs", "97.4%", "76%"),
-        ("Midwest", "1,634", "93.5%", "3.4 hrs", "97.9%", "79%"),
-        ("Southwest", "1,298", "91.7%", "3.8 hrs", "96.8%", "74%"),
-        ("West", "1,978", "95.1%", "2.6 hrs", "98.6%", "83%"),
+    # ── KPI strip ─────────────────────────────────────────────────────
+    kpis = [
+        {"label": "Open Tickets", "value": "1,247", "accent": "blue"},
+        {"label": "SLA Met", "value": "94.2%", "accent": "green"},
+        {"label": "First Fix Rate", "value": "78%", "accent": "purple"},
+        {"label": "Active Technicians", "value": "3,842", "accent": "yellow"},
     ]
 
-    table_rows = []
-    for region, orders, completion, mttr, sla, ftf in field_data:
-        sla_val = float(sla.replace("%", ""))
-        if sla_val >= 98.0:
-            sla_status_key = "Healthy"
-        elif sla_val >= 97.0:
-            sla_status_key = "Low"
-        else:
-            sla_status_key = "Critical"
-
-        table_rows.append(html.Tr(style=_ROW_BORDER, children=[
-            _td(region, bold=True),
-            _td(orders, mono=True),
-            _td(completion, mono=True),
-            _td(mttr, mono=True),
-            _status_td(sla, sla_status_key),
-            _td(ftf, mono=True),
-        ]))
-
-    ops_table = html.Div(className="card", children=[
-        html.H3("Field Operations by Region", style={"fontSize": "15px", "fontWeight": "600",
-                 "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(["Region", "Work Orders", "Completion Rate", "MTTR", "SLA Met", "First-Time Fix"], table_rows),
-    ])
-
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("Field Operations"),
-            html.P("Work order management, SLA compliance, and technician performance"),
-        ]),
-        html.Div(className="content-area", children=[kpi_cards, ops_table]),
-    ])
-
-
-# ===================================================================
-# 6. B2B & IoT
-# ===================================================================
-
-def render_b2b_iot(cfg):
-    """B2B & IoT page with product-level revenue and device metrics."""
-
-    kpi_cards = html.Div(className="grid-4", style={"marginBottom": "16px"}, children=[
-        _build_kpi_card("IoT Devices", "2.4M", "blue", "fa-microchip"),
-        _build_kpi_card("Edge Revenue", "$8.2M/mo", "green", "fa-server"),
-        _build_kpi_card("API Calls", "42M/mo", "purple", "fa-code"),
-        _build_kpi_card("Uptime", "99.98%", "green", "fa-arrow-trend-up"),
-    ])
-
-    # B2B products table
-    products = [
-        ("IoT Platform", "1,240", "1.8M", "$3.4M", "+8.2%"),
-        ("Edge Computing", "186", "42K", "$2.1M", "+14.6%"),
-        ("Private 5G", "64", "128K", "$1.8M", "+22.3%"),
-        ("API Services", "892", "420K", "$0.9M", "+6.1%"),
+    # ── Work order table rows ─────────────────────────────────────────
+    orders = [
+        ("WO-20261042", "Cell Tower Repair", "Northeast", "P1",
+         "In Progress", 72, COLORS["red"]),
+        ("WO-20261038", "Fiber Splice - Main St Hub", "Southeast", "P2",
+         "Dispatched", 55, COLORS["yellow"]),
+        ("WO-20261035", "5G Antenna Install", "West", "P2",
+         "In Progress", 88, COLORS["blue"]),
+        ("WO-20261031", "Customer Premise Install", "Midwest", "P3",
+         "Scheduled", 30, COLORS["blue"]),
+        ("WO-20261027", "Generator Maintenance", "Southwest", "P3",
+         "In Progress", 65, COLORS["green"]),
+        ("WO-20261024", "Cabinet Battery Replace", "Northeast", "P4",
+         "Completed", 100, COLORS["green"]),
+        ("WO-20261019", "Microwave Link Align", "West", "P2",
+         "In Progress", 40, COLORS["yellow"]),
+        ("WO-20261015", "Emergency Power Restore", "Southeast", "P1",
+         "Dispatched", 15, COLORS["red"]),
+        ("WO-20261011", "Backhaul Upgrade", "Midwest", "P3",
+         "Scheduled", 0, COLORS["text_muted"]),
+        ("WO-20261007", "Small Cell Deploy", "Southwest", "P2",
+         "In Progress", 60, COLORS["purple"]),
     ]
 
-    table_rows = []
-    for product, customers, devices, revenue, growth in products:
-        growth_val = float(growth.replace("%", "").replace("+", ""))
-        if growth_val >= 15.0:
-            growth_color = COLORS["green"]
-        elif growth_val >= 8.0:
-            growth_color = COLORS["blue"]
-        else:
-            growth_color = COLORS["yellow"]
-
-        table_rows.append(html.Tr(style=_ROW_BORDER, children=[
-            _td(product, bold=True),
-            _td(customers, mono=True),
-            _td(devices, mono=True),
-            _td(revenue, mono=True),
-            _td(growth, mono=True, color=growth_color),
+    rows = []
+    for wo_id, desc, region, priority, status, pct, color in orders:
+        status_key = {
+            "In Progress": "Info",
+            "Dispatched": "Warning",
+            "Scheduled": "Nominal",
+            "Completed": "Healthy",
+        }.get(status, "Info")
+        rows.append(html.Tr([
+            td(wo_id, mono=True),
+            td(desc, bold=True),
+            td(region),
+            td(priority, bold=True, color=color),
+            status_td(status, status_key),
+            progress_td(pct, color),
         ]))
 
-    b2b_table = html.Div(className="card", children=[
-        html.H3("B2B Products", style={"fontSize": "15px", "fontWeight": "600",
-                 "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(["Product Type", "Customers", "Devices", "Monthly Revenue", "Growth"], table_rows),
+    table = rich_table(
+        headers=["WO ID", "Description", "Region", "Priority",
+                 "Status", "SLA Progress"],
+        rows=rows,
+        col_widths=["12%", "24%", "12%", "8%", "14%", "20%"],
+    )
+
+    return layout_table(
+        title="Field Ops & Energy",
+        subtitle="Work order management, SLA tracking, and technician dispatch",
+        filters=filters,
+        kpi_items=kpis,
+        table_component=table,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  6. FRAUD PREVENTION  (Style D -- layout_alerts)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_fraud_prevention(cfg):
+    """Alert card layout with tabs for active/investigating/resolved,
+    summary KPIs, and detailed alert cards for SIM swap, billing, and
+    roaming fraud."""
+
+    # ── Summary KPIs ──────────────────────────────────────────────────
+    summary = [
+        {"label": "Active Alerts", "value": "47", "accent": "red"},
+        {"label": "Under Investigation", "value": "23", "accent": "yellow"},
+        {"label": "Blocked (MTD)", "value": "1,842", "accent": "green"},
+        {"label": "Est. Savings", "value": "$4.6M", "accent": "blue"},
+    ]
+
+    # ── Alert cards ───────────────────────────────────────────────────
+    alerts = [
+        {
+            "severity": "critical",
+            "title": "SIM Swap Fraud Cluster Detected",
+            "description": (
+                "Coordinated SIM swap activity detected across 14 accounts in "
+                "the Southeast region. Pattern matches organized fraud ring "
+                "behavior with rapid sequential port-out requests."
+            ),
+            "impact": "Financial Impact: $287K estimated",
+            "timestamp": "12 min ago",
+            "details": [
+                ("Affected Accounts", "14"),
+                ("Region", "Southeast -- Atlanta, Miami, Charlotte"),
+                ("Attack Vector", "Social engineering + dealer portal"),
+                ("Risk Score", "97 / 100"),
+                ("IMSI Changes", "14 in last 45 min"),
+            ],
+        },
+        {
+            "severity": "critical",
+            "title": "Billing System Anomaly -- Revenue Leakage",
+            "description": (
+                "Automated anomaly detection flagged abnormal CDR patterns "
+                "indicating potential revenue bypass. Approximately 3,200 calls "
+                "routed through a compromised interconnect gateway are not "
+                "generating billing records."
+            ),
+            "impact": "Revenue Leakage: $142K / day",
+            "timestamp": "38 min ago",
+            "details": [
+                ("Gateway ID", "GW-ATL-0042"),
+                ("Unbilled CDRs", "3,200+ daily"),
+                ("Duration", "Ongoing ~72 hours"),
+                ("Carrier", "Interconnect Partner C"),
+                ("Pattern", "Zero-rated international trunk"),
+            ],
+        },
+        {
+            "severity": "warning",
+            "title": "International Roaming Fraud -- Premium Rate",
+            "description": (
+                "Spike in premium-rate SMS origination from roaming subscribers "
+                "in Eastern Europe. 8 devices generating abnormal volumes "
+                "consistent with IRSF (International Revenue Share Fraud)."
+            ),
+            "impact": "Financial Impact: $68K accrued",
+            "timestamp": "1 hr ago",
+            "details": [
+                ("Devices Flagged", "8"),
+                ("Roaming Partner", "Operator EU-East-12"),
+                ("Premium Destinations", "Moldova, Latvia, Bosnia"),
+                ("SMS Volume", "24,000 msgs in 6 hrs"),
+                ("Avg Cost / msg", "$2.84"),
+            ],
+        },
+        {
+            "severity": "warning",
+            "title": "Subscription Fraud -- Synthetic Identity",
+            "description": (
+                "Credit-check bypass detected for 6 new enterprise accounts "
+                "opened in the last 48 hours. Identity verification scores "
+                "are unusually clustered, suggesting synthetic identities."
+            ),
+            "impact": "Potential Exposure: $180K device subsidy",
+            "timestamp": "2 hr ago",
+            "details": [
+                ("Accounts Flagged", "6"),
+                ("Devices Acquired", "42 handsets"),
+                ("Avg Credit Score", "710 (synthetic cluster)"),
+                ("Dealer Channel", "Online -- self-serve"),
+            ],
+        },
+        {
+            "severity": "info",
+            "title": "Wangiri Callback Scheme -- Low Volume",
+            "description": (
+                "Low-volume Wangiri (one-ring) activity detected from a block "
+                "of Togolese numbers targeting prepaid subscribers. Auto-block "
+                "rule engaged; no customer impact so far."
+            ),
+            "impact": "Blocked -- $0 customer impact",
+            "timestamp": "3 hr ago",
+            "details": [
+                ("Source Range", "+228 9XXX XXXX"),
+                ("Calls Attempted", "340"),
+                ("Calls Blocked", "340 (100%)"),
+                ("Callback Attempts", "0"),
+            ],
+        },
+    ]
+
+    return layout_alerts(
+        title="Fraud Prevention",
+        subtitle="Real-time fraud detection, investigation queue, and financial impact",
+        tabs=["Active Alerts", "Investigating", "Resolved"],
+        alerts=alerts,
+        summary_kpis=summary,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  7. CYBER SECURITY  (Style F variant -- layout_grid)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_cyber_security(cfg):
+    """Grid layout variant with threat-level gauge, attack-trend sparkline,
+    and metric panels for blocked attacks, firewall rules, vulnerabilities,
+    and SIEM alerts."""
+
+    # ── Panel 1: Threat Level gauge ───────────────────────────────────
+    fig_threat = gauge_figure(72, 100, title="Threat Level Index",
+                              color=COLORS["yellow"])
+    panel_threat = html.Div([
+        dcc.Graph(figure=fig_threat, config=CHART_CONFIG,
+                  style={"height": "180px"}),
+        html.Div(
+            style={"display": "flex", "justifyContent": "center",
+                   "gap": "16px", "marginTop": "4px"},
+            children=[
+                html.Span("Elevated",
+                           style={"fontSize": "12px", "fontWeight": "600",
+                                  "color": COLORS["yellow"]}),
+                html.Span("|", style={"color": COLORS["border"]}),
+                html.Span("Updated 2 min ago",
+                           style={"fontSize": "11px",
+                                  "color": COLORS["text_muted"]}),
+            ],
+        ),
     ])
 
-    return html.Div([
-        html.Div(className="page-header", children=[
-            html.H1("B2B & IoT"),
-            html.P("Enterprise connectivity, IoT platform, and edge computing analytics"),
-        ]),
-        html.Div(className="content-area", children=[kpi_cards, b2b_table]),
+    # ── Panel 2: Attack Trend sparkline ───────────────────────────────
+    attack_hourly = [120, 145, 132, 198, 210, 185, 240, 310, 275,
+                     420, 380, 295, 260, 230, 200, 190, 175, 160,
+                     155, 180, 210, 245, 220, 195]
+    panel_attacks = metric_with_sparkline(
+        "Attacks / Hour", "195", attack_hourly, accent="red",
+    )
+
+    # ── Panel 3: Blocked Attacks ──────────────────────────────────────
+    panel_blocked = html.Div([
+        html.Div("Blocked Attacks (24h)",
+                 style={"fontSize": "11px", "color": COLORS["text_muted"],
+                        "textTransform": "uppercase", "letterSpacing": "0.4px",
+                        "marginBottom": "4px"}),
+        html.Div("48,291",
+                 style={"fontSize": "28px", "fontWeight": "700",
+                        "color": COLORS["green"], "marginBottom": "12px"}),
+        progress_row("DDoS Mitigation", "18,420", 38, COLORS["red"]),
+        progress_row("Intrusion Attempts", "14,830", 31, COLORS["yellow"]),
+        progress_row("Malware / Phishing", "9,612", 20, COLORS["purple"]),
+        progress_row("Brute Force", "5,429", 11, COLORS["blue"]),
     ])
+
+    # ── Panel 4: Firewall Rules ───────────────────────────────────────
+    panel_firewall = html.Div([
+        html.Div("Active Firewall Rules",
+                 style={"fontSize": "11px", "color": COLORS["text_muted"],
+                        "textTransform": "uppercase", "letterSpacing": "0.4px",
+                        "marginBottom": "4px"}),
+        html.Div("12,847",
+                 style={"fontSize": "28px", "fontWeight": "700",
+                        "color": COLORS["blue"], "marginBottom": "8px"}),
+        html.Div(
+            style={"display": "flex", "gap": "16px", "marginTop": "8px"},
+            children=[
+                html.Div([
+                    html.Div("Auto-Generated", style={"fontSize": "11px",
+                                                       "color": COLORS["text_muted"]}),
+                    html.Div("8,234", style={"fontSize": "16px",
+                                              "fontWeight": "600",
+                                              "color": COLORS["purple"]}),
+                ]),
+                html.Div([
+                    html.Div("Manual", style={"fontSize": "11px",
+                                               "color": COLORS["text_muted"]}),
+                    html.Div("4,613", style={"fontSize": "16px",
+                                              "fontWeight": "600",
+                                              "color": COLORS["blue"]}),
+                ]),
+            ],
+        ),
+        html.Div(
+            style={"marginTop": "12px"},
+            children=[
+                html.Div("Last rule update: 14 min ago",
+                         style={"fontSize": "11px",
+                                "color": COLORS["text_muted"]}),
+            ],
+        ),
+    ])
+
+    # ── Panel 5: Open Vulnerabilities ─────────────────────────────────
+    panel_vulns = html.Div([
+        html.Div("Open Vulnerabilities",
+                 style={"fontSize": "11px", "color": COLORS["text_muted"],
+                        "textTransform": "uppercase", "letterSpacing": "0.4px",
+                        "marginBottom": "4px"}),
+        html.Div("164",
+                 style={"fontSize": "28px", "fontWeight": "700",
+                        "color": COLORS["yellow"], "marginBottom": "12px"}),
+        progress_row("Critical (CVE 9.0+)", "12", 7, COLORS["red"]),
+        progress_row("High (CVE 7.0-8.9)", "38", 23, COLORS["yellow"]),
+        progress_row("Medium (CVE 4.0-6.9)", "67", 41, COLORS["blue"]),
+        progress_row("Low (CVE < 4.0)", "47", 29, COLORS["green"]),
+    ])
+
+    # ── Panel 6: SIEM Alerts ─────────────────────────────────────────
+    siem_vals = [45, 52, 38, 60, 72, 55, 48, 65, 58, 42, 50, 63,
+                 70, 62, 54, 47, 68, 75, 59, 44, 56, 61, 53, 49]
+    panel_siem = html.Div([
+        metric_with_sparkline(
+            "SIEM Alerts (24h)", "1,312", siem_vals, accent="purple",
+        ),
+        html.Div(
+            style={"display": "flex", "gap": "12px", "marginTop": "12px"},
+            children=[
+                html.Div([
+                    html.Div("Correlated", style={"fontSize": "11px",
+                                                   "color": COLORS["text_muted"]}),
+                    html.Div("847", style={"fontSize": "14px",
+                                            "fontWeight": "600",
+                                            "color": COLORS["green"]}),
+                ]),
+                html.Div([
+                    html.Div("Pending Triage", style={"fontSize": "11px",
+                                                       "color": COLORS["text_muted"]}),
+                    html.Div("312", style={"fontSize": "14px",
+                                            "fontWeight": "600",
+                                            "color": COLORS["yellow"]}),
+                ]),
+                html.Div([
+                    html.Div("Escalated", style={"fontSize": "11px",
+                                                  "color": COLORS["text_muted"]}),
+                    html.Div("153", style={"fontSize": "14px",
+                                            "fontWeight": "600",
+                                            "color": COLORS["red"]}),
+                ]),
+            ],
+        ),
+    ])
+
+    grid_items = [
+        {"col_span": 1, "row_span": 1, "content": panel_threat},
+        {"col_span": 1, "row_span": 1, "content": panel_attacks},
+        {"col_span": 1, "row_span": 2, "content": panel_blocked},
+        {"col_span": 1, "row_span": 1, "content": panel_firewall},
+        {"col_span": 1, "row_span": 1, "content": panel_vulns},
+        {"col_span": 1, "row_span": 1, "content": panel_siem},
+    ]
+
+    return layout_grid(
+        title="Cyber Security",
+        subtitle="Threat intelligence, attack surface monitoring, and SOC metrics",
+        grid_items=grid_items,
+    )

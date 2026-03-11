@@ -1,522 +1,742 @@
-"""Financial Services vertical pages for the expanded FinancialIQ application.
+"""Financial Services vertical pages for the FinancialIQ application.
 
-Covers Banking, Capital Markets, and Insurance sub-verticals with six page
-renderers: dashboard, banking, capital_markets, insurance, fraud_compliance,
-and customer.
+Covers Capital Markets with seven page renderers: dashboard,
+investment_alpha, trading_advisory, risk_management, regulatory,
+fraud_cyber, and operations.
+
+Each renderer accepts a ``cfg`` dict and returns an ``html.Div``.
+All charts call ``dark_chart_layout()`` for consistent dark theming.
 """
 
+from app.page_styles import (
+    dark_chart_layout, CHART_CONFIG, ACCENT_ICONS,
+    page_header, hero_metric, compact_kpi, kpi_strip, filter_bar,
+    tab_bar, info_banner, alert_card, progress_row, stat_card,
+    rich_table, td, status_td, progress_td, breakdown_list,
+    trend_indicator, use_case_badges, donut_figure,
+    layout_executive, layout_table, layout_split, layout_alerts,
+    layout_forecast, layout_grid,
+    gauge_figure, sparkline_figure, metric_with_sparkline,
+    _card, _hex_to_rgb,
+)
+from app.theme import COLORS, FONT_FAMILY
 from dash import dcc, html
 import plotly.graph_objects as go
-from app.theme import COLORS, FONT_FAMILY, STATUS_COLORS
-
-# ---------------------------------------------------------------------------
-# Shared constants & helpers
-# ---------------------------------------------------------------------------
-
-_ACCENT_ICONS = {
-    "blue": "fa-chart-line", "purple": "fa-bolt", "green": "fa-arrow-trend-up",
-    "red": "fa-triangle-exclamation", "yellow": "fa-circle-exclamation",
-}
 
 
-def _build_kpi_card(title, value_str, accent, icon, alert=False):
-    accent_class = f"accent-{accent}"
-    children = [
-        html.Div(style={"display": "flex", "justifyContent": "space-between", "alignItems": "center"}, children=[
-            html.Span(title, className="card-title"),
-            html.I(className=f"fa-solid {icon}", style={"color": COLORS["text_muted"], "fontSize": "14px"}),
-        ]),
-        html.Div(value_str, className=f"card-value {accent_class}"),
-        html.Div("Live", className="card-subtitle"),
-    ]
-    if alert:
-        children.insert(1, html.Div(style={"position": "absolute", "top": "12px", "right": "12px"},
-            children=html.Span("ALERT", style={"fontSize": "9px", "fontWeight": "700", "color": COLORS["red"],
-                "backgroundColor": "rgba(239, 68, 68, 0.12)", "padding": "2px 6px", "borderRadius": "4px", "letterSpacing": "0.5px"})))
-    return html.Div(className="card", style={"position": "relative"}, children=children)
-
-
-def _build_table(headers, rows):
-    th_style = {"padding": "10px 14px", "fontSize": "11px", "color": COLORS["text_muted"], "textAlign": "left",
-                "borderBottom": f"1px solid {COLORS['border']}", "textTransform": "uppercase", "letterSpacing": "0.5px"}
-    return html.Table(style={"width": "100%", "borderCollapse": "collapse"}, children=[
-        html.Thead(html.Tr([html.Th(h, style=th_style) for h in headers])), html.Tbody(rows)])
-
-
-def _td(text, bold=False, mono=False, color=None):
-    style = {"padding": "10px 14px", "fontSize": "13px"}
-    if bold:
-        style["fontWeight"] = "500"
-    if mono:
-        style["fontFamily"] = "monospace"
-        style["fontWeight"] = "600"
-    if color:
-        style["color"] = color
-    return html.Td(str(text), style=style)
-
-
-def _status_td(status_text, status_key=None):
-    key = status_key or status_text
-    sc = STATUS_COLORS.get(key, STATUS_COLORS["Healthy"])
-    return html.Td(html.Span(status_text, className="status-badge",
-        style={"backgroundColor": sc["bg"], "color": sc["text"], "border": f"1px solid {sc['border']}"}),
-        style={"padding": "10px 14px"})
-
-
-def _detail_row(label, value):
-    return html.Div(style={"display": "flex", "justifyContent": "space-between", "padding": "6px 0",
-        "borderBottom": f"1px solid {COLORS['border']}"}, children=[
-        html.Span(label, style={"fontSize": "13px", "color": COLORS["text_muted"]}),
-        html.Span(str(value), style={"fontSize": "13px", "fontWeight": "500"})])
-
-
-# ---------------------------------------------------------------------------
-# Shared layout helpers
-# ---------------------------------------------------------------------------
-
-_PLOT_LAYOUT = dict(
-    paper_bgcolor=COLORS["panel"],
-    plot_bgcolor="#0E1117",
-    font=dict(color=COLORS["white"], family=FONT_FAMILY, size=12),
-    margin=dict(l=50, r=20, t=40, b=40),
-    xaxis=dict(gridcolor="#1E2028", zerolinecolor="#1E2028"),
-    yaxis=dict(gridcolor="#1E2028", zerolinecolor="#1E2028"),
-)
-
-_ROW_STYLE = {"borderBottom": f"1px solid {COLORS['border']}"}
-
-_SECTION_CARD_STYLE = {
-    "backgroundColor": COLORS["panel"],
-    "border": f"1px solid {COLORS['border']}",
-    "borderRadius": "12px",
-    "padding": "24px",
-    "marginBottom": "24px",
-}
-
-
-def _page_header(title, subtitle):
-    return html.Div(className="page-header", children=[
-        html.H1(title),
-        html.P(subtitle),
-    ])
-
-
-def _kpi_grid(cards):
-    return html.Div(className="grid-4", style={"marginBottom": "24px"}, children=cards)
-
-
-# ===================================================================
-# 1. render_dashboard  –  Enterprise Risk Command Center
-# ===================================================================
+# ═══════════════════════════════════════════════════════════════════════════
+# 1. DASHBOARD — layout_executive (Style A)
+# ═══════════════════════════════════════════════════════════════════════════
 
 def render_dashboard(cfg):
-    """Enterprise Risk Command Center spanning Banking, Capital Markets, and Insurance."""
+    """Executive dashboard with AUM, Revenue, Risk Score heroes,
+    portfolio performance chart, asset allocation donut, and revenue
+    breakdown bar chart."""
 
-    # KPI cards
-    kpi_cards = _kpi_grid([
-        _build_kpi_card("Transactions Today", "12.5M", "blue", "fa-chart-line"),
-        _build_kpi_card("Fraud Blocked", "847", "red", "fa-triangle-exclamation", alert=True),
-        _build_kpi_card("Portfolio VaR 95%", "$47M", "purple", "fa-bolt"),
-        _build_kpi_card("Combined Ratio", "96.4%", "green", "fa-arrow-trend-up"),
-    ])
+    # ── Hero metrics ──────────────────────────────────────────────────
+    heroes = [
+        hero_metric("Assets Under Management", "$847.3B",
+                     trend_text="+3.2% QoQ", trend_dir="up", accent="blue"),
+        hero_metric("Total Revenue", "$12.6B",
+                     trend_text="+5.8% YoY", trend_dir="up", accent="green"),
+        hero_metric("Composite Risk Score", "72 / 100",
+                     trend_text="-4 pts from prior quarter", trend_dir="down",
+                     accent="yellow"),
+    ]
 
-    # Bar chart – key metrics by sub-vertical
-    sub_verticals = ["Banking", "Capital Markets", "Insurance"]
-    revenue_values = [2.1, 0.89, 1.4]
-    risk_scores = [62, 38, 55]
+    # ── Main chart: portfolio performance line ────────────────────────
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    portfolio_vals = [100, 103.2, 101.8, 106.4, 109.1, 107.5,
+                      112.3, 115.8, 113.6, 118.2, 121.7, 124.4]
+    benchmark_vals = [100, 101.5, 100.9, 103.7, 105.2, 104.1,
+                      107.8, 109.6, 108.4, 111.3, 113.1, 114.9]
 
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=sub_verticals, y=revenue_values, name="Revenue ($B)",
-        marker=dict(color=COLORS["blue"], cornerradius=4),
-        text=[f"${v}B" for v in revenue_values],
+    perf_fig = go.Figure()
+    perf_fig.add_trace(go.Scatter(
+        x=months, y=portfolio_vals, name="Portfolio",
+        mode="lines+markers",
+        line=dict(color=COLORS["blue"], width=2),
+        marker=dict(size=5),
+        fill="tozeroy",
+        fillcolor=f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
+    ))
+    perf_fig.add_trace(go.Scatter(
+        x=months, y=benchmark_vals, name="S&P 500 Benchmark",
+        mode="lines",
+        line=dict(color=COLORS["text_muted"], width=1.5, dash="dash"),
+    ))
+    perf_fig.update_layout(**dark_chart_layout(
+        height=320,
+        title=dict(text="Portfolio Performance (Indexed to 100)",
+                   font=dict(size=14, color=COLORS["white"])),
+        yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], title="Index Value"),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"),
+    ))
+    main_chart = dcc.Graph(figure=perf_fig, config=CHART_CONFIG,
+                           style={"width": "100%"})
+
+    # ── Panel 1: Asset allocation donut ───────────────────────────────
+    alloc_labels = ["Equities", "Fixed Income", "Alternatives",
+                    "Real Estate", "Cash"]
+    alloc_values = [42, 28, 15, 10, 5]
+    alloc_colors = [COLORS["blue"], COLORS["green"], COLORS["purple"],
+                    COLORS["yellow"], COLORS["text_muted"]]
+    alloc_fig = donut_figure(alloc_labels, alloc_values, alloc_colors,
+                             center_text="$847B", title="Asset Allocation")
+    alloc_chart = dcc.Graph(figure=alloc_fig, config=CHART_CONFIG,
+                            style={"width": "100%"})
+
+    # ── Panel 2: Revenue by business line bar chart ───────────────────
+    lines = ["Wealth Mgmt", "IB Advisory", "Trading", "Asset Mgmt", "Other"]
+    rev_vals = [3.8, 3.1, 2.9, 1.9, 0.9]
+    rev_fig = go.Figure(go.Bar(
+        x=lines, y=rev_vals,
+        marker_color=[COLORS["blue"], COLORS["green"], COLORS["purple"],
+                      COLORS["yellow"], COLORS["text_muted"]],
+        text=[f"${v}B" for v in rev_vals],
         textposition="outside",
         textfont=dict(color=COLORS["white"], size=11),
     ))
-    fig.add_trace(go.Bar(
-        x=sub_verticals, y=risk_scores, name="Risk Score",
-        marker=dict(color=COLORS["purple"], cornerradius=4),
-        text=[str(v) for v in risk_scores],
-        textposition="outside",
-        textfont=dict(color=COLORS["white"], size=11),
-        yaxis="y2",
+    rev_fig.update_layout(**dark_chart_layout(
+        height=280,
+        title=dict(text="Revenue by Business Line",
+                   font=dict(size=14, color=COLORS["white"])),
+        yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"], title="$ Billions"),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+        margin=dict(l=48, r=24, t=40, b=60),
     ))
-    fig.update_layout(
-        paper_bgcolor=COLORS["panel"],
-        plot_bgcolor="#0E1117",
-        font=dict(color=COLORS["white"], family=FONT_FAMILY, size=12),
-        margin=dict(l=50, r=20, t=40, b=40),
-        title=dict(text="Key Metrics by Sub-Vertical", font=dict(size=15)),
-        barmode="group",
-        height=360,
-        legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(size=11)),
-        xaxis=dict(gridcolor="#1E2028", zerolinecolor="#1E2028"),
-        yaxis=dict(title="Revenue ($B)", gridcolor="#1E2028", zerolinecolor="#1E2028"),
-        yaxis2=dict(title="Risk Score", overlaying="y", side="right",
-                    gridcolor="#1E2028", zerolinecolor="#1E2028"),
+    rev_chart = dcc.Graph(figure=rev_fig, config=CHART_CONFIG,
+                          style={"width": "100%"})
+
+    panels = [
+        ("Asset Allocation", alloc_chart),
+        ("Revenue by Business Line", rev_chart),
+    ]
+
+    return layout_executive(
+        title="Financial Services Dashboard",
+        subtitle="Enterprise-wide performance across Capital Markets, "
+                 "Wealth Management, and Investment Banking",
+        heroes=heroes,
+        main_chart=main_chart,
+        panels=panels,
     )
 
-    chart_section = html.Div(style=_SECTION_CARD_STYLE, children=[
-        dcc.Graph(figure=fig, config={"displayModeBar": False}),
-    ])
 
-    # Cross-Business Summary table
-    summary_headers = ["Sub-Vertical", "Revenue", "Risk Score", "Compliance Status", "Key Metric"]
-    summary_rows = [
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Banking", bold=True), _td("$2.1B", mono=True),
-            _status_td("Medium", "Low"), _status_td("Compliant", "Healthy"),
-            _td("NIM 3.1%"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Capital Markets", bold=True), _td("$890M", mono=True),
-            _status_td("Low", "Healthy"), _status_td("Compliant", "Healthy"),
-            _td("Sharpe 1.42"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Insurance", bold=True), _td("$1.4B", mono=True),
-            _status_td("Medium", "Low"), _status_td("Under Review", "Low"),
-            _td("CLR 96.4%"),
-        ]),
+# ═══════════════════════════════════════════════════════════════════════════
+# 2. INVESTMENT & ALPHA — layout_forecast (Style E)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_investment_alpha(cfg):
+    """Investment performance page with KPIs, hero YTD returns, dual-axis
+    performance vs benchmark chart, and strategy breakdown sidebar."""
+
+    # ── KPI strip ─────────────────────────────────────────────────────
+    kpis = [
+        {"label": "Alpha (bps)", "value": "+142", "accent": "green"},
+        {"label": "Sharpe Ratio", "value": "1.87", "accent": "blue"},
+        {"label": "AUM Deployed", "value": "$623.5B", "accent": "purple"},
+        {"label": "Annualised Return", "value": "14.8%", "accent": "green"},
     ]
 
-    summary_table = html.Div(style=_SECTION_CARD_STYLE, children=[
-        html.Div("Cross-Business Summary", style={
-            "fontSize": "15px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(summary_headers, summary_rows),
+    # ── Dual-axis chart: performance vs benchmark ─────────────────────
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    fund_ret = [1.2, 0.8, 1.5, -0.3, 2.1, 1.7,
+                0.9, 1.4, -0.6, 2.3, 1.1, 1.3]
+    bench_ret = [0.9, 0.5, 1.1, -0.1, 1.6, 1.2,
+                 0.6, 1.0, -0.4, 1.7, 0.8, 0.9]
+    cumul_alpha = []
+    running = 0.0
+    for f, b in zip(fund_ret, bench_ret):
+        running += (f - b)
+        cumul_alpha.append(round(running, 2))
+
+    chart_fig = go.Figure()
+    chart_fig.add_trace(go.Bar(
+        x=months, y=fund_ret, name="Fund Return %",
+        marker_color=COLORS["blue"], opacity=0.85,
+        yaxis="y",
+    ))
+    chart_fig.add_trace(go.Bar(
+        x=months, y=bench_ret, name="Benchmark %",
+        marker_color=COLORS["text_muted"], opacity=0.55,
+        yaxis="y",
+    ))
+    chart_fig.add_trace(go.Scatter(
+        x=months, y=cumul_alpha, name="Cumulative Alpha (bps x100)",
+        mode="lines+markers",
+        line=dict(color=COLORS["green"], width=2),
+        marker=dict(size=5),
+        yaxis="y2",
+    ))
+    chart_fig.update_layout(**dark_chart_layout(
+        height=320, barmode="group",
+        yaxis=dict(title="Monthly Return %", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+        yaxis2=dict(title="Cumulative Alpha", overlaying="y", side="right",
+                    showgrid=False, color=COLORS["green"]),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.18, x=0.5, xanchor="center"),
+    ))
+    main_chart = dcc.Graph(figure=chart_fig, config=CHART_CONFIG,
+                           style={"width": "100%"})
+
+    # ── Side breakdown by strategy ────────────────────────────────────
+    side = breakdown_list([
+        {"label": "Long / Short Equity", "value": "+18.2%", "pct": 34,
+         "color": COLORS["blue"]},
+        {"label": "Global Macro", "value": "+14.6%", "pct": 22,
+         "color": COLORS["green"]},
+        {"label": "Quant Systematic", "value": "+12.1%", "pct": 18,
+         "color": COLORS["purple"]},
+        {"label": "Event-Driven", "value": "+9.7%", "pct": 14,
+         "color": COLORS["yellow"]},
+        {"label": "Fixed Income Arb", "value": "+6.3%", "pct": 12,
+         "color": COLORS["text_muted"]},
     ])
 
-    return html.Div(children=[
-        _page_header("Enterprise Risk Command Center",
-                     "Unified view across Banking, Capital Markets & Insurance operations"),
-        html.Div(className="content-area", children=[kpi_cards, chart_section, summary_table]),
-    ])
+    return layout_forecast(
+        title="Investment & Alpha Generation",
+        subtitle="Fund performance, alpha attribution, and strategy "
+                 "breakdown across all managed portfolios",
+        kpi_items=kpis,
+        hero_value="12.4%",
+        hero_label="Year-to-Date Returns",
+        hero_trend_text="+3.6% vs benchmark",
+        main_chart=main_chart,
+        side_component=side,
+    )
 
 
-# ===================================================================
-# 2. render_banking  –  Banking Intelligence
-# ===================================================================
+# ═══════════════════════════════════════════════════════════════════════════
+# 3. TRADING & ADVISORY — layout_table (Style B)
+# ═══════════════════════════════════════════════════════════════════════════
 
-def render_banking(cfg):
-    """Banking Intelligence page with NIM, fraud, LTV, and call-center metrics."""
+def render_trading_advisory(cfg):
+    """Trading desk view with filters, KPIs, and a rich table of active
+    trades showing PnL progress bars and status badges."""
 
-    kpi_cards = _kpi_grid([
-        _build_kpi_card("NIM", "3.1%", "blue", "fa-chart-line"),
-        _build_kpi_card("Fraud Rate", "0.23%", "red", "fa-triangle-exclamation"),
-        _build_kpi_card("Customer LTV", "$4,200", "green", "fa-arrow-trend-up"),
-        _build_kpi_card("Digital Adoption", "67%", "purple", "fa-bolt"),
-    ])
-
-    # Banking Metrics by Line
-    banking_headers = ["Line", "Portfolio", "Delinquency", "Fraud Blocked", "NPS", "LTV"]
-    banking_rows = [
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Retail Banking", bold=True), _td("$48B", mono=True),
-            _td("1.8%"), _td("312"), _td("34"), _td("$3,200"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Commercial Lending", bold=True), _td("$22B", mono=True),
-            _td("0.9%"), _td("87"), _td("42"), _td("$18,400"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Wealth Management", bold=True), _td("$15B", mono=True),
-            _td("0.3%"), _td("24"), _td("52"), _td("$42,000"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Cards", bold=True), _td("$8.4B", mono=True),
-            _td("2.4%"), _td("424"), _td("28"), _td("$1,800"),
-        ]),
+    # ── Filters ───────────────────────────────────────────────────────
+    filters = [
+        {"label": "Desk", "options": ["All Desks", "Equities", "FICC",
+                                       "FX", "Derivatives"]},
+        {"label": "Asset Class", "options": ["All Classes", "Equity",
+                                              "Fixed Income", "FX",
+                                              "Commodities"]},
+        {"label": "Strategy", "options": ["All Strategies", "Market Making",
+                                           "Prop", "Client Flow",
+                                           "Hedging"]},
     ]
 
-    banking_table = html.Div(style=_SECTION_CARD_STYLE, children=[
-        html.Div("Banking Metrics by Line", style={
-            "fontSize": "15px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(banking_headers, banking_rows),
-    ])
-
-    # Call Center Metrics
-    call_center_headers = ["Metric", "Value", "Target", "Status"]
-    call_center_rows = [
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("AHT", bold=True), _td("6.2 min", mono=True),
-            _td("5.5 min"), _status_td("Above Target", "Low"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("FCR", bold=True), _td("74%", mono=True),
-            _td("80%"), _status_td("Below Target", "Low"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("CSAT", bold=True), _td("4.1", mono=True),
-            _td("4.5"), _status_td("Below Target", "Low"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("STP Rate", bold=True), _td("89%", mono=True),
-            _td("92%"), _status_td("On Track", "Healthy"),
-        ]),
+    # ── KPI strip ─────────────────────────────────────────────────────
+    kpis = [
+        {"label": "Daily Volume", "value": "$24.7B", "accent": "blue"},
+        {"label": "Daily PnL", "value": "+$18.4M", "accent": "green"},
+        {"label": "Win Rate", "value": "68.3%", "accent": "purple"},
+        {"label": "Avg Latency", "value": "0.42ms", "accent": "yellow"},
+        {"label": "Fill Rate", "value": "99.7%", "accent": "green"},
     ]
 
-    call_center_table = html.Div(style=_SECTION_CARD_STYLE, children=[
-        html.Div("Call Center Metrics", style={
-            "fontSize": "15px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(call_center_headers, call_center_rows),
-    ])
+    # ── Trade table data ──────────────────────────────────────────────
+    headers = ["Trade ID", "Desk", "Instrument", "Side", "Notional",
+               "PnL", "PnL %", "Status"]
+    col_widths = ["10%", "10%", "16%", "8%", "14%", "14%", "16%", "12%"]
 
-    return html.Div(children=[
-        _page_header("Banking Intelligence",
-                     "Retail, commercial, wealth management & cards performance"),
-        html.Div(className="content-area", children=[kpi_cards, banking_table, call_center_table]),
-    ])
-
-
-# ===================================================================
-# 3. render_capital_markets  –  Capital Markets Analytics
-# ===================================================================
-
-def render_capital_markets(cfg):
-    """Capital Markets Analytics with AUM, VaR, Sharpe, and alpha tracking."""
-
-    kpi_cards = _kpi_grid([
-        _build_kpi_card("AUM", "$24.5B", "blue", "fa-chart-line"),
-        _build_kpi_card("VaR 95%", "$47M", "red", "fa-triangle-exclamation"),
-        _build_kpi_card("Sharpe Ratio", "1.42", "green", "fa-arrow-trend-up"),
-        _build_kpi_card("Alpha", "180 bps", "purple", "fa-bolt"),
-    ])
-
-    # Portfolio by Asset Class
-    portfolio_headers = ["Asset Class", "AUM", "VaR Contribution", "Sharpe", "Daily P&L", "Positions"]
-    portfolio_rows = [
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Equities", bold=True), _td("$8.2B", mono=True),
-            _td("$14M", mono=True), _td("1.48", mono=True),
-            _td("+$2.4M", color=COLORS["green"]), _td("2,140"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Fixed Income", bold=True), _td("$7.1B", mono=True),
-            _td("$11M", mono=True), _td("1.39", mono=True),
-            _td("-$0.8M", color=COLORS["red"]), _td("1,680"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Derivatives", bold=True), _td("$5.4B", mono=True),
-            _td("$15M", mono=True), _td("1.35", mono=True),
-            _td("+$1.2M", color=COLORS["green"]), _td("1,890"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Alternatives", bold=True), _td("$3.8B", mono=True),
-            _td("$7M", mono=True), _td("1.52", mono=True),
-            _td("+$0.6M", color=COLORS["green"]), _td("1,200"),
-        ]),
+    trade_rows = [
+        ("TRD-90124", "Equities", "AAPL 250C 03/21", "Buy",
+         "$14.2M", "+$842K", 72, "Healthy"),
+        ("TRD-90118", "FICC", "UST 10Y Future", "Sell",
+         "$250.0M", "+$1.3M", 85, "Healthy"),
+        ("TRD-90115", "FX", "EUR/USD Spot", "Buy",
+         "$78.5M", "-$124K", 28, "Warning"),
+        ("TRD-90112", "Derivatives", "SPX 5200P 03/28", "Sell",
+         "$32.7M", "+$567K", 64, "Healthy"),
+        ("TRD-90109", "Equities", "NVDA Equity Swap", "Buy",
+         "$95.0M", "+$2.1M", 91, "Healthy"),
+        ("TRD-90103", "FICC", "IG CDX Series 42", "Buy",
+         "$180.0M", "-$340K", 18, "Critical"),
+        ("TRD-90098", "FX", "USD/JPY 1M Fwd", "Sell",
+         "$45.0M", "+$215K", 55, "Healthy"),
+        ("TRD-90091", "Derivatives", "VIX Call Spread", "Buy",
+         "$8.4M", "+$93K", 48, "Low"),
+        ("TRD-90087", "Equities", "MSFT Block Trade", "Sell",
+         "$62.3M", "+$1.8M", 88, "Healthy"),
+        ("TRD-90082", "FICC", "MBS TBA Pool", "Buy",
+         "$320.0M", "-$780K", 22, "Warning"),
     ]
 
-    portfolio_table = html.Div(style=_SECTION_CARD_STYLE, children=[
-        html.Div("Portfolio by Asset Class", style={
-            "fontSize": "15px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(portfolio_headers, portfolio_rows),
-    ])
+    rows = []
+    for tid, desk, instr, side, notional, pnl, pnl_pct, status in trade_rows:
+        pnl_color = COLORS["green"] if pnl.startswith("+") else COLORS["red"]
+        bar_color = COLORS["green"] if pnl_pct >= 50 else (
+            COLORS["yellow"] if pnl_pct >= 30 else COLORS["red"])
+        rows.append(html.Tr([
+            td(tid, mono=True),
+            td(desk),
+            td(instr, bold=True),
+            td(side, color=COLORS["green"] if side == "Buy"
+               else COLORS["red"]),
+            td(notional, mono=True),
+            td(pnl, mono=True, color=pnl_color),
+            progress_td(pnl_pct, bar_color),
+            status_td(status),
+        ]))
 
-    return html.Div(children=[
-        _page_header("Capital Markets Analytics",
-                     "Portfolio performance, risk attribution & position management"),
-        html.Div(className="content-area", children=[kpi_cards, portfolio_table]),
-    ])
+    table = rich_table(headers, rows, col_widths)
+
+    return layout_table(
+        title="Trading & Advisory",
+        subtitle="Real-time trading desk activity, PnL attribution, "
+                 "and execution quality metrics",
+        filters=filters,
+        kpi_items=kpis,
+        table_component=table,
+    )
 
 
-# ===================================================================
-# 4. render_insurance  –  Insurance Operations
-# ===================================================================
+# ═══════════════════════════════════════════════════════════════════════════
+# 4. RISK MANAGEMENT — layout_alerts (Style D)
+# ═══════════════════════════════════════════════════════════════════════════
 
-def render_insurance(cfg):
-    """Insurance Operations with combined ratio, loss ratio, claims, and retention."""
+def render_risk_management(cfg):
+    """Risk management page with tabs, summary KPIs, and alert cards
+    for VaR breaches, concentration risk, and stress test failures."""
 
-    kpi_cards = _kpi_grid([
-        _build_kpi_card("Combined Ratio", "96.4%", "blue", "fa-chart-line"),
-        _build_kpi_card("Loss Ratio", "62.1%", "red", "fa-triangle-exclamation"),
-        _build_kpi_card("Claims Fraud", "8.2%", "yellow", "fa-circle-exclamation"),
-        _build_kpi_card("Policy Retention", "87%", "green", "fa-arrow-trend-up"),
-    ])
+    tabs = ["Active Risks", "Breaches", "Historical"]
 
-    # Insurance by Product
-    insurance_headers = ["Product", "Premiums", "Loss Ratio", "Combined Ratio", "Claims", "Retention"]
-    insurance_rows = [
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Auto", bold=True), _td("$420M", mono=True),
-            _td("64.2%"), _td("97.8%"), _td("18,400"), _td("84%"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Home", bold=True), _td("$310M", mono=True),
-            _td("58.4%"), _td("93.1%"), _td("12,200"), _td("89%"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Life", bold=True), _td("$280M", mono=True),
-            _td("42.6%"), _td("88.2%"), _td("4,800"), _td("94%"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Commercial", bold=True), _td("$240M", mono=True),
-            _td("71.3%"), _td("102.4%"), _td("8,600"), _td("82%"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Health", bold=True), _td("$180M", mono=True),
-            _td("78.9%"), _td("104.1%"), _td("22,000"), _td("86%"),
-        ]),
+    summary_kpis = [
+        {"label": "Active Alerts", "value": "14", "accent": "red"},
+        {"label": "VaR (99% 1D)", "value": "$48.2M", "accent": "yellow"},
+        {"label": "Stress Loss", "value": "-$312M", "accent": "red"},
+        {"label": "Capital Utilisation", "value": "73.4%", "accent": "blue"},
     ]
 
-    insurance_table = html.Div(style=_SECTION_CARD_STYLE, children=[
-        html.Div("Insurance by Product", style={
-            "fontSize": "15px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(insurance_headers, insurance_rows),
-    ])
-
-    return html.Div(children=[
-        _page_header("Insurance Operations",
-                     "Underwriting performance, claims analytics & policy retention"),
-        html.Div(className="content-area", children=[kpi_cards, insurance_table]),
-    ])
-
-
-# ===================================================================
-# 5. render_fraud_compliance  –  Fraud & Compliance Hub
-# ===================================================================
-
-def render_fraud_compliance(cfg):
-    """Fraud & Compliance Hub with detection metrics and regulatory status."""
-
-    kpi_cards = _kpi_grid([
-        _build_kpi_card("Total Fraud Blocked", "847", "red", "fa-triangle-exclamation"),
-        _build_kpi_card("AML Alerts", "1,240/mo", "yellow", "fa-circle-exclamation"),
-        _build_kpi_card("Claims Fraud Rate", "8.2%", "purple", "fa-bolt"),
-        _build_kpi_card("Regulatory Capital", "14.2%", "green", "fa-arrow-trend-up"),
-    ])
-
-    # Fraud Detection by Type
-    fraud_headers = ["Type", "Detected", "Blocked", "Rate", "Avg Amount", "Trend"]
-    fraud_rows = [
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Transaction Fraud", bold=True), _td("1,240", mono=True),
-            _td("1,180", mono=True), _td("95.2%"),
-            _td("$2,400", mono=True), _td("\u2193 12%", color=COLORS["green"]),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Account Takeover", bold=True), _td("380", mono=True),
-            _td("342", mono=True), _td("90.0%"),
-            _td("$8,200", mono=True), _td("\u2191 8%", color=COLORS["red"]),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Synthetic ID", bold=True), _td("145", mono=True),
-            _td("128", mono=True), _td("88.3%"),
-            _td("$15,600", mono=True), _td("\u2191 22%", color=COLORS["red"]),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Claims Fraud", bold=True), _td("420", mono=True),
-            _td("385", mono=True), _td("91.7%"),
-            _td("$12,400", mono=True), _td("\u2193 5%", color=COLORS["green"]),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Market Manipulation", bold=True), _td("28", mono=True),
-            _td("24", mono=True), _td("85.7%"),
-            _td("$142,000", mono=True), _td("\u2192 0%", color=COLORS["text_muted"]),
-        ]),
+    alerts = [
+        {
+            "severity": "critical",
+            "title": "VaR Limit Breach — Equity Desk",
+            "description": (
+                "The 99th-percentile 1-day VaR for the Equity Trading desk "
+                "has exceeded the $25M internal limit by $7.3M.  Current "
+                "VaR stands at $32.3M driven by concentrated NVDA and AAPL "
+                "delta exposure."
+            ),
+            "impact": "Potential Loss: $32.3M",
+            "details": [
+                ("Desk", "Equities — US Large Cap"),
+                ("VaR Limit", "$25.0M"),
+                ("Current VaR", "$32.3M (129%)"),
+                ("Primary Driver", "Single-name delta concentration"),
+                ("Breach Duration", "2h 14m"),
+            ],
+            "timestamp": "14 min ago",
+        },
+        {
+            "severity": "critical",
+            "title": "Stress Test Failure — 2008 Replay Scenario",
+            "description": (
+                "The firm-wide stress test under the 2008 GFC replay "
+                "scenario projects a loss of $312M, exceeding the $280M "
+                "board-approved threshold by 11.4%.  Credit spread widening "
+                "in the IG book is the dominant factor."
+            ),
+            "impact": "Potential Loss: $312M",
+            "details": [
+                ("Scenario", "2008 GFC Replay"),
+                ("Threshold", "$280M"),
+                ("Projected Loss", "$312M (111%)"),
+                ("Key Factor", "IG credit spread +180 bps"),
+            ],
+            "timestamp": "43 min ago",
+        },
+        {
+            "severity": "warning",
+            "title": "Concentration Risk — Sector Exposure",
+            "description": (
+                "Technology sector exposure has reached 34.2% of total "
+                "AUM, above the 30% soft limit.  Current allocation is "
+                "driven by strong momentum positioning in semiconductor "
+                "names across multiple desks."
+            ),
+            "impact": "Exposure: $289.8B (34.2%)",
+            "details": [
+                ("Sector", "Information Technology"),
+                ("Limit", "30% of AUM"),
+                ("Current", "34.2% ($289.8B)"),
+                ("Top Holdings", "NVDA, AAPL, MSFT, AVGO"),
+            ],
+            "timestamp": "1h 12m ago",
+        },
+        {
+            "severity": "warning",
+            "title": "Counterparty Credit Downgrade — Lehman RE Fund III",
+            "description": (
+                "Moody's has placed Lehman RE Fund III on negative watch "
+                "following deterioration of underlying CRE collateral.  "
+                "Current exposure is $84M in secured lending facilities."
+            ),
+            "impact": "Exposure: $84M",
+            "details": [
+                ("Counterparty", "Lehman RE Fund III"),
+                ("Rating Action", "Baa2 → Negative Watch"),
+                ("Exposure Type", "Secured Lending"),
+                ("Collateral LTV", "78% → 91%"),
+            ],
+            "timestamp": "2h 38m ago",
+        },
+        {
+            "severity": "info",
+            "title": "Liquidity Coverage Ratio — Approaching Floor",
+            "description": (
+                "The 30-day LCR has declined to 118%, approaching the "
+                "110% internal floor.  Seasonal outflows in money-market "
+                "funds and increased repo activity are contributing to "
+                "the drawdown of HQLA buffers."
+            ),
+            "impact": "LCR: 118% (floor 110%)",
+            "details": [
+                ("Current LCR", "118%"),
+                ("Regulatory Min", "100%"),
+                ("Internal Floor", "110%"),
+                ("Trend", "Down 7 pts in 5 days"),
+            ],
+            "timestamp": "3h 05m ago",
+        },
     ]
 
-    fraud_table = html.Div(style=_SECTION_CARD_STYLE, children=[
-        html.Div("Fraud Detection by Type", style={
-            "fontSize": "15px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(fraud_headers, fraud_rows),
-    ])
+    return layout_alerts(
+        title="Risk Management",
+        subtitle="Enterprise risk monitoring — VaR, stress testing, "
+                 "concentration limits, and counterparty exposure",
+        tabs=tabs,
+        alerts=alerts,
+        summary_kpis=summary_kpis,
+    )
 
-    # Compliance Status
-    compliance_headers = ["Framework", "Status", "Capital Impact", "Last Review"]
-    compliance_rows = [
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Basel III/IV", bold=True), _status_td("Compliant", "Healthy"),
-            _td("$2.4B", mono=True), _td("2026-02-15"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Dodd-Frank", bold=True), _status_td("Compliant", "Healthy"),
-            _td("$1.8B", mono=True), _td("2026-01-20"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("MiFID II", bold=True), _status_td("Under Review", "Low"),
-            _td("$640M", mono=True), _td("2026-03-01"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Solvency II", bold=True), _status_td("Compliant", "Healthy"),
-            _td("$920M", mono=True), _td("2026-02-28"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("CECL", bold=True), _status_td("Needs Review", "Critical"),
-            _td("$1.1B", mono=True), _td("2025-12-10"),
-        ]),
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 5. REGULATORY & COMPLIANCE — layout_split (Style C)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_regulatory(cfg):
+    """Regulatory compliance with tabs, info banner, capital ratios bar
+    chart on the left, compliance status donut on the right, and bottom
+    summary stats."""
+
+    tabs = ["Capital", "Reporting", "Audit"]
+
+    banner_text = (
+        "All Basel III / IV capital ratios are above regulatory minimums "
+        "as of the latest quarterly filing.  Next CCAR submission due in "
+        "18 days — pre-filing review is 94% complete."
+    )
+
+    # ── Left panel: stacked bar of capital ratios over time ───────────
+    quarters = ["Q1 '25", "Q2 '25", "Q3 '25", "Q4 '25"]
+    cet1 = [13.2, 13.5, 13.8, 14.1]
+    tier1 = [1.8, 1.7, 1.9, 1.8]
+    tier2 = [1.5, 1.6, 1.5, 1.4]
+
+    cap_fig = go.Figure()
+    cap_fig.add_trace(go.Bar(
+        x=quarters, y=cet1, name="CET1",
+        marker_color=COLORS["blue"],
+    ))
+    cap_fig.add_trace(go.Bar(
+        x=quarters, y=tier1, name="AT1",
+        marker_color=COLORS["purple"],
+    ))
+    cap_fig.add_trace(go.Bar(
+        x=quarters, y=tier2, name="Tier 2",
+        marker_color=COLORS["green"],
+    ))
+    cap_fig.update_layout(**dark_chart_layout(
+        height=300, barmode="stack",
+        yaxis=dict(title="Capital Ratio %", showgrid=True,
+                   gridcolor=COLORS["border"], color=COLORS["text_muted"]),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+        legend=dict(orientation="h", y=-0.2, x=0.5, xanchor="center"),
+    ))
+    # Add regulatory minimum line
+    cap_fig.add_hline(y=10.5, line_dash="dash",
+                      line_color=COLORS["red"], opacity=0.6,
+                      annotation_text="Min Total Capital (10.5%)",
+                      annotation_font_color=COLORS["red"],
+                      annotation_font_size=10)
+
+    left_chart = dcc.Graph(figure=cap_fig, config=CHART_CONFIG,
+                           style={"width": "100%"})
+
+    # ── Right panel: compliance status donut ──────────────────────────
+    comp_labels = ["Compliant", "Under Review", "Remediation", "Past Due"]
+    comp_values = [142, 18, 7, 3]
+    comp_colors = [COLORS["green"], COLORS["blue"], COLORS["yellow"],
+                   COLORS["red"]]
+    comp_fig = donut_figure(comp_labels, comp_values, comp_colors,
+                            center_text="170", title="Compliance Items")
+    right_chart = dcc.Graph(figure=comp_fig, config=CHART_CONFIG,
+                            style={"width": "100%"})
+
+    # ── Bottom stats ──────────────────────────────────────────────────
+    bottom_stats = [
+        ("CET1 Ratio", "14.1%", "blue"),
+        ("Total Capital", "17.3%", "green"),
+        ("Leverage Ratio", "6.2%", "purple"),
+        ("CCAR Progress", "94%", "blue"),
+        ("Open Findings", "3", "red"),
     ]
 
-    compliance_table = html.Div(style=_SECTION_CARD_STYLE, children=[
-        html.Div("Compliance Status", style={
-            "fontSize": "15px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(compliance_headers, compliance_rows),
+    return layout_split(
+        title="Regulatory & Compliance",
+        subtitle="Capital adequacy, regulatory reporting, and audit "
+                 "readiness across all jurisdictions",
+        tabs=tabs,
+        banner_text=banner_text,
+        left_panel=("Capital Ratios Over Time", left_chart),
+        right_panel=("Compliance Status", right_chart),
+        bottom_stats=bottom_stats,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 6. FRAUD & CYBER SECURITY — layout_grid (Style F)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_fraud_cyber(cfg):
+    """Grid-based fraud and cyber security dashboard with gauge, sparkline,
+    metric cards, and monitoring panels."""
+
+    # ── Grid item 1: Threat level gauge (1x1) ─────────────────────────
+    threat_gauge = gauge_figure(72, 100, title="Threat Level", color=COLORS["red"])
+    gauge_panel = html.Div([
+        dcc.Graph(figure=threat_gauge, config=CHART_CONFIG,
+                  style={"height": "180px"}),
+        html.Div("ELEVATED", style={
+            "textAlign": "center", "fontSize": "13px", "fontWeight": "700",
+            "color": COLORS["yellow"], "letterSpacing": "1px",
+            "marginTop": "4px",
+        }),
     ])
 
-    return html.Div(children=[
-        _page_header("Fraud & Compliance Hub",
-                     "Cross-business fraud detection, AML monitoring & regulatory compliance"),
-        html.Div(className="content-area", children=[kpi_cards, fraud_table, compliance_table]),
+    # ── Grid item 2: Transaction monitoring sparkline (1x1) ──────────
+    txn_values = [1240, 1380, 1190, 1560, 1720, 1480, 1890, 2010,
+                  1760, 1940, 2130, 1870, 2240, 2080, 2310, 1960,
+                  2450, 2280, 2590, 2370]
+    txn_panel = metric_with_sparkline(
+        "Transaction Monitoring",
+        "2,370 / min",
+        txn_values,
+        accent="blue",
+    )
+
+    # ── Grid item 3: Fraud detected metric (tall, 1x2) ───────────────
+    fraud_detail_children = [
+        html.Div("Fraud Detected (MTD)", style={
+            "fontSize": "12px", "color": COLORS["text_muted"],
+            "textTransform": "uppercase", "letterSpacing": "0.4px",
+            "marginBottom": "12px", "fontWeight": "600",
+        }),
+        html.Div("$4.8M", style={
+            "fontSize": "36px", "fontWeight": "700",
+            "color": COLORS["red"], "marginBottom": "4px",
+        }),
+        html.Div([
+            html.Span("847 incidents", style={
+                "fontSize": "13px", "color": COLORS["white"],
+                "fontWeight": "500",
+            }),
+            trend_indicator("down", "-12% vs prior month"),
+        ], style={"marginBottom": "20px"}),
+        progress_row("Card Fraud", "$2.1M", 44, COLORS["red"]),
+        progress_row("Wire Fraud", "$1.4M", 29, COLORS["yellow"]),
+        progress_row("Account Takeover", "$0.8M", 17, COLORS["purple"]),
+        progress_row("Identity Theft", "$0.5M", 10, COLORS["blue"]),
+    ]
+    fraud_panel = html.Div(fraud_detail_children)
+
+    # ── Grid item 4: False positive rate (1x1) ───────────────────────
+    fp_sparkline_vals = [8.2, 7.9, 8.5, 7.4, 6.8, 7.1, 6.5, 6.2,
+                         5.9, 5.6, 5.8, 5.3, 4.9, 5.1, 4.7, 4.4]
+    fp_panel = metric_with_sparkline(
+        "False Positive Rate",
+        "4.4%",
+        fp_sparkline_vals,
+        accent="green",
+    )
+
+    # ── Grid item 5: Blocked transactions (wide, 2x1) ────────────────
+    blocked_months = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+                      "Jan", "Feb", "Mar"]
+    blocked_counts = [3420, 3890, 4210, 3780, 4560, 5120, 4870, 5340, 5680]
+    blocked_fig = go.Figure(go.Bar(
+        x=blocked_months, y=blocked_counts,
+        marker_color=COLORS["purple"],
+        text=[f"{v:,}" for v in blocked_counts],
+        textposition="outside",
+        textfont=dict(color=COLORS["text_muted"], size=10),
+    ))
+    blocked_fig.update_layout(**dark_chart_layout(
+        height=160, margin=dict(l=40, r=16, t=28, b=28),
+        title=dict(text="Blocked Transactions (Monthly)",
+                   font=dict(size=12, color=COLORS["text_muted"])),
+        yaxis=dict(showgrid=True, gridcolor=COLORS["border"],
+                   color=COLORS["text_muted"]),
+        xaxis=dict(showgrid=False, color=COLORS["text_muted"]),
+    ))
+    blocked_panel = html.Div([
+        dcc.Graph(figure=blocked_fig, config=CHART_CONFIG,
+                  style={"height": "160px"}),
+        html.Div(style={"display": "flex", "justifyContent": "space-between",
+                         "marginTop": "8px"}, children=[
+            html.Div([
+                html.Div("Total Blocked (MTD)", style={
+                    "fontSize": "11px", "color": COLORS["text_muted"],
+                    "textTransform": "uppercase"}),
+                html.Div("5,680", style={
+                    "fontSize": "20px", "fontWeight": "700",
+                    "color": COLORS["purple"]}),
+            ]),
+            html.Div([
+                html.Div("Block Rate", style={
+                    "fontSize": "11px", "color": COLORS["text_muted"],
+                    "textTransform": "uppercase"}),
+                html.Div("99.2%", style={
+                    "fontSize": "20px", "fontWeight": "700",
+                    "color": COLORS["green"]}),
+            ]),
+        ]),
     ])
 
+    # ── Grid item 6: Investigation backlog (1x1) ─────────────────────
+    backlog_children = [
+        html.Div("Investigation Backlog", style={
+            "fontSize": "11px", "color": COLORS["text_muted"],
+            "textTransform": "uppercase", "letterSpacing": "0.4px",
+            "marginBottom": "8px", "fontWeight": "600",
+        }),
+        html.Div("127", style={
+            "fontSize": "28px", "fontWeight": "700",
+            "color": COLORS["yellow"], "marginBottom": "12px",
+        }),
+        progress_row("Critical", "12 cases", 9, COLORS["red"]),
+        progress_row("High", "34 cases", 27, COLORS["yellow"]),
+        progress_row("Medium", "51 cases", 40, COLORS["blue"]),
+        progress_row("Low", "30 cases", 24, COLORS["text_muted"]),
+    ]
+    backlog_panel = html.Div(backlog_children)
 
-# ===================================================================
-# 6. render_customer  –  Customer & Distribution
-# ===================================================================
-
-def render_customer(cfg):
-    """Customer & Distribution page with segmentation, LTV, and churn analytics."""
-
-    kpi_cards = _kpi_grid([
-        _build_kpi_card("Customer LTV", "$4,200", "blue", "fa-chart-line"),
-        _build_kpi_card("NPS", "38", "green", "fa-arrow-trend-up"),
-        _build_kpi_card("Churn Risk", "12.4K", "red", "fa-triangle-exclamation"),
-        _build_kpi_card("Digital Adoption", "67%", "purple", "fa-bolt"),
-    ])
-
-    # Customer Segments
-    segment_headers = ["Segment", "Customers", "Avg LTV", "Products Held", "NPS", "Churn Risk"]
-    segment_rows = [
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Mass", bold=True), _td("8.4M", mono=True),
-            _td("$1,200", mono=True), _td("2.1"),
-            _td("32"), _status_td("Medium", "Low"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Affluent", bold=True), _td("3.2M", mono=True),
-            _td("$4,800", mono=True), _td("3.4"),
-            _td("42"), _status_td("Low", "Healthy"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("HNW", bold=True), _td("0.8M", mono=True),
-            _td("$24,500", mono=True), _td("5.2"),
-            _td("48"), _status_td("Low", "Healthy"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("UHNW", bold=True), _td("0.1M", mono=True),
-            _td("$142,000", mono=True), _td("7.8"),
-            _td("52"), _status_td("Low", "Healthy"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("SMB", bold=True), _td("1.4M", mono=True),
-            _td("$8,400", mono=True), _td("4.1"),
-            _td("38"), _status_td("Medium", "Low"),
-        ]),
-        html.Tr(style=_ROW_STYLE, children=[
-            _td("Corporate", bold=True), _td("0.3M", mono=True),
-            _td("$48,000", mono=True), _td("6.4"),
-            _td("44"), _status_td("Low", "Healthy"),
-        ]),
+    # ── Assemble grid ─────────────────────────────────────────────────
+    grid_items = [
+        {"col_span": 1, "row_span": 1, "content": gauge_panel},
+        {"col_span": 1, "row_span": 1, "content": txn_panel},
+        {"col_span": 1, "row_span": 2, "content": fraud_panel},
+        {"col_span": 1, "row_span": 1, "content": fp_panel},
+        {"col_span": 2, "row_span": 1, "content": blocked_panel},
+        {"col_span": 1, "row_span": 1, "content": backlog_panel},
     ]
 
-    segment_table = html.Div(style=_SECTION_CARD_STYLE, children=[
-        html.Div("Customer Segments", style={
-            "fontSize": "15px", "fontWeight": "600", "color": COLORS["white"], "marginBottom": "16px"}),
-        _build_table(segment_headers, segment_rows),
-    ])
+    return layout_grid(
+        title="Fraud & Cyber Security",
+        subtitle="Real-time threat monitoring, fraud detection, and "
+                 "investigation pipeline across all channels",
+        grid_items=grid_items,
+    )
 
-    return html.Div(children=[
-        _page_header("Customer & Distribution",
-                     "Segment analytics, lifetime value & distribution channel performance"),
-        html.Div(className="content-area", children=[kpi_cards, segment_table]),
-    ])
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 7. OPERATIONS — layout_table (Style B variant)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def render_operations(cfg):
+    """Operational systems view with filters, KPIs, and a rich table of
+    systems showing health progress bars and status badges."""
+
+    # ── Filters ───────────────────────────────────────────────────────
+    filters = [
+        {"label": "Region", "options": ["All Regions", "Americas", "EMEA",
+                                         "APAC"]},
+        {"label": "System", "options": ["All Systems", "Core Banking",
+                                         "Trading Platform", "Settlement",
+                                         "Risk Engine"]},
+        {"label": "Priority", "options": ["All", "P1", "P2", "P3", "P4"]},
+    ]
+
+    # ── KPI strip ─────────────────────────────────────────────────────
+    kpis = [
+        {"label": "STP Rate", "value": "97.8%", "accent": "green"},
+        {"label": "Settlement T+1", "value": "99.2%", "accent": "blue"},
+        {"label": "System Uptime", "value": "99.97%", "accent": "green"},
+        {"label": "Open Incidents", "value": "7", "accent": "yellow"},
+        {"label": "Avg MTTR", "value": "23 min", "accent": "purple"},
+    ]
+
+    # ── Operations table data ─────────────────────────────────────────
+    headers = ["System", "Region", "Health", "STP %", "Uptime",
+               "Incidents", "Last Incident", "Status"]
+    col_widths = ["16%", "10%", "14%", "10%", "10%", "10%", "16%", "14%"]
+
+    systems = [
+        ("Core Banking Engine", "Americas", 98, "99.4%", "99.99%",
+         "0", "12 days ago", "Healthy"),
+        ("Equities Trading Platform", "Americas", 94, "98.7%", "99.98%",
+         "1", "3h ago", "Healthy"),
+        ("FICC Trading Engine", "Americas", 87, "97.2%", "99.95%",
+         "2", "1h 15m ago", "Warning"),
+        ("FX Settlement Gateway", "EMEA", 96, "99.1%", "99.99%",
+         "0", "8 days ago", "Healthy"),
+        ("Risk Calc Engine", "Americas", 72, "95.8%", "99.91%",
+         "3", "28 min ago", "Warning"),
+        ("Margin & Collateral", "EMEA", 91, "98.3%", "99.97%",
+         "1", "6h ago", "Healthy"),
+        ("Regulatory Reporting", "APAC", 88, "97.6%", "99.96%",
+         "1", "4h 20m ago", "Healthy"),
+        ("Client Onboarding", "EMEA", 95, "98.9%", "99.98%",
+         "0", "18 days ago", "Healthy"),
+        ("Payment Processing", "APAC", 64, "93.2%", "99.84%",
+         "4", "14 min ago", "Critical"),
+        ("Data Warehouse / ETL", "Americas", 82, "96.5%", "99.93%",
+         "2", "2h 40m ago", "Low"),
+        ("Anti-Money Laundering", "EMEA", 93, "98.5%", "99.97%",
+         "0", "21 days ago", "Healthy"),
+        ("Market Data Feed", "APAC", 76, "96.1%", "99.89%",
+         "3", "45 min ago", "Warning"),
+    ]
+
+    rows = []
+    for (sys_name, region, health, stp, uptime,
+         incidents, last_inc, status) in systems:
+        if health >= 90:
+            health_color = COLORS["green"]
+        elif health >= 75:
+            health_color = COLORS["yellow"]
+        else:
+            health_color = COLORS["red"]
+
+        rows.append(html.Tr([
+            td(sys_name, bold=True),
+            td(region),
+            progress_td(health, health_color),
+            td(stp, mono=True),
+            td(uptime, mono=True, color=COLORS["green"]),
+            td(incidents, mono=True,
+               color=COLORS["red"] if int(incidents) > 2
+               else COLORS["white"]),
+            td(last_inc, color=COLORS["text_muted"]),
+            status_td(status),
+        ]))
+
+    table = rich_table(headers, rows, col_widths)
+
+    return layout_table(
+        title="Operations & Infrastructure",
+        subtitle="System health, settlement processing, and incident "
+                 "management across all regions and platforms",
+        filters=filters,
+        kpi_items=kpis,
+        table_component=table,
+    )

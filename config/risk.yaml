@@ -1,0 +1,413 @@
+# ============================================================
+# Blueprint RiskIQ - Enterprise Risk Management & Compliance
+# Configuration for the RiskIQ vertical in Blueprint IQ
+# ============================================================
+
+# ----------------------------------------------------------
+# App Metadata
+# ----------------------------------------------------------
+app:
+  name: RiskIQ
+  title: "Blueprint RiskIQ"
+  subtitle: "Enterprise Risk Management & Compliance"
+  catalog: risk_iq
+  version: "1.0.0"
+  description: "Comprehensive enterprise risk management platform covering credit, market, operational, cyber, and regulatory risk."
+
+# ----------------------------------------------------------
+# Brand / Theme
+# ----------------------------------------------------------
+brand:
+  primary_color: '#4B7BF5'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#F59E0B'
+    critical: '#EF4444'
+  logo: "assets/riskiq_logo.svg"
+  font_family: "Inter, sans-serif"
+
+# ----------------------------------------------------------
+# Data Configuration
+# ----------------------------------------------------------
+data:
+  risk_types:
+    - Credit Risk
+    - Market Risk
+    - Operational Risk
+    - Liquidity Risk
+    - Cyber Risk
+    - Regulatory Risk
+    - Reputational Risk
+    - Strategic Risk
+  business_units:
+    - Retail Banking
+    - Commercial Banking
+    - Investment Banking
+    - Wealth Management
+    - Treasury
+    - Insurance
+    - Asset Management
+  regions:
+    - North America
+    - Europe
+    - Asia Pacific
+    - Latin America
+    - Middle East & Africa
+  risk_levels:
+    - Low
+    - Medium
+    - High
+    - Critical
+  risk_frameworks:
+    - Basel III
+    - COSO ERM
+    - ISO 31000
+    - NIST CSF
+    - SOX
+  currencies:
+    - USD
+    - EUR
+    - GBP
+    - JPY
+    - CHF
+  time_horizons:
+    - 1D
+    - 10D
+    - 1M
+    - 3M
+    - 1Y
+
+# ----------------------------------------------------------
+# ML Models
+# ----------------------------------------------------------
+ml:
+  credit_default_model:
+    name: "Credit Default Predictor"
+    algorithm: "XGBClassifier"
+    features:
+      - debt_to_income_ratio
+      - credit_utilization
+      - payment_history_score
+      - loan_to_value_ratio
+      - employment_tenure_months
+      - delinquency_count_12m
+      - industry_sector_risk_score
+      - macroeconomic_stress_index
+    target_metric: auc_roc
+    target_value: 0.94
+  market_anomaly_model:
+    name: "Market Anomaly Detector"
+    algorithm: "IsolationForest"
+    features:
+      - intraday_pnl_volatility
+      - var_utilization_ratio
+      - greeks_delta_exposure
+      - bid_ask_spread_z_score
+      - volume_deviation
+      - correlation_regime_indicator
+    target_metric: precision
+    target_value: 0.89
+  operational_loss_model:
+    name: "Operational Loss Forecaster"
+    algorithm: "BayesianTimeSeries"
+    features:
+      - historical_loss_amount
+      - incident_count_30d
+      - control_effectiveness_score
+      - employee_turnover_rate
+      - system_downtime_hours
+      - audit_finding_severity
+    target_metric: mape
+    target_value: 12.3
+
+# ----------------------------------------------------------
+# Pages / Navigation
+# ----------------------------------------------------------
+pages:
+  - id: dashboard
+    label: "Risk Command Center"
+    icon: fa-shield-halved
+    group: ""
+    enabled: true
+
+  - id: enterprise_risk
+    label: "Enterprise Risk"
+    icon: fa-building
+    group: "Risk Intelligence"
+    enabled: true
+
+  - id: credit_risk
+    label: "Credit Risk"
+    icon: fa-credit-card
+    group: "Risk Intelligence"
+    enabled: true
+
+  - id: market_risk
+    label: "Market Risk"
+    icon: fa-chart-line
+    group: "Market & Trading"
+    enabled: true
+
+  - id: operational_risk
+    label: "Operational Risk"
+    icon: fa-gears
+    group: "Market & Trading"
+    enabled: true
+
+  - id: compliance
+    label: "Compliance & Regulatory"
+    icon: fa-scale-balanced
+    group: "Governance"
+    enabled: true
+
+  - id: cyber_risk
+    label: "Cyber Risk"
+    icon: fa-shield-virus
+    group: "Governance"
+    enabled: true
+
+# ----------------------------------------------------------
+# Genie - AI Assistant
+# ----------------------------------------------------------
+genie:
+  sample_questions:
+    # --- Enterprise Risk Overview (15) ---
+    - "What is our current enterprise-wide risk score and how has it trended over the past quarter?"
+    - "Which business unit contributes the most to aggregate risk exposure?"
+    - "Show me a breakdown of risk-weighted assets by category."
+    - "What are the top 10 risks across all risk types ranked by expected loss?"
+    - "How does our economic capital compare to regulatory capital requirements?"
+    - "What is the current risk appetite utilization across all risk pillars?"
+    - "Summarize the key risk indicators that breached their thresholds this month."
+    - "Which risk committees have overdue action items from the last review cycle?"
+    - "Provide a heat map of risk concentration across business units and regions."
+    - "What is the correlation between our top five risk exposures?"
+    - "How has the enterprise risk profile changed since the last board report?"
+    - "List all emerging risks identified in the past 90 days."
+    - "What is our total economic capital allocation versus deployed capital?"
+    - "Show the trend of risk-adjusted return on capital by business segment."
+    - "What scenario would cause our aggregate risk to exceed the board-approved appetite?"
+
+    # --- Credit Risk (15) ---
+    - "What is the current probability of default distribution across the loan portfolio?"
+    - "Show the top 20 counterparties by credit exposure."
+    - "What is our total expected credit loss provision and how does it compare to last quarter?"
+    - "Which industry sectors have the highest non-performing loan ratios?"
+    - "What is the migration pattern of credit ratings over the past 12 months?"
+    - "How much credit concentration risk do we have in the commercial real estate sector?"
+    - "Show the vintage analysis for the 2024 origination cohort."
+    - "What is the loss given default estimate for our secured versus unsecured portfolios?"
+    - "List all watchlist credits that have been downgraded in the past 30 days."
+    - "What is the stressed expected credit loss under the severe recession scenario?"
+    - "Compare actual versus predicted default rates for each risk grade."
+    - "What is the average recovery rate by collateral type?"
+    - "Show the credit VaR at 99.9% confidence for the wholesale portfolio."
+    - "Which loan covenants have the most frequent breaches?"
+    - "What is the exposure at default for our top 50 syndicated loan positions?"
+
+    # --- Market Risk (15) ---
+    - "What is today's firm-wide Value at Risk at the 99% confidence level?"
+    - "Which trading desk had the largest VaR breach in the past month?"
+    - "Show the P&L attribution by risk factor for the fixed income portfolio."
+    - "What is our current interest rate DV01 exposure across all curves?"
+    - "How does our actual P&L distribution compare to the VaR model predictions?"
+    - "What is the stressed VaR under the 2008 financial crisis scenario?"
+    - "Show the Greeks exposure summary for the equity derivatives book."
+    - "What are our top 10 FX positions by notional value?"
+    - "How many backtesting exceptions have we had in the past 250 trading days?"
+    - "What is the incremental risk charge for the credit trading portfolio?"
+    - "Show the historical simulation VaR versus parametric VaR comparison."
+    - "What is our net commodity exposure across energy and metals?"
+    - "Calculate the expected shortfall at 97.5% for the rates trading desk."
+    - "What is the basis risk between our hedges and underlying positions?"
+    - "Show the term structure of VaR by maturity bucket."
+
+    # --- Operational Risk (15) ---
+    - "What is the total operational loss amount year-to-date by event type?"
+    - "Show the frequency and severity distribution of operational incidents this quarter."
+    - "Which business line has the highest operational risk capital charge?"
+    - "List all high-severity incidents that are still open and unresolved."
+    - "What are the top control deficiencies identified in the latest RCSA cycle?"
+    - "How does our operational loss experience compare to industry benchmarks?"
+    - "Show the trend of near-miss events over the past 12 months."
+    - "What is the operational VaR by Basel event type category?"
+    - "Which key risk indicators for operational risk are in amber or red status?"
+    - "What is the status of remediation actions from the last internal audit?"
+    - "Show the scenario analysis results for a major IT system outage."
+    - "How many process exceptions were granted in the current quarter?"
+    - "What is the third-party vendor risk assessment summary?"
+    - "List all operational risk events with losses exceeding $1 million."
+    - "What is the expected versus unexpected operational loss distribution?"
+
+    # --- Regulatory & Compliance (15) ---
+    - "What is our current Basel III CET1 capital ratio and buffer status?"
+    - "List all upcoming regulatory deadlines in the next 90 days."
+    - "What is the status of our stress testing submissions to the Federal Reserve?"
+    - "How many compliance violations were recorded this quarter by regulation type?"
+    - "Show the AML/KYC suspicious activity report filing trend over the past year."
+    - "What is our Liquidity Coverage Ratio and Net Stable Funding Ratio?"
+    - "List all open regulatory findings and their remediation progress."
+    - "What is the impact of the latest Basel III endgame proposal on our RWA?"
+    - "Show the compliance training completion rates by business unit."
+    - "What are the results of the most recent fair lending analysis?"
+    - "How many sanctions screening alerts were generated and resolved this month?"
+    - "What is our leverage ratio and how much headroom do we have?"
+    - "Summarize the findings from the last regulatory examination."
+    - "What is the projected impact of IFRS 9 stage migration on provisions?"
+    - "List all material regulatory change initiatives currently in progress."
+
+    # --- Cyber Security (15) ---
+    - "What is the current cyber risk score across all critical assets?"
+    - "How many critical vulnerabilities remain unpatched beyond the SLA window?"
+    - "Show the trend of phishing simulation click rates over the past six months."
+    - "What is the mean time to detect and respond for security incidents this quarter?"
+    - "List all third-party vendors with a cyber risk rating below acceptable threshold."
+    - "How many data loss prevention alerts were triggered in the past 30 days?"
+    - "What is the status of our penetration testing remediation items?"
+    - "Show the ransomware readiness assessment results by business unit."
+    - "What is our current cyber insurance coverage versus estimated maximum loss?"
+    - "How many privileged access accounts exist and what percentage had recent reviews?"
+    - "What is the NIST Cybersecurity Framework maturity score by function?"
+    - "List all security incidents classified as severity 1 or 2 this year."
+    - "What is the patch compliance rate for internet-facing systems?"
+    - "Show the identity and access management anomaly detection results."
+    - "What are the key findings from the latest SOC 2 Type II audit?"
+
+    # --- Liquidity & Treasury (10) ---
+    - "What is our current cash position and projected liquidity for the next 30 days?"
+    - "Show the maturity mismatch profile across all funding sources."
+    - "What is the concentration risk in our funding base by counterparty type?"
+    - "How does our liquidity stress test result compare to regulatory minimums?"
+    - "What is the intraday liquidity utilization trend across payment systems?"
+    - "Show the breakdown of high-quality liquid assets in our liquidity buffer."
+    - "What is the cost of funds trend and how does it compare to peer banks?"
+    - "List all committed credit facilities and their current utilization rates."
+    - "What is the projected impact of a two-notch credit rating downgrade on collateral calls?"
+    - "Show the contingency funding plan trigger status for all early warning indicators."
+
+  tables:
+    - name: risk_exposures
+      display_name: "Risk Exposures"
+      description: "Aggregated risk exposure data across all risk types, business units, and regions."
+      columns:
+        - exposure_id
+        - risk_type
+        - business_unit
+        - region
+        - gross_exposure
+        - net_exposure
+        - risk_weighted_amount
+        - risk_rating
+        - last_review_date
+
+    - name: credit_portfolio
+      display_name: "Credit Portfolio"
+      description: "Loan and counterparty credit portfolio with default probabilities and loss estimates."
+      columns:
+        - loan_id
+        - counterparty_name
+        - industry_sector
+        - exposure_at_default
+        - probability_of_default
+        - loss_given_default
+        - expected_loss
+        - risk_grade
+        - maturity_date
+        - collateral_type
+
+    - name: market_risk_positions
+      display_name: "Market Risk Positions"
+      description: "Trading positions with associated market risk metrics and VaR calculations."
+      columns:
+        - position_id
+        - trading_desk
+        - asset_class
+        - instrument_type
+        - notional_value
+        - market_value
+        - var_1d_99
+        - delta
+        - gamma
+        - vega
+        - currency
+
+    - name: operational_incidents
+      display_name: "Operational Incidents"
+      description: "Operational risk events, losses, and near-miss incidents."
+      columns:
+        - incident_id
+        - event_type
+        - business_line
+        - severity
+        - loss_amount
+        - discovery_date
+        - resolution_date
+        - root_cause
+        - status
+        - remediation_owner
+
+    - name: compliance_findings
+      display_name: "Compliance Findings"
+      description: "Regulatory and compliance findings, violations, and remediation tracking."
+      columns:
+        - finding_id
+        - regulation
+        - finding_type
+        - severity
+        - business_unit
+        - identified_date
+        - due_date
+        - status
+        - remediation_plan
+        - responsible_officer
+
+    - name: cyber_threat_events
+      display_name: "Cyber Threat Events"
+      description: "Cybersecurity incidents, vulnerability assessments, and threat intelligence."
+      columns:
+        - event_id
+        - threat_type
+        - affected_asset
+        - severity
+        - detection_timestamp
+        - response_timestamp
+        - resolution_timestamp
+        - attack_vector
+        - impact_assessment
+        - status
+
+# ----------------------------------------------------------
+# Dashboard
+# ----------------------------------------------------------
+dashboard:
+  kpis:
+    - title: "Total Value at Risk (99%)"
+      value: "$142.8M"
+      accent: "critical"
+    - title: "Risk-Adjusted Capital Ratio"
+      value: "14.7%"
+      accent: "healthy"
+    - title: "Credit Default Rate"
+      value: "1.23%"
+      accent: "warning"
+    - title: "Operational Loss YTD"
+      value: "$38.4M"
+      accent: "warning"
+    - title: "CET1 Capital Ratio"
+      value: "13.2%"
+      accent: "healthy"
+    - title: "Liquidity Coverage Ratio"
+      value: "128%"
+      accent: "healthy"
+    - title: "Cyber Risk Score"
+      value: "B+"
+      accent: "warning"
+    - title: "Open Compliance Findings"
+      value: "47"
+      accent: "critical"
+    - title: "Risk Appetite Utilization"
+      value: "78%"
+      accent: "warning"
+    - title: "Expected Credit Loss"
+      value: "$215.6M"
+      accent: "critical"

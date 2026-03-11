@@ -1,0 +1,317 @@
+app:
+  name: ManufacturingIQ
+  title: Blueprint ManufacturingIQ
+  subtitle: "Production Analytics, Quality Control & Supply Chain"
+  catalog: manufacturing_iq
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
+brand:
+  primary_color: '#4B7BF5'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#EAB308'
+    critical: '#EF4444'
+data:
+  facilities:
+  - Austin Assembly Plant
+  - Detroit Powertrain Center
+  - Shanghai Precision Works
+  - Stuttgart Advanced Manufacturing
+  - Guadalajara Electronics Hub
+  product_lines:
+  - Industrial Actuators
+  - Precision Bearings
+  - EV Drive Units
+  - Sensor Modules
+  - Control Panels
+  regions:
+  - NA-Central
+  - NA-East
+  - EU-West
+  - EU-Central
+  - APAC-East
+  - LATAM-North
+  shifts:
+  - Morning (06:00–14:00)
+  - Afternoon (14:00–22:00)
+  - Night (22:00–06:00)
+  supplier_tiers:
+  - Tier 1 – Direct
+  - Tier 2 – Sub-assembly
+  - Tier 3 – Raw Material
+  production_metrics:
+    oee: 0.847
+    first_pass_yield: 0.963
+    throughput_units_per_hour: 1240
+    cycle_time_seconds: 42.6
+    takt_time_seconds: 48.0
+    changeover_time_minutes: 18.4
+    planned_downtime_pct: 0.05
+    unplanned_downtime_pct: 0.032
+    batch_size_avg: 500
+    wip_units: 3200
+  quality_metrics:
+    defect_rate_ppm: 620
+    scrap_rate_pct: 0.018
+    rework_rate_pct: 0.027
+    cpk_avg: 1.54
+    customer_complaints_monthly: 12
+    ncr_open: 34
+    capa_closure_rate: 0.91
+    spc_out_of_control_pct: 0.004
+  maintenance_metrics:
+    mtbf_hours: 1680
+    mttr_hours: 2.4
+    planned_maintenance_compliance: 0.94
+    spare_parts_availability: 0.97
+    work_orders_open: 87
+    predictive_alerts_active: 14
+    equipment_availability: 0.962
+  supply_chain_metrics:
+    on_time_delivery_pct: 0.93
+    supplier_lead_time_days_avg: 14.2
+    inventory_turns: 8.6
+    raw_material_days_on_hand: 22
+    finished_goods_days_on_hand: 5.4
+    freight_cost_per_unit: 3.80
+    supplier_quality_score_avg: 0.91
+    purchase_order_cycle_days: 4.2
+  energy_metrics:
+    kwh_per_unit: 12.4
+    carbon_tonnes_monthly: 480
+    renewable_energy_pct: 0.34
+    water_usage_gallons_monthly: 210000
+    waste_diversion_rate: 0.78
+    energy_cost_per_unit: 1.62
+  workforce_metrics:
+    headcount: 2840
+    overtime_pct: 0.12
+    absenteeism_rate: 0.038
+    training_hours_per_employee_annual: 42
+    safety_incident_rate: 1.2
+    near_miss_reports_monthly: 28
+    labor_cost_per_unit: 8.40
+    operator_efficiency: 0.91
+ml:
+  anomaly_detector:
+    name: Equipment_Anomaly_Detector
+    features:
+    - vibration_rms
+    - temperature_delta
+    - current_draw_amps
+    - acoustic_emission_db
+    - cycle_time_deviation
+    - oil_particulate_count
+    algorithm: IsolationForest
+    target_metric: f1_score
+    target_value: 0.93
+  demand_forecaster:
+    name: Demand_Forecast_Model
+    features:
+    - historical_orders_90d
+    - seasonal_index
+    - customer_backlog
+    - economic_indicator
+    - lead_time_variability
+    - promotion_flag
+    algorithm: LightGBMRegressor
+    target_metric: mape
+    target_value: 6.2
+  quality_predictor:
+    name: Quality_Defect_Predictor
+    features:
+    - raw_material_lot_score
+    - machine_age_hours
+    - ambient_temperature
+    - humidity_pct
+    - operator_experience_months
+    - tool_wear_index
+    algorithm: XGBClassifier
+    target_metric: auc_roc
+    target_value: 0.89
+pages:
+- id: dashboard
+  label: Plant Performance
+  icon: fa-industry
+  group: ""
+  enabled: true
+- id: production_analytics
+  label: Production Analytics
+  icon: fa-chart-bar
+  group: "Production Excellence"
+  enabled: true
+- id: quality_control
+  label: Quality Control
+  icon: fa-magnifying-glass-chart
+  group: "Production Excellence"
+  enabled: true
+- id: supply_chain
+  label: Supply Chain
+  icon: fa-truck-fast
+  group: "Supply Chain & Logistics"
+  enabled: true
+- id: predictive_maintenance
+  label: Predictive Maintenance
+  icon: fa-gears
+  group: "Supply Chain & Logistics"
+  enabled: true
+- id: energy_sustainability
+  label: Energy & Sustainability
+  icon: fa-leaf
+  group: "Operations"
+  enabled: true
+- id: workforce_ops
+  label: Workforce Operations
+  icon: fa-users-gear
+  group: "Operations"
+  enabled: true
+genie:
+  space_name: ManufacturingIQ Genie
+  tables:
+  - manufacturing_iq.gold.production_line_kpis
+  - manufacturing_iq.gold.quality_inspection_results
+  - manufacturing_iq.gold.equipment_health_metrics
+  - manufacturing_iq.gold.supply_chain_performance
+  - manufacturing_iq.silver.sensor_telemetry
+  - manufacturing_iq.silver.work_order_log
+  sample_questions:
+  # --- Production Performance (15) ---
+  - What is the current OEE for each production line broken down by facility?
+  - How has throughput per hour trended over the past 90 days across all facilities?
+  - What is the average cycle time by product line and how does it compare to takt time?
+  - Show me production output by shift for each facility over the past 30 days.
+  - Which production lines have the highest unplanned downtime this month?
+  - What is the changeover time trend by product line over the past quarter?
+  - How does actual production volume compare to planned production targets this week?
+  - What is the capacity utilization rate for each facility and are any lines bottlenecked?
+  - Show me the WIP inventory levels by production stage for the past 14 days.
+  - What is the average batch completion time by product line and how has it changed?
+  - Which facilities have the highest and lowest OEE and what are the main loss categories?
+  - What is the planned vs actual production schedule adherence this month?
+  - How does the production yield vary across shifts and what are the top yield loss drivers?
+  - Show me a Pareto chart of the top 10 causes of production stoppages this quarter.
+  - What is the overall equipment effectiveness availability, performance, and quality breakdown by line?
+  # --- Quality & Defects (15) ---
+  - What is the current first pass yield by product line and facility?
+  - How has the defect rate in PPM trended over the past 12 months?
+  - Which product lines have the highest scrap and rework rates this quarter?
+  - Show me the Cpk and Ppk values for critical-to-quality dimensions across all products.
+  - What are the top 5 defect types by frequency and which lines are most affected?
+  - How many non-conformance reports are currently open and what is their average age?
+  - What is the CAPA closure rate and are there any overdue corrective actions?
+  - Show me SPC control chart data for the top 3 critical process parameters.
+  - How does incoming raw material quality correlate with finished product defect rates?
+  - What is the customer complaint trend by product line over the past 6 months?
+  - Which inspection stations have the highest rejection rates and what are the root causes?
+  - How does the defect rate differ across the three shifts for each product line?
+  - What percentage of lots passed final inspection on the first attempt this month?
+  - Show me the cost of quality breakdown: prevention, appraisal, internal failure, and external failure.
+  - Are there any process parameters trending out of control based on the latest SPC analysis?
+  # --- Inventory & Supply Chain (15) ---
+  - What is the current on-time delivery rate by supplier and material category?
+  - How many days of raw material inventory do we have on hand by material type?
+  - What is the inventory turnover ratio by product line and how has it trended?
+  - Show me the supplier lead time variability for our top 20 suppliers over the past quarter.
+  - Which materials are at risk of stockout within the next 14 days?
+  - What is the finished goods inventory level by product and facility?
+  - How does our actual freight cost per unit compare to the budgeted amount by region?
+  - What is the supplier quality score distribution and which suppliers fall below our threshold?
+  - Show me purchase order cycle time by material category and identify any bottlenecks.
+  - What is the current backorder volume and estimated fulfillment timeline?
+  - How have raw material prices changed over the past 12 months for our top 10 materials?
+  - What is the inbound shipment on-time performance by carrier and origin region?
+  - Which suppliers have the most quality rejections in the past 90 days?
+  - What is the warehouse space utilization by facility and are any nearing capacity?
+  - Show me a demand vs supply gap analysis for the next 8 weeks by product line.
+  # --- Equipment & Maintenance (15) ---
+  - What is the current MTBF and MTTR by equipment type across all facilities?
+  - How many predictive maintenance alerts are active and which equipment is affected?
+  - What is the planned maintenance compliance rate by facility this month?
+  - Show me the top 10 equipment assets by unplanned downtime hours this quarter.
+  - What is the spare parts availability rate and which parts have the longest replenishment lead times?
+  - How many open work orders are there by priority level and facility?
+  - What is the equipment availability trend by production line over the past 6 months?
+  - Which machines are showing early signs of degradation based on sensor anomaly scores?
+  - What is the ratio of preventive to corrective maintenance work orders this quarter?
+  - Show me the vibration, temperature, and current draw trends for equipment flagged with alerts.
+  - What is the average time to complete a maintenance work order by type and priority?
+  - How does equipment age correlate with failure frequency and maintenance cost?
+  - What is the total maintenance cost per unit of production by facility?
+  - Which equipment types have the highest failure rates and what are the most common failure modes?
+  - Show me the remaining useful life estimates for critical equipment based on the anomaly detector model.
+  # --- Energy & Sustainability (10) ---
+  - What is the energy consumption in kWh per unit produced by facility and product line?
+  - How has our monthly carbon footprint in tonnes trended over the past 12 months?
+  - What percentage of our total energy comes from renewable sources by facility?
+  - Show me water usage trends by facility and how they compare to reduction targets.
+  - What is the waste diversion rate and how much waste is going to landfill vs recycling?
+  - How does energy cost per unit vary across shifts and what drives peak consumption?
+  - Are we on track to meet our annual sustainability goals for carbon, water, and waste?
+  - Which production processes are the most energy-intensive and are there optimization opportunities?
+  - What is the compressed air leakage rate and estimated energy loss by facility?
+  - Show me a breakdown of Scope 1, Scope 2, and Scope 3 emissions for the current quarter.
+  # --- Workforce & Safety (10) ---
+  - What is the current absenteeism rate by facility, shift, and department?
+  - How has the safety incident rate trended over the past 12 months by facility?
+  - What is the overtime percentage by facility and how does it correlate with quality metrics?
+  - Show me near-miss reports by category and facility for the past 90 days.
+  - What is the average training hours per employee and which departments are below target?
+  - How does operator efficiency vary across shifts and experience levels?
+  - What is the labor cost per unit by product line and how has it changed quarter over quarter?
+  - Which departments have the highest turnover rate and what are the top cited reasons?
+  - Show me the safety compliance audit scores by facility for the current year.
+  - What is the correlation between training completion rates and first pass yield by team?
+  # --- Cost & Finance (10) ---
+  - What is the total cost per unit by product line broken down by material, labor, and overhead?
+  - How does actual production cost compare to standard cost by product line this month?
+  - What is the manufacturing variance analysis showing price, quantity, and efficiency variances?
+  - Show me the scrap and rework cost trend by facility over the past 6 months.
+  - What is the gross margin by product line and how has it changed quarter over quarter?
+  - How much are we spending on maintenance vs capital expenditure by facility?
+  - What is the return on invested capital for each major equipment purchase made this year?
+  - Show me the energy and utility cost per unit trend and forecast for the next quarter.
+  - What is the total cost of unplanned downtime this quarter by facility and root cause?
+  - How does our cost per unit compare across facilities and what are the key cost drivers?
+  # --- General Analytics (10) ---
+  - Give me an executive summary of plant performance across all facilities for this month.
+  - What are the top 5 operational risks currently affecting our manufacturing network?
+  - How do our key metrics compare to industry benchmarks for OEE, yield, and delivery?
+  - Show me a correlation matrix between production volume, quality, maintenance, and energy metrics.
+  - What are the most significant month-over-month changes across all KPI categories?
+  - Which facility is the best performer overall and what practices can be replicated?
+  - Show me a trend analysis of our top 10 KPIs over the past 12 months with forecasts.
+  - What patterns emerge when comparing weekend vs weekday production and quality data?
+  - How does seasonal demand variability impact our production planning accuracy?
+  - Generate a balanced scorecard view covering production, quality, cost, and delivery metrics.
+dashboard:
+  kpis:
+  - title: OEE
+    value: "84.7%"
+    accent: blue
+  - title: First Pass Yield
+    value: "96.3%"
+    accent: green
+  - title: MTTR
+    value: "2.4 hrs"
+    accent: purple
+  - title: Scrap Rate
+    value: "1.8%"
+    accent: blue
+  - title: On-Time Delivery
+    value: "93%"
+    accent: green
+  - title: Throughput
+    value: "1,240 u/hr"
+    accent: purple
+  - title: Defect Rate
+    value: "620 PPM"
+    accent: blue
+  - title: Unplanned Downtime
+    value: "3.2%"
+    accent: red
+    alert: true
+  - title: Inventory Turns
+    value: "8.6x"
+    accent: green
+  - title: Energy per Unit
+    value: "12.4 kWh"
+    accent: purple

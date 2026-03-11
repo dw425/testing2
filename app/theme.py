@@ -10,17 +10,17 @@ base CSS stylesheet for the dark industrial theme.
 # ---------------------------------------------------------------------------
 
 COLORS = {
-    "blue": "#233ED8",
-    "blue_hover": "#1D35BB",
-    "dark": "#0F1115",
-    "panel": "#16181D",
-    "border": "#272A31",
-    "text_muted": "#A0A4B0",
-    "white": "#FFFFFF",
-    "green": "#22C55E",
-    "yellow": "#EAB308",
-    "red": "#EF4444",
-    "purple": "#8B5CF6",
+    "blue": "#4B7BF5",
+    "blue_hover": "#3D6BE0",
+    "dark": "#131620",
+    "panel": "#1A1F2E",
+    "border": "#272D3F",
+    "text_muted": "#8892A7",
+    "white": "#E8ECF4",
+    "green": "#34D399",
+    "yellow": "#FBBF24",
+    "red": "#F87171",
+    "purple": "#A78BFA",
 }
 
 # ---------------------------------------------------------------------------
@@ -29,29 +29,39 @@ COLORS = {
 
 STATUS_COLORS = {
     "Healthy": {
-        "bg": "rgba(34, 197, 94, 0.12)",
-        "text": "#22C55E",
-        "border": "rgba(34, 197, 94, 0.30)",
+        "bg": "rgba(52, 211, 153, 0.12)",
+        "text": "#34D399",
+        "border": "rgba(52, 211, 153, 0.30)",
     },
     "Low": {
-        "bg": "rgba(234, 179, 8, 0.12)",
-        "text": "#EAB308",
-        "border": "rgba(234, 179, 8, 0.30)",
+        "bg": "rgba(251, 191, 36, 0.12)",
+        "text": "#FBBF24",
+        "border": "rgba(251, 191, 36, 0.30)",
     },
     "Critical": {
-        "bg": "rgba(239, 68, 68, 0.12)",
-        "text": "#EF4444",
-        "border": "rgba(239, 68, 68, 0.30)",
+        "bg": "rgba(248, 113, 113, 0.12)",
+        "text": "#F87171",
+        "border": "rgba(248, 113, 113, 0.30)",
     },
     "Nominal": {
-        "bg": "rgba(34, 197, 94, 0.12)",
-        "text": "#22C55E",
-        "border": "rgba(34, 197, 94, 0.30)",
+        "bg": "rgba(52, 211, 153, 0.12)",
+        "text": "#34D399",
+        "border": "rgba(52, 211, 153, 0.30)",
     },
     "Defect": {
-        "bg": "rgba(239, 68, 68, 0.12)",
-        "text": "#EF4444",
-        "border": "rgba(239, 68, 68, 0.30)",
+        "bg": "rgba(248, 113, 113, 0.12)",
+        "text": "#F87171",
+        "border": "rgba(248, 113, 113, 0.30)",
+    },
+    "Warning": {
+        "bg": "rgba(251, 191, 36, 0.12)",
+        "text": "#FBBF24",
+        "border": "rgba(251, 191, 36, 0.30)",
+    },
+    "Info": {
+        "bg": "rgba(75, 123, 245, 0.12)",
+        "text": "#4B7BF5",
+        "border": "rgba(75, 123, 245, 0.30)",
     },
 }
 
@@ -189,12 +199,12 @@ def get_base_stylesheet() -> str:
     }}
 
     .nav-link:hover {{
-        background-color: rgba(35, 62, 216, 0.08);
+        background-color: rgba(75, 123, 245, 0.08);
         color: {COLORS["white"]};
     }}
 
     .nav-link.active {{
-        background-color: rgba(35, 62, 216, 0.15);
+        background-color: rgba(75, 123, 245, 0.15);
         color: {COLORS["blue"]};
         border-left: 3px solid {COLORS["blue"]};
     }}
@@ -223,7 +233,7 @@ def get_base_stylesheet() -> str:
     }}
 
     .genie-question {{
-        background-color: rgba(35, 62, 216, 0.06);
+        background-color: rgba(75, 123, 245, 0.06);
         border: 1px solid {COLORS["border"]};
         border-radius: 8px;
         padding: 10px 14px;
@@ -347,7 +357,7 @@ def get_base_stylesheet() -> str:
     }}
 
     .genie-msg-sql {{
-        background-color: #0F1115;
+        background-color: {COLORS["dark"]};
         color: #E2E8F0;
         padding: 10px 12px;
         border-radius: 8px;
@@ -356,7 +366,7 @@ def get_base_stylesheet() -> str:
         line-height: 1.5;
         overflow-x: auto;
         margin-top: 8px;
-        border: 1px solid #272A31;
+        border: 1px solid {COLORS["border"]};
     }}
 
     .genie-msg-source {{
@@ -377,44 +387,44 @@ def get_base_stylesheet() -> str:
     .landing-overlay {{
         height: 100vh; display: flex; flex-direction: column;
         align-items: center; justify-content: center;
-        background: linear-gradient(135deg, #0F1115 0%, #1a1d28 50%, #0F1115 100%);
+        background: linear-gradient(135deg, {COLORS["dark"]} 0%, #1a1d28 50%, {COLORS["dark"]} 100%);
     }}
     .landing-title {{ font-size: 48px; font-weight: 700; color: white; margin-bottom: 8px; }}
-    .landing-subtitle {{ font-size: 18px; color: #A0A4B0; margin-bottom: 40px; }}
+    .landing-subtitle {{ font-size: 18px; color: {COLORS["text_muted"]}; margin-bottom: 40px; }}
     .landing-enter-btn {{
-        background: #233ED8; color: white; border: none; padding: 16px 48px;
+        background: {COLORS["blue"]}; color: white; border: none; padding: 16px 48px;
         border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
         transition: background 0.2s; text-decoration: none;
     }}
-    .landing-enter-btn:hover {{ background: #1D35BB; color: white; }}
+    .landing-enter-btn:hover {{ background: {COLORS["blue_hover"]}; color: white; }}
 
     /* ---------- hub grid ---------- */
     .hub-header {{ text-align: center; padding: 48px 32px 32px; }}
     .hub-title {{ font-size: 32px; font-weight: 700; color: white; }}
-    .hub-subtitle {{ font-size: 16px; color: #A0A4B0; margin-top: 8px; }}
+    .hub-subtitle {{ font-size: 16px; color: {COLORS["text_muted"]}; margin-top: 8px; }}
     .hub-grid {{
         display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 24px; padding: 0 48px 48px; max-width: 1400px; margin: 0 auto;
     }}
     .vertical-card {{
-        background: #16181D; border: 1px solid #272A31; border-radius: 16px;
+        background: {COLORS["panel"]}; border: 1px solid {COLORS["border"]}; border-radius: 16px;
         padding: 32px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: block;
     }}
-    .vertical-card:hover {{ border-color: #233ED8; transform: translateY(-4px); box-shadow: 0 8px 32px rgba(35,62,216,0.15); }}
+    .vertical-card:hover {{ border-color: {COLORS["blue"]}; transform: translateY(-4px); box-shadow: 0 8px 32px rgba(35,62,216,0.15); }}
     .vertical-card-icon {{ width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px; }}
     .vertical-card-title {{ font-size: 20px; font-weight: 700; color: white; margin-bottom: 4px; }}
-    .vertical-card-subtitle {{ font-size: 14px; color: #A0A4B0; margin-bottom: 16px; }}
+    .vertical-card-subtitle {{ font-size: 14px; color: {COLORS["text_muted"]}; margin-bottom: 16px; }}
     .vertical-card-stats {{ display: flex; gap: 24px; }}
-    .vertical-card-stat {{ font-size: 12px; color: #A0A4B0; }}
+    .vertical-card-stat {{ font-size: 12px; color: {COLORS["text_muted"]}; }}
     .vertical-card-stat strong {{ color: white; font-size: 14px; display: block; }}
 
     /* ---------- back to hub link ---------- */
     .back-to-hub {{
         display: flex; align-items: center; gap: 8px; padding: 12px 20px; margin-bottom: 8px;
-        color: #A0A4B0; text-decoration: none; font-size: 13px; font-weight: 500;
-        border-bottom: 1px solid #272A31; transition: color 0.15s;
+        color: {COLORS["text_muted"]}; text-decoration: none; font-size: 13px; font-weight: 500;
+        border-bottom: 1px solid {COLORS["border"]}; transition: color 0.15s;
     }}
-    .back-to-hub:hover {{ color: #233ED8; }}
+    .back-to-hub:hover {{ color: {COLORS["blue"]}; }}
 
     /* ---------- utilities ---------- */
     .text-muted {{ color: {COLORS["text_muted"]}; }}
