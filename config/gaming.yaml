@@ -111,7 +111,7 @@ pages:
   enabled: true
 - id: know_player
   label: Know the Player
-  icon: fa-user-magnifying-glass
+  icon: fa-users-viewfinder
   group: "Next Gen Player Experience"
   enabled: true
 - id: grow_playerbase
