@@ -224,20 +224,14 @@ def build_layout() -> html.Div:
                 children=[
                     # Sidebar placeholder -- populated by callback
                     html.Div(id="sidebar-container"),
-                    # Content area with loading indicator for page transitions
-                    dcc.Loading(
-                        type="circle",
-                        color=COLORS["blue"],
-                        children=html.Div(
-                            id="page-content",
-                            style={
-                                "flex": "1",
-                                "overflowY": "auto",
-                                "backgroundColor": COLORS["dark"],
-                                "minHeight": "100vh",
-                            },
-                        ),
-                        style={"flex": "1", "overflow": "hidden"},
+                    # Content area
+                    html.Div(
+                        id="page-content",
+                        style={
+                            "flex": "1",
+                            "overflowY": "auto",
+                            "backgroundColor": COLORS["dark"],
+                        },
                     ),
                 ],
             ),
