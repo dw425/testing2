@@ -306,6 +306,18 @@ def data_table(columns, data, page_size=10, style_conditions=None):
 
     Auto-applies color coding to status, severity, and risk_grade columns.
     """
+    if not data or not columns:
+        return html.Div(
+            className="card",
+            style={"padding": "40px", "textAlign": "center"},
+            children=[
+                html.I(className="fa-solid fa-table",
+                       style={"fontSize": "32px", "color": COLORS["text_muted"],
+                              "marginBottom": "12px", "display": "block"}),
+                html.Div("No data available",
+                         style={"color": COLORS["text_muted"], "fontSize": "14px"}),
+            ],
+        )
     col_ids = {c["id"] for c in columns} if columns else set()
 
     conditions = [

@@ -645,15 +645,40 @@ def route_page(pathname):
     try:
         content = renderer()
     except Exception as e:
-        content = html.Div(
-            className="content-area",
-            children=[
+        content = html.Div([
+            html.Div(className="page-header", children=[
+                html.H1("Something went wrong"),
+                html.P("An error occurred while loading this page"),
+            ]),
+            html.Div(className="content-area", children=[
                 html.Div(className="card", children=[
-                    html.H3("Error loading page", style={"color": COLORS["red"]}),
-                    html.P(str(e), style={"color": COLORS["text_muted"], "marginTop": "8px"}),
+                    html.Div(
+                        style={"display": "flex", "alignItems": "center", "gap": "12px",
+                               "marginBottom": "16px"},
+                        children=[
+                            html.I(className="fa-solid fa-triangle-exclamation",
+                                   style={"color": COLORS["red"], "fontSize": "24px"}),
+                            html.Span("Error Loading Page",
+                                      style={"fontSize": "18px", "fontWeight": "600"}),
+                        ],
+                    ),
+                    html.Pre(str(e), style={
+                        "color": COLORS["text_muted"], "fontSize": "12px",
+                        "backgroundColor": COLORS["dark"], "padding": "12px",
+                        "borderRadius": "8px", "fontFamily": "'Courier New', monospace",
+                        "whiteSpace": "pre-wrap", "overflowX": "auto",
+                    }),
+                    html.Div(
+                        style={"marginTop": "16px"},
+                        children=dcc.Link(
+                            "\u2190 Back to Demo Hub", href="/hub",
+                            style={"color": COLORS["blue"], "textDecoration": "none",
+                                   "fontSize": "14px"},
+                        ),
+                    ),
                 ]),
-            ],
-        )
+            ]),
+        ])
 
     sidebar_children = build_sidebar(vertical, page_id)
     sidebar_style = {"width": "220px", "minWidth": "220px", "flexShrink": "0", "position": "relative"}
@@ -824,7 +849,9 @@ def _render_chat_messages(history):
             elements.append(html.Div(text, className="genie-msg-user"))
         elif role == "ai":
             ai_children = _parse_ai_text(text)
-            elements.append(html.Div(ai_children, className="genie-msg-ai"))
+            is_error = msg.get("source") == "error"
+            msg_cls = "genie-msg-ai genie-msg-error" if is_error else "genie-msg-ai"
+            elements.append(html.Div(ai_children, className=msg_cls))
 
             sql = msg.get("sql")
             if sql:
@@ -901,6 +928,10 @@ def handle_genie_query(send_clicks, n_submit, input_value, chat_history, active_
         "source": result.get("source", "demo"),
         "data": result.get("data"),
     })
+
+    # Cap chat history to prevent unbounded memory growth
+    if len(chat_history) > 50:
+        chat_history = chat_history[-50:]
 
     rendered = _render_chat_messages(chat_history)
     return rendered, "", chat_history

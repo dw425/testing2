@@ -374,6 +374,11 @@ def get_base_stylesheet() -> str:
         color: #111827;
     }}
 
+    .genie-msg-error {{
+        border-left: 3px solid #F87171;
+        background-color: #FEF2F2 !important;
+    }}
+
     .genie-msg-sql {{
         background-color: {COLORS["dark"]};
         color: #E2E8F0;
