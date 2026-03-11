@@ -378,12 +378,15 @@ def _render_hub():
                 children=[
                     html.Div(
                         className="hub-title",
-                        style={"display": "flex", "alignItems": "center",
-                               "justifyContent": "center", "gap": "16px"},
+                        style={"display": "flex", "alignItems": "baseline",
+                               "justifyContent": "center", "gap": "12px"},
                         children=[
                             html.Img(src="/assets/blueprint-logo.jpg",
-                                     style={"height": "40px"}),
-                            html.Span("Demo Hub"),
+                                     style={"height": "38px", "alignSelf": "center"}),
+                            html.Span("Demo Hub", style={"fontSize": "0.7em",
+                                                          "fontWeight": "400",
+                                                          "opacity": "0.85",
+                                                          "paddingLeft": "4px"}),
                         ],
                     ),
                     html.Div(
