@@ -186,6 +186,8 @@ def build_layout() -> html.Div:
             dcc.Store(id="genie-chat-history", data=[]),
             # Store for chat modal visibility
             dcc.Store(id="chat-modal-open", data=False),
+            # Store for tracking which vertical the genie chat is configured for
+            dcc.Store(id="genie-current-vertical", data=None),
             # Outer flex container
             html.Div(
                 style={
@@ -301,17 +303,45 @@ def build_layout() -> html.Div:
                         ],
                     ),
 
-                    # Chat messages area (empty)
+                    # Chat messages area with loading spinner
                     html.Div(
-                        id="genie-response",
-                        style={
-                            "flex": "1",
-                            "overflowY": "auto",
-                            "padding": "16px",
-                            "display": "flex",
-                            "flexDirection": "column",
-                            "gap": "8px",
-                        },
+                        style={"flex": "1", "overflow": "hidden", "position": "relative"},
+                        children=dcc.Loading(
+                            type="circle",
+                            color=COLORS["blue"],
+                            children=html.Div(
+                                id="genie-response",
+                                style={
+                                    "height": "100%",
+                                    "overflowY": "auto",
+                                    "padding": "16px",
+                                    "display": "flex",
+                                    "flexDirection": "column",
+                                    "gap": "8px",
+                                },
+                                children=[
+                                    html.Div(
+                                        style={"textAlign": "center", "padding": "32px 16px"},
+                                        children=[
+                                            html.I(
+                                                className="fa-solid fa-robot",
+                                                style={"fontSize": "28px", "color": COLORS["blue"],
+                                                       "marginBottom": "8px", "display": "block"},
+                                            ),
+                                            html.Div(
+                                                "Hi! I'm Genie AI",
+                                                style={"fontSize": "15px", "fontWeight": "600",
+                                                       "color": "#1F2937", "marginBottom": "4px"},
+                                            ),
+                                            html.Div(
+                                                "Ask me anything about your data.",
+                                                style={"fontSize": "12px", "color": "#9CA3AF"},
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        ),
                     ),
 
                     # Input bar

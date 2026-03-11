@@ -14,6 +14,8 @@ The app serves three kinds of pages:
 
 import os
 import sys
+import json
+import re
 
 # ---------------------------------------------------------------------------
 # Ensure the project root is on sys.path so `from app.xxx` imports work
@@ -735,6 +737,82 @@ def update_active_nav(pathname, nav_ids):
 # ===================================================================
 
 
+def _bold_parts(text):
+    """Parse **bold** markers in a string, returning a list of str/html.Strong."""
+    parts = []
+    remaining = text
+    while "**" in remaining:
+        before, _, after = remaining.partition("**")
+        if "**" in after:
+            bold, _, after = after.partition("**")
+            if before:
+                parts.append(before)
+            parts.append(html.Strong(bold))
+            remaining = after
+        else:
+            parts.append(remaining)
+            remaining = ""
+            break
+    if remaining:
+        parts.append(remaining)
+    return parts if parts else [text]
+
+
+def _parse_ai_text(text):
+    """Parse AI response text into Dash components with bullet/numbered list support."""
+    lines = text.split("\n")
+    result = []
+    list_items = []
+    is_ordered = False
+
+    def flush_list():
+        nonlocal list_items, is_ordered
+        if not list_items:
+            return
+        tag = html.Ol if is_ordered else html.Ul
+        result.append(tag(
+            [html.Li(_bold_parts(item)) for item in list_items],
+            style={"margin": "4px 0", "paddingLeft": "20px", "fontSize": "13px"},
+        ))
+        list_items = []
+
+    for line in lines:
+        s = line.strip()
+
+        # Bullet list item
+        if re.match(r'^[-*•]\s+', s):
+            if is_ordered and list_items:
+                flush_list()
+            is_ordered = False
+            list_items.append(re.sub(r'^[-*•]\s+', '', s))
+            continue
+
+        # Numbered list item
+        m = re.match(r'^(\d+)\.\s+(.+)', s)
+        if m:
+            if not is_ordered and list_items:
+                flush_list()
+            is_ordered = True
+            list_items.append(m.group(2))
+            continue
+
+        # Non-list line
+        flush_list()
+        if s:
+            result.extend(_bold_parts(s))
+            result.append(html.Br())
+        elif result:
+            result.append(html.Br())
+
+    flush_list()
+
+    # Remove trailing <br>
+    while result and isinstance(result[-1], html.Br):
+        result.pop()
+
+    return result
+
+
 def _render_chat_messages(history):
     """Convert the chat history list into Dash HTML components for display."""
     elements = []
@@ -745,43 +823,7 @@ def _render_chat_messages(history):
         if role == "user":
             elements.append(html.Div(text, className="genie-msg-user"))
         elif role == "ai":
-            parts = []
-            remaining = text
-            while "**" in remaining:
-                before, _, after = remaining.partition("**")
-                if "**" in after:
-                    bold_text, _, after = after.partition("**")
-                    if before:
-                        parts.append(before)
-                    parts.append(html.Strong(bold_text))
-                    remaining = after
-                else:
-                    parts.append(remaining)
-                    remaining = ""
-                    break
-            if remaining:
-                parts.append(remaining)
-
-            ai_children = []
-            if parts:
-                final_parts = []
-                for part in parts:
-                    if isinstance(part, str):
-                        lines = part.split("\n")
-                        for i, line in enumerate(lines):
-                            final_parts.append(line)
-                            if i < len(lines) - 1:
-                                final_parts.append(html.Br())
-                    else:
-                        final_parts.append(part)
-                ai_children.extend(final_parts)
-            else:
-                lines = text.split("\n")
-                for i, line in enumerate(lines):
-                    ai_children.append(line)
-                    if i < len(lines) - 1:
-                        ai_children.append(html.Br())
-
+            ai_children = _parse_ai_text(text)
             elements.append(html.Div(ai_children, className="genie-msg-ai"))
 
             sql = msg.get("sql")
@@ -862,6 +904,94 @@ def handle_genie_query(send_clicks, n_submit, input_value, chat_history, active_
 
     rendered = _render_chat_messages(chat_history)
     return rendered, "", chat_history
+
+
+# ===================================================================
+#  Genie welcome & sample question callbacks
+# ===================================================================
+
+
+def _render_welcome(app_name, sample_questions):
+    """Render welcome message with clickable sample question chips."""
+    children = [
+        html.Div(
+            style={"textAlign": "center", "padding": "20px 8px 16px"},
+            children=[
+                html.I(
+                    className="fa-solid fa-robot",
+                    style={"fontSize": "28px", "color": COLORS["blue"],
+                           "marginBottom": "8px", "display": "block"},
+                ),
+                html.Div(
+                    f"Ask me about {app_name}",
+                    style={"fontSize": "15px", "fontWeight": "600",
+                           "color": "#1F2937", "marginBottom": "4px"},
+                ),
+                html.Div(
+                    "Click a question below or type your own",
+                    style={"fontSize": "12px", "color": "#9CA3AF"},
+                ),
+            ],
+        ),
+    ]
+    for i, q in enumerate(sample_questions):
+        children.append(
+            html.Button(
+                q,
+                id={"type": "sample-q", "index": i},
+                n_clicks=0,
+                className="sample-question-chip",
+            )
+        )
+    return children
+
+
+@app.callback(
+    Output("genie-response", "children", allow_duplicate=True),
+    Output("genie-chat-history", "data", allow_duplicate=True),
+    Output("genie-current-vertical", "data"),
+    Input("active-vertical", "data"),
+    State("genie-current-vertical", "data"),
+    prevent_initial_call=True,
+)
+def update_genie_welcome(active_vertical, current_genie_vertical):
+    """Reset chat and show welcome with sample questions when vertical changes."""
+    if not active_vertical:
+        raise dash.exceptions.PreventUpdate
+
+    # Only reset when the vertical actually changes
+    if active_vertical == current_genie_vertical:
+        raise dash.exceptions.PreventUpdate
+
+    cfg = get_config_for(active_vertical)
+    app_name = cfg["app"].get("name", active_vertical.replace("_", " ").title())
+    questions = cfg.get("genie", {}).get("sample_questions", [])[:6]
+
+    return _render_welcome(app_name, questions), [], active_vertical
+
+
+@app.callback(
+    Output("genie-input", "value", allow_duplicate=True),
+    Input({"type": "sample-q", "index": ALL}, "n_clicks"),
+    State("active-vertical", "data"),
+    prevent_initial_call=True,
+)
+def fill_sample_question(n_clicks_list, active_vertical):
+    """Fill the chat input when a sample question chip is clicked."""
+    ctx = callback_context
+    if not ctx.triggered or not any(n for n in n_clicks_list if n):
+        raise dash.exceptions.PreventUpdate
+
+    prop_id = ctx.triggered[0]["prop_id"]
+    idx = json.loads(prop_id.rsplit(".", 1)[0])["index"]
+
+    vertical = active_vertical or "gaming"
+    cfg = get_config_for(vertical)
+    questions = cfg.get("genie", {}).get("sample_questions", [])
+
+    if idx < len(questions):
+        return questions[idx]
+    raise dash.exceptions.PreventUpdate
 
 
 # ---------------------------------------------------------------------------

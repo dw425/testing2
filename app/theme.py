@@ -545,4 +545,35 @@ def get_base_stylesheet() -> str:
         background-color: rgba(75, 123, 245, 0.15) !important;
         border-color: {COLORS["blue"]} !important;
     }}
+
+    /* ---------- sample question chips ---------- */
+    .sample-question-chip {{
+        display: block;
+        width: 100%;
+        text-align: left;
+        background-color: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: #374151;
+        cursor: pointer;
+        font-family: {FONT_FAMILY};
+        line-height: 1.4;
+        transition: border-color 0.15s, background-color 0.15s;
+    }}
+    .sample-question-chip:hover {{
+        border-color: {COLORS["blue"]};
+        background-color: #EFF6FF;
+    }}
+
+    /* ---------- AI message list styling ---------- */
+    .genie-msg-ai ul, .genie-msg-ai ol {{
+        margin: 4px 0;
+        padding-left: 20px;
+    }}
+    .genie-msg-ai li {{
+        margin-bottom: 2px;
+    }}
     """
