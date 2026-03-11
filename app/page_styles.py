@@ -294,10 +294,59 @@ def data_table(columns, data, page_size=10, style_conditions=None):
     """Interactive DataTable with native sort/filter/pagination.
     columns: list of {"name": "Display Name", "id": "col_id"} dicts
     data: list of row dicts
+
+    Auto-applies color coding to status, severity, and risk_grade columns.
     """
+    col_ids = {c["id"] for c in columns} if columns else set()
+
     conditions = [
         {"if": {"row_index": "odd"}, "backgroundColor": "rgba(255,255,255,0.03)"},
     ]
+
+    # Auto-style status-like columns (status, risk_status, health)
+    _STATUS_MAP = {
+        "Healthy": COLORS["green"],
+        "Nominal": COLORS["blue"],
+        "Warning": COLORS["yellow"],
+        "Critical": COLORS["red"],
+        "Low": COLORS["text_muted"],
+        "Info": COLORS["blue"],
+    }
+    for col in ("status", "risk_status", "health"):
+        if col in col_ids:
+            for val, color in _STATUS_MAP.items():
+                conditions.append({
+                    "if": {"filter_query": f'{{{col}}} = "{val}"', "column_id": col},
+                    "color": color, "fontWeight": "600",
+                })
+            # Subtle row tint for Critical rows
+            conditions.append({
+                "if": {"filter_query": f'{{{col}}} = "Critical"'},
+                "backgroundColor": "rgba(248, 113, 113, 0.06)",
+            })
+
+    # Auto-style severity columns
+    _SEVERITY_MAP = {
+        "Critical": COLORS["red"], "High": COLORS["red"],
+        "Medium": COLORS["yellow"], "Low": COLORS["green"],
+    }
+    if "severity" in col_ids:
+        for val, color in _SEVERITY_MAP.items():
+            conditions.append({
+                "if": {"filter_query": f'{{severity}} = "{val}"', "column_id": "severity"},
+                "color": color, "fontWeight": "600",
+            })
+
+    # Auto-style risk_grade columns
+    _GRADE_MAP = {"A": COLORS["green"], "B": COLORS["blue"],
+                  "C": COLORS["yellow"], "D": COLORS["red"]}
+    if "risk_grade" in col_ids:
+        for val, color in _GRADE_MAP.items():
+            conditions.append({
+                "if": {"filter_query": f'{{risk_grade}} = "{val}"', "column_id": "risk_grade"},
+                "color": color, "fontWeight": "600",
+            })
+
     if style_conditions:
         conditions.extend(style_conditions)
 
@@ -312,6 +361,8 @@ def data_table(columns, data, page_size=10, style_conditions=None):
             page_action="native",
             page_size=page_size,
             row_selectable="single",
+            export_format="csv",
+            export_headers="display",
             style_table={"overflowX": "auto"},
             style_cell={
                 "backgroundColor": COLORS["panel"],

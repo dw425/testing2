@@ -568,6 +568,24 @@ def get_base_stylesheet() -> str:
         background-color: #EFF6FF;
     }}
 
+    /* ---------- DataTable export button ---------- */
+    .dash-table-container .export {{
+        color: {COLORS["text_muted"]} !important;
+        background-color: {COLORS["panel"]} !important;
+        border: 1px solid {COLORS["border"]} !important;
+        border-radius: 6px !important;
+        padding: 4px 12px !important;
+        font-size: 11px !important;
+        cursor: pointer !important;
+        margin: 8px !important;
+        font-family: {FONT_FAMILY} !important;
+    }}
+    .dash-table-container .export:hover {{
+        background-color: rgba(75, 123, 245, 0.15) !important;
+        border-color: {COLORS["blue"]} !important;
+        color: {COLORS["white"]} !important;
+    }}
+
     /* ---------- AI message list styling ---------- */
     .genie-msg-ai ul, .genie-msg-ai ol {{
         margin: 4px 0;
