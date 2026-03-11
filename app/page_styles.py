@@ -57,8 +57,11 @@ def page_header(title, subtitle=""):
     return html.Div(className="page-header", children=children)
 
 
-def hero_metric(title, value, trend_text="", trend_dir="up", accent="blue"):
-    """Large hero metric card for executive dashboards."""
+def hero_metric(title, value, trend_text="", trend_dir="up", accent="blue", href=None):
+    """Large hero metric card for executive dashboards.
+
+    When *href* is provided the card becomes a clickable link.
+    """
     accent_color = COLORS.get(accent, COLORS["blue"])
     arrow = "\u25b2" if trend_dir == "up" else "\u25bc"
     trend_color = COLORS["green"] if trend_dir == "up" else COLORS["red"]
@@ -78,7 +81,13 @@ def hero_metric(title, value, trend_text="", trend_dir="up", accent="blue"):
             ],
             style={"fontSize": "13px", "marginTop": "8px"},
         ))
-    return html.Div(className="card", style={"padding": "24px", "minHeight": "130px"}, children=children)
+
+    cls = "card clickable-card" if href else "card"
+    card = html.Div(className=cls, style={"padding": "24px", "minHeight": "130px"}, children=children)
+
+    if href:
+        return dcc.Link(card, href=href, style={"textDecoration": "none", "color": "inherit"})
+    return card
 
 
 def compact_kpi(label, value, accent="blue"):
@@ -585,7 +594,7 @@ def layout_executive(title, subtitle, heroes, main_chart, panels):
 
     heroes: list of hero_metric() components
     main_chart: dcc.Graph or html component
-    panels: list of (title_str, component) tuples
+    panels: list of (title_str, component) or (title_str, component, href) tuples
     """
     hero_count = len(heroes)
     hero_cols = min(hero_count, 4)
@@ -602,12 +611,26 @@ def layout_executive(title, subtitle, heroes, main_chart, panels):
 
     if panels:
         panel_divs = []
-        for ptitle, pcomp in panels:
-            panel_divs.append(_card([
+        for panel in panels:
+            ptitle, pcomp = panel[0], panel[1]
+            phref = panel[2] if len(panel) > 2 else None
+
+            header_children = [
                 html.Div(ptitle, style={"fontSize": "14px", "fontWeight": "600",
-                                         "color": COLORS["white"], "marginBottom": "16px"}),
-                pcomp,
-            ], padding="20px"))
+                                         "color": COLORS["white"]}),
+            ]
+            if phref:
+                header_children.append(
+                    dcc.Link("View Details \u2192", href=phref,
+                             style={"fontSize": "12px", "color": COLORS["blue"],
+                                    "textDecoration": "none"})
+                )
+            header = html.Div(
+                style={"display": "flex", "justifyContent": "space-between",
+                       "alignItems": "center", "marginBottom": "16px"},
+                children=header_children,
+            )
+            panel_divs.append(_card([header, pcomp], padding="20px"))
         content.append(html.Div(
             style={"display": "grid",
                    "gridTemplateColumns": f"repeat({min(len(panels), 3)}, 1fr)",

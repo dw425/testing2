@@ -41,13 +41,13 @@ def render_dashboard(cfg):
     heroes = [
         hero_metric("Daily Active Users", "1.24M",
                      trend_text="+6.3% vs last week", trend_dir="up",
-                     accent="blue"),
+                     accent="blue", href="/gaming/know_player"),
         hero_metric("Daily Revenue", "$284K",
                      trend_text="+11.7% vs last week", trend_dir="up",
-                     accent="green"),
+                     accent="green", href="/gaming/grow_revenue"),
         hero_metric("D7 Retention", "38.2%",
                      trend_text="-1.4% vs last week", trend_dir="down",
-                     accent="purple"),
+                     accent="purple", href="/gaming/grow_playerbase"),
     ]
 
     # ── Main chart: Player trend (30 days) ────────────────────────────────
@@ -126,8 +126,8 @@ def render_dashboard(cfg):
 
     # ── Assemble ──────────────────────────────────────────────────────────
     panels = [
-        ("Revenue Breakdown", panel_donut),
-        ("Retention Cohorts", panel_cohort),
+        ("Revenue Breakdown", panel_donut, "/gaming/grow_revenue"),
+        ("Retention Cohorts", panel_cohort, "/gaming/grow_playerbase"),
     ]
     return layout_executive(
         title=cfg.get("title", "Gaming Dashboard"),

@@ -39,6 +39,7 @@ def render_dashboard(cfg):
             trend_text="+2.1% vs last month",
             trend_dir="up",
             accent="blue",
+            href="/manufacturing/production_analytics",
         ),
         hero_metric(
             "First Pass Yield",
@@ -46,6 +47,7 @@ def render_dashboard(cfg):
             trend_text="+0.6% vs last month",
             trend_dir="up",
             accent="green",
+            href="/manufacturing/quality_control",
         ),
         hero_metric(
             "Production Rate",
@@ -53,6 +55,7 @@ def render_dashboard(cfg):
             trend_text="-3.2% vs last month",
             trend_dir="down",
             accent="purple",
+            href="/manufacturing/production_analytics",
         ),
     ]
 
@@ -135,8 +138,8 @@ def render_dashboard(cfg):
         heroes=heroes,
         main_chart=main_chart,
         panels=[
-            ("Output by Product Line", donut_chart),
-            ("Downtime Trend", downtime_chart),
+            ("Output by Product Line", donut_chart, "/manufacturing/production_analytics"),
+            ("Downtime Trend", downtime_chart, "/manufacturing/predictive_maintenance"),
         ],
     )
 

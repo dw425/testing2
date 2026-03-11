@@ -37,13 +37,13 @@ def render_dashboard(cfg):
     heroes = [
         hero_metric("Total Value at Risk", "$284M",
                      trend_text="3.2% vs prior month", trend_dir="up",
-                     accent="red"),
+                     accent="red", href="/risk/market_risk"),
         hero_metric("Risk-Adjusted Capital", "$1.92B",
                      trend_text="1.8% improvement", trend_dir="up",
-                     accent="blue"),
+                     accent="blue", href="/risk/enterprise_risk"),
         hero_metric("Composite Risk Score", "72 / 100",
                      trend_text="4 pts from last quarter", trend_dir="down",
-                     accent="yellow"),
+                     accent="yellow", href="/risk/enterprise_risk"),
     ]
 
     # --- Main chart: risk exposure trends -----------------------------------
@@ -116,8 +116,8 @@ def render_dashboard(cfg):
                               style={"height": "280px"})
 
     panels = [
-        ("Risk Category Distribution", panel_donut),
-        ("Capital Adequacy", panel_capital),
+        ("Risk Category Distribution", panel_donut, "/risk/enterprise_risk"),
+        ("Capital Adequacy", panel_capital, "/risk/compliance"),
     ]
 
     return layout_executive(

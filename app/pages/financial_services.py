@@ -36,12 +36,15 @@ def render_dashboard(cfg):
     # ── Hero metrics ──────────────────────────────────────────────────
     heroes = [
         hero_metric("Assets Under Management", "$847.3B",
-                     trend_text="+3.2% QoQ", trend_dir="up", accent="blue"),
+                     trend_text="+3.2% QoQ", trend_dir="up", accent="blue",
+                     href="/financial_services/investment_alpha"),
         hero_metric("Total Revenue", "$12.6B",
-                     trend_text="+5.8% YoY", trend_dir="up", accent="green"),
+                     trend_text="+5.8% YoY", trend_dir="up", accent="green",
+                     href="/financial_services/operations"),
         hero_metric("Composite Risk Score", "72 / 100",
                      trend_text="-4 pts from prior quarter", trend_dir="down",
-                     accent="yellow"),
+                     accent="yellow",
+                     href="/financial_services/risk_management"),
     ]
 
     # ── Main chart: portfolio performance line ────────────────────────
@@ -113,8 +116,8 @@ def render_dashboard(cfg):
                           style={"width": "100%"})
 
     panels = [
-        ("Asset Allocation", alloc_chart),
-        ("Revenue by Business Line", rev_chart),
+        ("Asset Allocation", alloc_chart, "/financial_services/investment_alpha"),
+        ("Revenue by Business Line", rev_chart, "/financial_services/operations"),
     ]
 
     return layout_executive(

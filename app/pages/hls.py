@@ -34,13 +34,13 @@ def render_dashboard(cfg):
     heroes = [
         hero_metric("Patient Outcomes Score", "94.2%",
                      trend_text="+2.1% vs last quarter", trend_dir="up",
-                     accent="green"),
+                     accent="green", href="/hls/patient_outcomes"),
         hero_metric("Bed Utilization", "87.6%",
                      trend_text="+3.4% vs last month", trend_dir="up",
-                     accent="blue"),
+                     accent="blue", href="/hls/healthcare_ops"),
         hero_metric("Clinical Trial Success", "68.3%",
                      trend_text="+5.7% vs prior year", trend_dir="up",
-                     accent="purple"),
+                     accent="purple", href="/hls/biopharma_intel"),
     ]
 
     # ── Main chart: patient volume trend ──────────────────────────────
@@ -120,8 +120,8 @@ def render_dashboard(cfg):
                               style={"height": "280px"})
 
     panels = [
-        ("Department Revenue", dept_chart),
-        ("Readmission Trend", readmit_chart),
+        ("Department Revenue", dept_chart, "/hls/healthcare_ops"),
+        ("Readmission Trend", readmit_chart, "/hls/patient_outcomes"),
     ]
 
     return layout_executive(

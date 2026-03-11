@@ -39,11 +39,14 @@ def render_dashboard(cfg):
     # ── Hero metrics ──────────────────────────────────────────────────
     heroes = [
         hero_metric("Total Subscribers", "48.7M",
-                     trend_text="+3.2% YoY", trend_dir="up", accent="blue"),
+                     trend_text="+3.2% YoY", trend_dir="up", accent="blue",
+                     href="/telecom/consumer_cx"),
         hero_metric("Net Promoter Score", "62",
-                     trend_text="+4 pts vs Q3", trend_dir="up", accent="green"),
+                     trend_text="+4 pts vs Q3", trend_dir="up", accent="green",
+                     href="/telecom/consumer_cx"),
         hero_metric("Network Uptime", "99.97%",
-                     trend_text="0.01% improvement", trend_dir="up", accent="purple"),
+                     trend_text="0.01% improvement", trend_dir="up", accent="purple",
+                     href="/telecom/network_ops"),
     ]
 
     # ── Main chart: subscriber growth (18 months) ─────────────────────
@@ -109,8 +112,8 @@ def render_dashboard(cfg):
         heroes=heroes,
         main_chart=main_chart,
         panels=[
-            ("Revenue by Segment", panel_rev),
-            ("Churn Trend", panel_churn),
+            ("Revenue by Segment", panel_rev, "/telecom/b2b_enterprise"),
+            ("Churn Trend", panel_churn, "/telecom/consumer_cx"),
         ],
     )
 

@@ -36,13 +36,13 @@ def render_dashboard(cfg):
     heroes = [
         hero_metric("Total Subscribers", "48.2M",
                      trend_text="+6.4% vs last quarter", trend_dir="up",
-                     accent="blue"),
+                     accent="blue", href="/media/subscription_intel"),
         hero_metric("Content Engagement", "73.8%",
                      trend_text="+2.1pp vs last month", trend_dir="up",
-                     accent="green"),
+                     accent="green", href="/media/content_strategy"),
         hero_metric("Ad Revenue", "$18.7M",
                      trend_text="+11.3% YoY", trend_dir="up",
-                     accent="purple"),
+                     accent="purple", href="/media/ad_yield"),
     ]
 
     # -- main area chart: viewership trends ---------------------------------
@@ -125,8 +125,8 @@ def render_dashboard(cfg):
         heroes=heroes,
         main_chart=main_chart,
         panels=[
-            ("Genre Distribution", genre_donut),
-            ("Platform Split", plat_chart),
+            ("Genre Distribution", genre_donut, "/media/content_strategy"),
+            ("Platform Split", plat_chart, "/media/platform_delivery"),
         ],
     )
 

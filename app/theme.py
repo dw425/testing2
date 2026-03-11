@@ -139,6 +139,15 @@ def get_base_stylesheet() -> str:
         margin-top: 4px;
     }}
 
+    .clickable-card {{
+        cursor: pointer;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }}
+    .clickable-card:hover {{
+        border-color: {COLORS["blue"]} !important;
+        box-shadow: 0 0 0 1px rgba(75, 123, 245, 0.2);
+    }}
+
     /* ---------- KPI accent colors ---------- */
     .accent-blue {{ color: {COLORS["blue"]}; }}
     .accent-purple {{ color: {COLORS["purple"]}; }}
