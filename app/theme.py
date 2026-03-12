@@ -696,10 +696,33 @@ def get_base_stylesheet() -> str:
         color: {COLORS["white"]} !important;
     }}
 
-    /* ---------- row selection highlight ---------- */
-    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected {{
+    /* ---------- row selection & hover highlight ---------- */
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected,
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--active {{
         background-color: rgba(75, 123, 245, 0.15) !important;
         border-color: {COLORS["blue"]} !important;
+        color: {COLORS["white"]} !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.focused {{
+        background-color: rgba(75, 123, 245, 0.10) !important;
+        outline: none !important;
+        border-color: {COLORS["blue"]} !important;
+        color: {COLORS["white"]} !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner tr:hover td {{
+        background-color: {COLORS["surface_elevated"]} !important;
+        color: {COLORS["white"]} !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected.focused {{
+        background-color: rgba(75, 123, 245, 0.18) !important;
+        color: {COLORS["white"]} !important;
+        outline: none !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner input.dash-cell-value {{
+        color: {COLORS["white"]} !important;
+        background-color: transparent !important;
+        border: none !important;
+        caret-color: {COLORS["white"]} !important;
     }}
 
     /* ---------- sample question chips ---------- */
