@@ -784,86 +784,295 @@ def _render_architecture():
 
 
 def _render_details():
-    """Implementation Details page -- reads all ML models from config."""
+    """Implementation Details page -- rich technical overview."""
     cfg = get_config()
     ml_cfg = cfg.get("ml", {})
+    data_cfg = cfg.get("data", {})
+    genie_cfg = cfg.get("genie", {})
+    pages_cfg = cfg.get("pages", [])
     app_name = cfg["app"]["name"]
+    catalog = cfg["app"].get("catalog", "N/A")
 
+    # ── Count summary stats ────────────────────────────────────────────
+    num_models = sum(1 for v in ml_cfg.values() if isinstance(v, dict) and "name" in v)
+    total_features = sum(len(v.get("features", [])) for v in ml_cfg.values() if isinstance(v, dict))
+    num_tables = len(genie_cfg.get("tables", []))
+    num_questions = len(genie_cfg.get("sample_questions", []))
+    num_pages = len([p for p in pages_cfg if p.get("enabled", True)])
+    metric_groups = [k for k in data_cfg if isinstance(data_cfg[k], dict) and k.endswith("_metrics")]
+    total_metrics = sum(len(data_cfg[k]) for k in metric_groups)
+
+    # ── KPI strip ──────────────────────────────────────────────────────
+    kpi_data = [
+        {"label": "ML Models", "value": str(num_models), "accent": "blue"},
+        {"label": "Model Features", "value": str(total_features), "accent": "purple"},
+        {"label": "Lakehouse Tables", "value": str(num_tables), "accent": "green"},
+        {"label": "Tracked Metrics", "value": str(total_metrics), "accent": "yellow"},
+        {"label": "Dashboard Pages", "value": str(num_pages), "accent": "blue"},
+        {"label": "Genie Questions", "value": str(num_questions), "accent": "green"},
+    ]
+
+    kpis = html.Div(
+        style={"display": "grid", "gridTemplateColumns": f"repeat({len(kpi_data)}, 1fr)",
+               "gap": "12px", "marginBottom": "20px"},
+        children=[
+            html.Div(className="card", style={"padding": "16px"}, children=[
+                html.Div(kpi["label"], style={"fontSize": "10px", "color": COLORS["text_muted"],
+                    "textTransform": "uppercase", "letterSpacing": "0.5px", "marginBottom": "4px"}),
+                html.Div(kpi["value"], style={"fontSize": "24px", "fontWeight": "700",
+                    "color": COLORS.get(kpi["accent"], COLORS["blue"])}),
+            ])
+            for kpi in kpi_data
+        ],
+    )
+
+    # ── Model cards with hero metric style ─────────────────────────────
     model_cards = []
-    for model_key, model_info in ml_cfg.items():
+    model_accents = ["blue", "purple", "green", "yellow", "red"]
+    for i, (model_key, model_info) in enumerate(ml_cfg.items()):
         if not isinstance(model_info, dict) or "name" not in model_info:
             continue
-        card_title = model_key.replace("_", " ").title()
-        detail_rows = [
-            _detail_row("Model Name", model_info.get("name", "N/A")),
-            _detail_row("Algorithm", model_info.get("algorithm", "N/A")),
-        ]
-        if "features" in model_info:
-            detail_rows.append(_detail_row("Features", ", ".join(model_info["features"])))
-        if "target_metric" in model_info:
-            detail_rows.append(_detail_row("Target Metric", model_info["target_metric"]))
-        if "target_value" in model_info:
-            detail_rows.append(_detail_row("Target Value", str(model_info["target_value"])))
+        accent = model_accents[i % len(model_accents)]
+        accent_color = COLORS.get(accent, COLORS["blue"])
+        algo = model_info.get("algorithm", "N/A")
+        features = model_info.get("features", [])
+        target_metric = model_info.get("target_metric", "")
+        target_value = model_info.get("target_value", "")
+
+        # Hero metric at top
+        hero_section = html.Div(
+            style={"display": "flex", "justifyContent": "space-between",
+                   "alignItems": "flex-start", "marginBottom": "16px"},
+            children=[
+                html.Div([
+                    html.Div(model_info["name"].replace("_", " "),
+                             style={"fontSize": "15px", "fontWeight": "700",
+                                    "color": COLORS["white"], "marginBottom": "4px"}),
+                    html.Div(algo, style={"fontSize": "12px", "color": accent_color,
+                                          "fontWeight": "600"}),
+                ]),
+                html.Div(
+                    style={"textAlign": "right"},
+                    children=[
+                        html.Div(str(target_value) if target_value else "--",
+                                 style={"fontSize": "28px", "fontWeight": "700",
+                                        "color": accent_color}),
+                        html.Div(target_metric.upper() if target_metric else "",
+                                 style={"fontSize": "10px", "color": COLORS["text_muted"],
+                                        "letterSpacing": "0.5px"}),
+                    ] if target_value else [],
+                ),
+            ],
+        )
+
+        # Feature tags
+        feat_tags = html.Div(
+            style={"display": "flex", "flexWrap": "wrap", "gap": "6px", "marginTop": "12px"},
+            children=[
+                html.Span(f, style={
+                    "fontSize": "11px", "color": COLORS["text_muted"],
+                    "backgroundColor": f"rgba({_hex_to_rgb(accent_color)}, 0.08)",
+                    "padding": "3px 10px", "borderRadius": "12px",
+                    "border": f"1px solid rgba({_hex_to_rgb(accent_color)}, 0.15)",
+                })
+                for f in features
+            ],
+        ) if features else html.Div()
+
+        # Stats row
+        stats = html.Div(
+            style={"display": "flex", "gap": "16px", "marginTop": "14px",
+                   "paddingTop": "12px", "borderTop": f"1px solid {COLORS['border']}"},
+            children=[
+                html.Div([
+                    html.Div(str(len(features)), style={"fontSize": "16px", "fontWeight": "700",
+                                                         "color": COLORS["white"]}),
+                    html.Div("Features", style={"fontSize": "10px", "color": COLORS["text_muted"]}),
+                ]),
+                html.Div([
+                    html.Div("Live" if target_value else "Dev",
+                             style={"fontSize": "16px", "fontWeight": "700",
+                                    "color": COLORS["green"] if target_value else COLORS["yellow"]}),
+                    html.Div("Status", style={"fontSize": "10px", "color": COLORS["text_muted"]}),
+                ]),
+                html.Div([
+                    html.Div(algo.split("(")[0][:12],
+                             style={"fontSize": "16px", "fontWeight": "700",
+                                    "color": COLORS["white"]}),
+                    html.Div("Engine", style={"fontSize": "10px", "color": COLORS["text_muted"]}),
+                ]),
+            ],
+        )
 
         model_cards.append(
-            html.Div(className="card", children=[
-                html.Span(card_title, className="card-title"),
-                html.Div(style={"marginTop": "12px"}, children=detail_rows),
+            html.Div(className="card",
+                     style={"padding": "20px", "borderLeft": f"3px solid {accent_color}"},
+                     children=[hero_section, feat_tags, stats])
+        )
+
+    model_section = html.Div([
+        html.Div(style={"display": "flex", "alignItems": "center", "gap": "10px",
+                         "marginBottom": "16px"}, children=[
+            html.I(className="fa-solid fa-brain", style={"color": COLORS["blue"], "fontSize": "16px"}),
+            html.Span("ML Models & AI", style={"fontSize": "16px", "fontWeight": "700",
+                                                 "color": COLORS["white"]}),
+        ]),
+        html.Div(
+            style={"display": "grid", "gridTemplateColumns": "repeat(auto-fill, minmax(340px, 1fr))",
+                   "gap": "16px", "alignItems": "start"},
+            children=model_cards,
+        ),
+    ])
+
+    # ── Data & Metrics section ─────────────────────────────────────────
+    # Grouped metric cards
+    metric_cards = []
+    for group_key in metric_groups:
+        group_label = group_key.replace("_", " ").replace("metrics", "").strip().title()
+        group_data = data_cfg[group_key]
+        rows = []
+        for mk, mv in group_data.items():
+            label = mk.replace("_", " ").title()
+            if isinstance(mv, float) and mv < 1:
+                display_val = f"{mv:.1%}"
+            elif isinstance(mv, float):
+                display_val = f"{mv:,.1f}"
+            elif isinstance(mv, int) and mv > 9999:
+                display_val = f"{mv:,}"
+            else:
+                display_val = str(mv)
+            rows.append(_detail_row(label, display_val))
+        metric_cards.append(
+            html.Div(className="card", style={"padding": "20px"}, children=[
+                html.Div(group_label, style={"fontSize": "13px", "fontWeight": "700",
+                    "color": COLORS["white"], "textTransform": "uppercase",
+                    "letterSpacing": "0.5px", "marginBottom": "12px"}),
+                html.Div(children=rows),
             ])
         )
 
-    # Data configuration card
-    data_cfg = cfg.get("data", {})
-    data_rows = [_detail_row("Catalog", cfg["app"].get("catalog", "N/A"))]
-
-    for key in ["game_titles", "regions", "sub_verticals", "technologies",
-                "content_types", "platforms", "facilities", "departments",
-                "banking_lines", "capital_markets_desks", "insurance_lines",
-                "subscriber_segments", "customer_segments", "genres",
-                "therapeutic_areas", "medtech_categories"]:
-        if key in data_cfg and isinstance(data_cfg[key], list):
-            data_rows.append(_detail_row(
-                key.replace("_", " ").title(),
-                ", ".join(str(v) for v in data_cfg[key])
+    # Dimensions card (lists like regions, segments, etc.)
+    dim_rows = [_detail_row("Catalog", catalog)]
+    for key in sorted(data_cfg.keys()):
+        val = data_cfg[key]
+        if isinstance(val, list):
+            label = key.replace("_", " ").title()
+            dim_rows.append(_detail_row(label, f"{len(val)} items"))
+            dim_rows.append(html.Div(
+                style={"display": "flex", "flexWrap": "wrap", "gap": "4px",
+                       "paddingBottom": "8px", "marginTop": "-2px"},
+                children=[html.Span(str(v), style={
+                    "fontSize": "11px", "color": COLORS["text_muted"],
+                    "backgroundColor": "rgba(255,255,255,0.04)",
+                    "padding": "2px 8px", "borderRadius": "4px",
+                }) for v in val],
             ))
 
-    # Metric summaries from data sub-dicts
-    for key, value in data_cfg.items():
-        if isinstance(value, dict) and key.endswith("_metrics"):
-            label = key.replace("_", " ").title()
-            for mk, mv in list(value.items())[:4]:
-                data_rows.append(_detail_row(f"{label} - {mk}", str(mv)))
-
-    data_card = html.Div(className="card", children=[
-        html.Span("Data Configuration", className="card-title"),
-        html.Div(style={"marginTop": "12px"}, children=data_rows),
+    dim_card = html.Div(className="card", style={"padding": "20px"}, children=[
+        html.Div("Data Dimensions", style={"fontSize": "13px", "fontWeight": "700",
+            "color": COLORS["white"], "textTransform": "uppercase",
+            "letterSpacing": "0.5px", "marginBottom": "12px"}),
+        html.Div(children=dim_rows),
     ])
 
-    # Genie card
-    genie_cfg = cfg.get("genie", {})
-    genie_card = html.Div(className="card", children=[
-        html.Span("Genie AI Space", className="card-title"),
-        html.Div(style={"marginTop": "12px"}, children=[
-            _detail_row("Space Name", genie_cfg.get("space_name", "N/A")),
-            _detail_row("Lakehouse Tables", str(len(genie_cfg.get("tables", [])))),
-            _detail_row("Sample Questions", str(len(genie_cfg.get("sample_questions", [])))),
+    data_section = html.Div([
+        html.Div(style={"display": "flex", "alignItems": "center", "gap": "10px",
+                         "marginBottom": "16px", "marginTop": "24px"}, children=[
+            html.I(className="fa-solid fa-database", style={"color": COLORS["green"], "fontSize": "16px"}),
+            html.Span("Data & Metrics", style={"fontSize": "16px", "fontWeight": "700",
+                                                 "color": COLORS["white"]}),
         ]),
+        html.Div(
+            style={"display": "grid", "gridTemplateColumns": "repeat(auto-fill, minmax(300px, 1fr))",
+                   "gap": "16px", "alignItems": "start"},
+            children=metric_cards + [dim_card],
+        ),
     ])
 
-    all_cards = model_cards + [data_card, genie_card]
+    # ── Platform section ───────────────────────────────────────────────
+    tables = genie_cfg.get("tables", [])
+    table_items = [
+        html.Div(style={"display": "flex", "alignItems": "center", "gap": "8px",
+                         "padding": "6px 0", "borderBottom": f"1px solid {COLORS['border']}"},
+            children=[
+                html.I(className="fa-solid fa-table", style={"color": COLORS["blue"],
+                    "fontSize": "11px", "opacity": "0.6"}),
+                html.Span(t, style={"fontSize": "12px", "color": COLORS["white"],
+                    "fontFamily": "'Courier New', monospace"}),
+            ])
+        for t in tables
+    ]
+
+    platform_cards = [
+        html.Div(className="card", style={"padding": "20px",
+                 "borderLeft": f"3px solid {COLORS['purple']}"}, children=[
+            html.Div(style={"display": "flex", "justifyContent": "space-between",
+                            "alignItems": "flex-start", "marginBottom": "16px"}, children=[
+                html.Div([
+                    html.Div(genie_cfg.get("space_name", "N/A"),
+                             style={"fontSize": "15px", "fontWeight": "700",
+                                    "color": COLORS["white"], "marginBottom": "4px"}),
+                    html.Div("Databricks Genie AI Space",
+                             style={"fontSize": "12px", "color": COLORS["purple"], "fontWeight": "600"}),
+                ]),
+                html.Div(style={"textAlign": "right"}, children=[
+                    html.Div(str(num_questions), style={"fontSize": "28px", "fontWeight": "700",
+                                                         "color": COLORS["purple"]}),
+                    html.Div("QUESTIONS", style={"fontSize": "10px", "color": COLORS["text_muted"],
+                                                  "letterSpacing": "0.5px"}),
+                ]),
+            ]),
+            html.Div(style={"display": "flex", "gap": "16px", "paddingTop": "12px",
+                            "borderTop": f"1px solid {COLORS['border']}"}, children=[
+                html.Div([
+                    html.Div(str(num_tables), style={"fontSize": "16px", "fontWeight": "700",
+                                                      "color": COLORS["white"]}),
+                    html.Div("Tables", style={"fontSize": "10px", "color": COLORS["text_muted"]}),
+                ]),
+                html.Div([
+                    html.Div(str(num_questions), style={"fontSize": "16px", "fontWeight": "700",
+                                                         "color": COLORS["white"]}),
+                    html.Div("Questions", style={"fontSize": "10px", "color": COLORS["text_muted"]}),
+                ]),
+                html.Div([
+                    html.Div(str(num_pages), style={"fontSize": "16px", "fontWeight": "700",
+                                                     "color": COLORS["white"]}),
+                    html.Div("Pages", style={"fontSize": "10px", "color": COLORS["text_muted"]}),
+                ]),
+            ]),
+        ]),
+        html.Div(className="card", style={"padding": "20px"}, children=[
+            html.Div("Lakehouse Tables", style={"fontSize": "13px", "fontWeight": "700",
+                "color": COLORS["white"], "textTransform": "uppercase",
+                "letterSpacing": "0.5px", "marginBottom": "12px"}),
+            html.Div(children=table_items),
+        ]),
+    ]
+
+    platform_section = html.Div([
+        html.Div(style={"display": "flex", "alignItems": "center", "gap": "10px",
+                         "marginBottom": "16px", "marginTop": "24px"}, children=[
+            html.I(className="fa-solid fa-server", style={"color": COLORS["purple"], "fontSize": "16px"}),
+            html.Span("Platform & Infrastructure", style={"fontSize": "16px", "fontWeight": "700",
+                                                            "color": COLORS["white"]}),
+        ]),
+        html.Div(
+            style={"display": "grid", "gridTemplateColumns": "repeat(auto-fill, minmax(400px, 1fr))",
+                   "gap": "16px", "alignItems": "start"},
+            children=platform_cards,
+        ),
+    ])
 
     return html.Div([
         html.Div(className="page-header", children=[
             html.H1("Implementation Details"),
-            html.P(f"Technical configuration and model parameters for {app_name}"),
+            html.P(f"Technical configuration, ML models, and platform details for {app_name}"),
         ]),
         html.Div(className="content-area", children=[
-            html.Div(
-                style={"display": "grid",
-                        "gridTemplateColumns": "repeat(auto-fill, minmax(480px, 1fr))",
-                        "gap": "16px", "alignItems": "start"},
-                children=all_cards,
-            ),
+            kpis,
+            model_section,
+            data_section,
+            platform_section,
         ]),
     ])
 
