@@ -1,0 +1,278 @@
+# ============================================================
+# Blueprint RetailIQ - Omnichannel Retail Analytics & Commerce
+# Configuration for the RetailIQ vertical in Blueprint IQ
+# ============================================================
+
+# ----------------------------------------------------------
+# App Metadata
+# ----------------------------------------------------------
+app:
+  name: RetailIQ
+  title: "Blueprint RetailIQ"
+  subtitle: "Omnichannel Retail Analytics & Commerce Intelligence"
+  catalog: retail_iq
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
+
+# ----------------------------------------------------------
+# Brand / Theme
+# ----------------------------------------------------------
+brand:
+  primary_color: '#233ED8'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#EAB308'
+    critical: '#EF4444'
+
+# ----------------------------------------------------------
+# Data Configuration
+# ----------------------------------------------------------
+data:
+  store_formats:
+    - Flagship
+    - Mall
+    - Outlet
+    - Express
+    - Dark Store
+  regions:
+    - Northeast
+    - Southeast
+    - Midwest
+    - West Coast
+    - Southwest
+  channels:
+    - In-Store
+    - E-Commerce
+    - Mobile App
+    - Social Commerce
+    - Marketplace
+  departments:
+    - Apparel
+    - Electronics
+    - Home & Garden
+    - Grocery
+    - Beauty
+    - Sports
+  customer_segments:
+    - Loyalty Platinum
+    - Loyalty Gold
+    - Loyalty Silver
+    - Casual
+    - New
+  retail_metrics:
+    revenue_monthly: 148000000
+    aov: 67.40
+    conversion_rate: 0.034
+    basket_size: 3.8
+    foot_traffic_daily: 42000
+    inventory_turnover: 8.2
+    shrinkage_rate: 0.014
+    gross_margin: 0.382
+    ecommerce_share: 0.34
+    fulfillment_time_hours: 4.6
+    csat_score: 82
+    nps: 42
+    return_rate: 0.089
+    loyalty_penetration: 0.58
+  supply_chain_metrics:
+    fill_rate: 0.964
+    stockout_rate: 0.031
+    days_of_supply: 28.4
+    supplier_otif: 0.918
+  workforce_metrics:
+    sales_per_labor_hour: 142.60
+    turnover_rate: 0.48
+    training_compliance: 0.91
+
+# ----------------------------------------------------------
+# ML Models
+# ----------------------------------------------------------
+ml:
+  demand_forecast:
+    name: "Demand_Forecast_Model"
+    algorithm: "LightGBMRegressor"
+    features:
+      - historical_sales_90d
+      - seasonal_index
+      - promotion_flag
+      - weather_index
+      - local_events_flag
+      - price_elasticity_score
+      - day_of_week
+      - competitor_pricing
+    target_metric: mape
+    target_value: 5.8
+  customer_churn:
+    name: "Customer_Churn_Predictor"
+    algorithm: "XGBClassifier"
+    features:
+      - days_since_last_purchase
+      - purchase_frequency_90d
+      - avg_basket_value
+      - loyalty_tier
+      - return_rate
+      - nps_score
+      - channel_diversity
+      - promo_response_rate
+    target_metric: auc_roc
+    target_value: 0.91
+  markdown_optimizer:
+    name: "Markdown_Optimization_Engine"
+    algorithm: "BayesianOptimization"
+    features:
+      - current_inventory_level
+      - weeks_of_supply
+      - sell_through_rate
+      - seasonality_factor
+      - competitor_price
+      - margin_target
+      - demand_elasticity
+    target_metric: margin_lift_pct
+    target_value: 8.4
+
+# ----------------------------------------------------------
+# Pages / Navigation
+# ----------------------------------------------------------
+pages:
+  - id: dashboard
+    label: "Retail Command Center"
+    icon: fa-store
+    group: ""
+    enabled: true
+
+  - id: merchandising
+    label: "Merchandising & Assortment"
+    icon: fa-tags
+    group: "Drive Revenue"
+    enabled: true
+
+  - id: customer_analytics
+    label: "Customer Analytics"
+    icon: fa-users
+    group: "Drive Revenue"
+    enabled: true
+
+  - id: store_ops
+    label: "Store Operations"
+    icon: fa-shop
+    group: "Optimize Operations"
+    enabled: true
+
+  - id: supply_chain
+    label: "Supply Chain & Inventory"
+    icon: fa-boxes-stacked
+    group: "Optimize Operations"
+    enabled: true
+
+  - id: ecommerce
+    label: "E-Commerce & Digital"
+    icon: fa-cart-shopping
+    group: "Digital Growth"
+    enabled: true
+
+  - id: loss_prevention
+    label: "Loss Prevention & Shrink"
+    icon: fa-shield-halved
+    group: "Digital Growth"
+    enabled: true
+
+# ----------------------------------------------------------
+# Genie - AI Assistant
+# ----------------------------------------------------------
+genie:
+  space_name: RetailIQ Genie
+  tables:
+    - retail_iq.gold.store_performance
+    - retail_iq.gold.product_sales
+    - retail_iq.gold.customer_profiles
+    - retail_iq.gold.inventory_positions
+    - retail_iq.gold.ecommerce_sessions
+    - retail_iq.gold.loss_prevention_events
+    - retail_iq.silver.pos_transactions
+    - retail_iq.silver.traffic_counts
+  sample_questions:
+    # --- Merchandising & Assortment (8) ---
+    - "What are the top 10 selling SKUs by revenue this month across all channels?"
+    - "Show me the sell-through rate by department and compare to last year."
+    - "Which categories have the highest and lowest gross margin this quarter?"
+    - "What is the markdown cadence effectiveness — are deeper discounts driving incremental volume?"
+    - "Show me the price elasticity analysis for our top 20 products."
+    - "Which new product launches in the past 90 days exceeded their sales plan?"
+    - "What is the assortment productivity by department measured by sales per SKU?"
+    - "How does private label penetration compare across departments and regions?"
+    # --- Customer Analytics (8) ---
+    - "What is the average customer lifetime value by loyalty tier and acquisition channel?"
+    - "Show me customer retention rates by cohort for the past 12 months."
+    - "Which customer segments have the highest predicted churn probability?"
+    - "What is the repeat purchase rate by department and customer segment?"
+    - "How has NPS trended by region and channel over the past four quarters?"
+    - "What is the cross-sell and upsell attach rate by product category?"
+    - "Show me the customer acquisition cost versus lifetime value by marketing channel."
+    - "Which loyalty program rewards drive the highest redemption and incremental spend?"
+    # --- Store Operations (7) ---
+    - "What is the sales per square foot by store format and region?"
+    - "Show me foot traffic conversion rate trends by store and day of week."
+    - "Which stores have the highest and lowest labor productivity measured by sales per labor hour?"
+    - "What is the average transaction value by store format and time of day?"
+    - "How does associate staffing level correlate with conversion rate by store?"
+    - "Show me store-level CSAT scores and identify the bottom-performing locations."
+    - "What is the four-wall EBITDA margin by store and how has it trended?"
+    # --- Supply Chain & Inventory (7) ---
+    - "What is the current stockout rate by department and region?"
+    - "Show me days of supply by category and flag any items below safety stock."
+    - "What is the inventory turnover trend by department over the past 12 months?"
+    - "Which suppliers have the lowest on-time-in-full delivery rates?"
+    - "What is the distribution center fill rate and order accuracy this month?"
+    - "Show me the slow-moving and obsolete inventory value by department."
+    - "What is the forecast accuracy by product category and how does it impact stock levels?"
+    # --- E-Commerce & Digital (7) ---
+    - "What is the e-commerce conversion rate trend by device type and traffic source?"
+    - "Show me cart abandonment rate by stage and identify the biggest drop-off point."
+    - "What is the average order value for online versus in-store purchases by department?"
+    - "How has buy-online-pick-up-in-store usage trended and what is its impact on basket size?"
+    - "What is the digital traffic mix by channel — organic, paid, social, email, direct?"
+    - "Show me the fulfillment SLA performance — what percentage of orders ship within 24 hours?"
+    - "What is the return rate for e-commerce orders versus in-store purchases by category?"
+    # --- Loss Prevention & Shrink (5) ---
+    - "What is the total shrinkage as a percentage of sales by store and department?"
+    - "Show me the top stores with the highest loss per transaction and identify the primary causes."
+    - "How has organized retail crime incident frequency trended over the past 12 months?"
+    - "What is the exception-based reporting hit rate and average case value?"
+    - "Which departments have the highest internal versus external shrinkage rates?"
+
+# ----------------------------------------------------------
+# Dashboard
+# ----------------------------------------------------------
+dashboard:
+  kpis:
+    - title: "Revenue MTD"
+      value: "$148M"
+      accent: blue
+    - title: "Comp Store Sales"
+      value: "+4.2%"
+      accent: green
+    - title: "Gross Margin"
+      value: "38.2%"
+      accent: blue
+    - title: "Conversion Rate"
+      value: "3.4%"
+      accent: green
+    - title: "AOV"
+      value: "$67.40"
+      accent: purple
+    - title: "E-Commerce Share"
+      value: "34%"
+      accent: blue
+    - title: "NPS"
+      value: "42"
+      accent: green
+    - title: "Shrinkage Rate"
+      value: "1.4%"
+      accent: red
+      alert: true
+    - title: "Inventory Turnover"
+      value: "8.2x"
+      accent: purple
+    - title: "Stockout Rate"
+      value: "3.1%"
+      accent: red
+      alert: true

@@ -1,0 +1,253 @@
+app:
+  name: PropIQ
+  title: Blueprint PropIQ
+  subtitle: "Property Analytics, Portfolio Intelligence & Market Insights"
+  catalog: prop_iq
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
+brand:
+  primary_color: '#233ED8'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#EAB308'
+    critical: '#EF4444'
+data:
+  property_types:
+  - Office
+  - Retail
+  - Industrial
+  - Multifamily
+  - Mixed-Use
+  - Data Center
+  markets:
+  - New York
+  - San Francisco
+  - Chicago
+  - Austin
+  - Miami
+  - Seattle
+  - Denver
+  - Atlanta
+  asset_classes:
+  - Class A
+  - Class B
+  - Class C
+  investment_strategies:
+  - Core
+  - Core-Plus
+  - Value-Add
+  - Opportunistic
+  portfolio_metrics:
+    portfolio_value: 4200000000
+    noi: 285000000
+    cap_rate: 0.058
+    occupancy_rate: 0.921
+    avg_rent_psf: 42.80
+    rent_growth_yoy: 0.034
+    tenant_retention: 0.82
+    leasing_velocity: 14.2
+    dscr: 1.45
+    ltv: 0.62
+    irr_target: 0.142
+    operating_expense_ratio: 0.38
+    net_effective_rent: 38.50
+  market_metrics:
+    market_cap_rate: 0.061
+    vacancy_rate: 0.128
+    absorption_sf: 2840000
+    construction_pipeline_sf: 5200000
+    rent_growth_market: 0.028
+  sustainability_metrics:
+    energy_star_score: 78
+    leed_certified_pct: 0.42
+    carbon_intensity: 8.4
+    water_usage_reduction: 0.18
+ml:
+  valuation_model:
+    name: Property_Valuation_Model
+    features:
+    - location_score
+    - building_age
+    - rentable_sf
+    - occupancy_rate
+    - noi_per_sf
+    - cap_rate_local
+    - recent_comps
+    - transit_score
+    - crime_index
+    - school_rating
+    algorithm: GradientBoostingRegressor
+    target_metric: mape
+    target_value: 4.8
+  tenant_churn:
+    name: Tenant_Churn_Predictor
+    features:
+    - lease_term_remaining
+    - rent_vs_market
+    - tenant_credit_score
+    - maintenance_requests
+    - renewal_history
+    - market_vacancy
+    - tenant_industry_health
+    - satisfaction_score
+    algorithm: XGBClassifier
+    target_metric: auc_roc
+    target_value: 0.91
+  rent_optimizer:
+    name: Rent_Optimization_Model
+    features:
+    - market_rent_psf
+    - floor_level
+    - view_premium
+    - lease_term_years
+    - tenant_credit
+    - concession_months
+    - ti_allowance
+    - occupancy_building
+    algorithm: LightGBMRegressor
+    target_metric: rmse
+    target_value: 1.85
+pages:
+- id: dashboard
+  label: Portfolio Overview
+  icon: fa-building
+  group: ""
+  enabled: true
+- id: portfolio_analytics
+  label: Portfolio Analytics
+  icon: fa-chart-pie
+  group: "Portfolio Management"
+  enabled: true
+- id: leasing
+  label: Leasing & Occupancy
+  icon: fa-key
+  group: "Portfolio Management"
+  enabled: true
+- id: market_intel
+  label: Market Intelligence
+  icon: fa-magnifying-glass-chart
+  group: "Investment Strategy"
+  enabled: true
+- id: acquisitions
+  label: Acquisitions Pipeline
+  icon: fa-handshake
+  group: "Investment Strategy"
+  enabled: true
+- id: asset_management
+  label: Asset Management
+  icon: fa-screwdriver-wrench
+  group: "Operations"
+  enabled: true
+- id: sustainability
+  label: ESG & Sustainability
+  icon: fa-leaf
+  group: "Operations"
+  enabled: true
+genie:
+  space_name: PropIQ Genie
+  tables:
+  - prop_iq.gold.portfolio_summary
+  - prop_iq.gold.property_valuations
+  - prop_iq.gold.lease_abstracts
+  - prop_iq.gold.market_analytics
+  - prop_iq.gold.tenant_performance
+  - prop_iq.silver.rent_roll
+  - prop_iq.silver.operating_statements
+  sample_questions:
+  # --- Portfolio Performance (10) ---
+  - What is the total portfolio value and NOI by property type and market?
+  - How has the portfolio-level cap rate trended over the past 8 quarters?
+  - What is the weighted average occupancy rate by asset class and market?
+  - Show me the NOI margin by property type compared to industry benchmarks.
+  - Which properties have the highest and lowest IRR relative to target?
+  - What is the debt service coverage ratio trend by property and how many are below 1.25x?
+  - How does our portfolio LTV compare across markets and what is the weighted average?
+  - What is the net effective rent per square foot by property type and market?
+  - Show me the operating expense ratio trend by property type over the past 12 months.
+  - Which properties are underperforming their underwritten NOI projections and by how much?
+  # --- Leasing & Occupancy (10) ---
+  - What is the current occupancy rate by property and how has it trended over 12 months?
+  - How many leases are expiring in the next 12, 24, and 36 months by property type?
+  - What is the tenant retention rate by property type and market over the past 3 years?
+  - Show me the leasing velocity in days to lease by market and property type.
+  - What is the average rent per square foot for new leases vs renewals this quarter?
+  - Which properties have the highest concentration of lease expirations in any single year?
+  - What is the tenant credit quality distribution across the portfolio by rating category?
+  - How does our in-place rent compare to current market rent by property and market?
+  - Show me the net absorption trend by property type and market over the past 8 quarters.
+  - What concessions are we offering on new leases and how do they compare to market norms?
+  # --- Market Intelligence (10) ---
+  - What are the current cap rates by property type across our target markets?
+  - How has the vacancy rate trended in each of our markets over the past 5 years?
+  - What is the construction pipeline in square feet by market and property type?
+  - Show me the rent growth comparison between our portfolio and the broader market.
+  - Which markets are showing the strongest net absorption relative to new supply?
+  - What are the top 10 comparable transactions in our target markets in the past 6 months?
+  - How do interest rate changes correlate with cap rate movements in our markets?
+  - What is the employment growth trend in each market and how does it impact demand?
+  - Show me the supply-demand imbalance by market highlighting markets at risk of oversupply.
+  - What are the demographic and migration trends driving demand in our growth markets?
+  # --- Acquisitions & Dispositions (10) ---
+  - What properties are currently in our acquisition pipeline and what stage are they in?
+  - How does the underwritten IRR compare to our target by acquisition opportunity?
+  - What is the average cap rate we are targeting for acquisitions vs the current market?
+  - Show me the due diligence checklist status for properties under contract.
+  - Which disposition candidates have the highest potential gain relative to basis?
+  - What is the projected impact of pending acquisitions on portfolio-level metrics?
+  - How does the acquisition pipeline compare to our annual deployment target?
+  - What is the competitive landscape for deals we are pursuing in each market?
+  - Show me the historical acquisition performance vs underwriting for deals closed in the past 3 years.
+  - What is the sensitivity analysis on IRR for our top 5 acquisition targets given cap rate and rent scenarios?
+  # --- Asset Management & Operations (10) ---
+  - What is the capital expenditure plan by property and how does actual spend compare to budget?
+  - How many open maintenance work orders are there by priority and property?
+  - What is the tenant satisfaction score by property and what are the top complaint categories?
+  - Show me the operating expense variance analysis by property and expense category.
+  - Which properties have the highest deferred maintenance backlog and estimated cost?
+  - What is the energy consumption and cost per square foot by property type?
+  - How does our property management cost compare across properties and to industry benchmarks?
+  - What capital improvements have the highest ROI based on rent premium achieved?
+  - Show me the insurance claims history by property type and the trend in premiums.
+  - What is the status of our value-add renovation projects and are they on schedule and budget?
+  # --- ESG & Sustainability (10) ---
+  - What is the average Energy Star score across the portfolio and which properties are below 50?
+  - What percentage of our portfolio is LEED certified and what levels have been achieved?
+  - How has our portfolio carbon intensity per square foot trended over the past 3 years?
+  - Show me the water usage reduction progress by property relative to our baseline year.
+  - What is the estimated cost of achieving carbon neutrality across the portfolio?
+  - Which properties have the highest energy consumption per square foot and what retrofits are planned?
+  - How do our ESG metrics compare to GRESB benchmarks for our peer group?
+  - What is the green lease adoption rate and how does it impact tenant behavior?
+  - Show me the renewable energy usage by property and the feasibility of solar installations.
+  - What is the projected impact of climate risk on property valuations in coastal markets?
+dashboard:
+  kpis:
+  - title: Portfolio Value
+    value: "$4.2B"
+    accent: blue
+  - title: NOI
+    value: "$285M"
+    accent: green
+  - title: Cap Rate
+    value: "5.8%"
+    accent: purple
+  - title: Occupancy
+    value: "92.1%"
+    accent: green
+  - title: Avg Rent PSF
+    value: "$42.80"
+    accent: blue
+  - title: Rent Growth YoY
+    value: "+3.4%"
+    accent: green
+  - title: Tenant Retention
+    value: "82%"
+    accent: purple
+  - title: DSCR
+    value: "1.45x"
+    accent: green
+  - title: LTV
+    value: "62%"
+    accent: yellow
+  - title: Energy Star Avg
+    value: "78"
+    accent: blue

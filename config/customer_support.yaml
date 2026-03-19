@@ -1,0 +1,384 @@
+# ============================================================
+# Blueprint SupportIQ - Contact Center Intelligence & Customer Success
+# Configuration for the SupportIQ vertical in Blueprint IQ
+# ============================================================
+
+# ----------------------------------------------------------
+# App Metadata
+# ----------------------------------------------------------
+app:
+  name: SupportIQ
+  title: "Blueprint SupportIQ"
+  subtitle: "Contact Center Intelligence & Customer Success"
+  catalog: support_iq
+  version: "1.0.0"
+  description: "End-to-end customer support analytics covering contact center operations, ticket intelligence, agent performance, quality assurance, customer health, and AI-driven self-service."
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
+
+# ----------------------------------------------------------
+# Brand / Theme
+# ----------------------------------------------------------
+brand:
+  primary_color: '#233ED8'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#F59E0B'
+    critical: '#EF4444'
+  logo: "assets/supportiq_logo.svg"
+  font_family: "Inter, sans-serif"
+
+# ----------------------------------------------------------
+# Data Configuration
+# ----------------------------------------------------------
+data:
+  channels:
+    - Phone
+    - Chat
+    - Email
+    - Social Media
+    - Self-Service
+    - Video
+  tiers:
+    - "Tier 1 \u2014 General"
+    - "Tier 2 \u2014 Specialist"
+    - "Tier 3 \u2014 Engineering"
+    - "Tier 4 \u2014 Escalation"
+  categories:
+    - Billing
+    - Technical
+    - Account
+    - Returns
+    - Product Info
+    - Complaints
+  regions:
+    - North America
+    - EMEA
+    - APAC
+    - LATAM
+  products:
+    - Core Platform
+    - Mobile App
+    - Enterprise Suite
+    - API Services
+    - Add-ons
+  support_metrics:
+    tickets_daily: 2840
+    avg_handle_time_min: 8.4
+    first_contact_resolution: 0.742
+    csat: 4.32
+    nps: 47
+    abandonment_rate: 0.054
+    sla_compliance: 0.921
+    backlog: 1284
+    avg_response_time_min: 3.2
+    cost_per_ticket: 12.80
+    escalation_rate: 0.138
+    agent_utilization: 0.82
+    self_service_deflection: 0.384
+    sentiment_positive_pct: 0.68
+  workforce_metrics:
+    agents_active: 342
+    occupancy_rate: 0.78
+    adherence_rate: 0.91
+    attrition_rate_annual: 0.22
+    training_hours_per_agent: 48
+  quality_metrics:
+    qa_score_avg: 87.4
+    compliance_adherence: 0.96
+    customer_effort_score: 3.8
+
+# ----------------------------------------------------------
+# ML Models
+# ----------------------------------------------------------
+ml:
+  ticket_routing:
+    name: "Intelligent Ticket Router"
+    algorithm: "XGBClassifier"
+    features:
+      - ticket_text_embedding
+      - customer_tier
+      - product_category
+      - historical_resolution_path
+      - sentiment_score
+      - urgency_keywords
+      - time_of_day
+      - channel_type
+    target_metric: accuracy
+    target_value: 0.91
+  churn_predictor:
+    name: "Customer Churn Predictor"
+    algorithm: "LightGBMClassifier"
+    features:
+      - ticket_frequency_30d
+      - csat_trend
+      - nps_score
+      - product_usage_decline
+      - billing_dispute_count
+      - escalation_history
+      - days_since_last_positive_interaction
+      - contract_renewal_days
+    target_metric: auc_roc
+    target_value: 0.88
+  sentiment_analyzer:
+    name: "Real-Time Sentiment Analyzer"
+    algorithm: "DistilBERT-finetuned"
+    features:
+      - conversation_text
+      - agent_response_text
+      - customer_tone_shift
+      - emoji_usage
+      - caps_ratio
+      - response_latency
+    target_metric: f1_score
+    target_value: 0.93
+
+# ----------------------------------------------------------
+# Pages / Navigation
+# ----------------------------------------------------------
+pages:
+  - id: dashboard
+    label: "Support Command Center"
+    icon: fa-headset
+    group: ""
+    enabled: true
+
+  - id: contact_center
+    label: "Contact Center Analytics"
+    icon: fa-phone-volume
+    group: "Operational Excellence"
+    enabled: true
+
+  - id: ticket_analytics
+    label: "Ticket Intelligence"
+    icon: fa-ticket
+    group: "Operational Excellence"
+    enabled: true
+
+  - id: agent_performance
+    label: "Agent Performance"
+    icon: fa-user-check
+    group: "People & Quality"
+    enabled: true
+
+  - id: quality_assurance
+    label: "Quality Assurance"
+    icon: fa-clipboard-check
+    group: "People & Quality"
+    enabled: true
+
+  - id: customer_health
+    label: "Customer Health"
+    icon: fa-heart
+    group: "Customer Success"
+    enabled: true
+
+  - id: self_service
+    label: "Self-Service & AI"
+    icon: fa-robot
+    group: "Customer Success"
+    enabled: true
+
+# ----------------------------------------------------------
+# Genie - AI Assistant
+# ----------------------------------------------------------
+genie:
+  space_name: SupportIQ Genie
+  tables:
+    - name: ticket_master
+      display_name: "Ticket Master"
+      description: "Comprehensive ticket data including creation, assignment, resolution, and customer feedback."
+      columns:
+        - ticket_id
+        - created_at
+        - channel
+        - category
+        - priority
+        - status
+        - assigned_agent
+        - tier
+        - product
+        - region
+        - resolution_time_min
+        - csat_score
+        - first_contact_resolved
+
+    - name: agent_metrics
+      display_name: "Agent Metrics"
+      description: "Agent-level performance metrics including handle times, quality scores, and utilization."
+      columns:
+        - agent_id
+        - agent_name
+        - team
+        - shift
+        - tickets_handled
+        - avg_handle_time_min
+        - first_contact_resolution_rate
+        - csat_avg
+        - qa_score
+        - adherence_rate
+        - occupancy_rate
+        - utilization
+
+    - name: customer_interactions
+      display_name: "Customer Interactions"
+      description: "Interaction-level data with sentiment analysis, effort scoring, and journey mapping."
+      columns:
+        - interaction_id
+        - customer_id
+        - ticket_id
+        - channel
+        - timestamp
+        - duration_sec
+        - sentiment_score
+        - effort_score
+        - transferred
+        - escalated
+        - resolution_outcome
+
+    - name: quality_evaluations
+      display_name: "Quality Evaluations"
+      description: "QA evaluation records with scoring breakdowns and calibration data."
+      columns:
+        - evaluation_id
+        - agent_id
+        - evaluator_id
+        - ticket_id
+        - overall_score
+        - greeting_score
+        - empathy_score
+        - resolution_score
+        - compliance_score
+        - evaluated_at
+        - calibration_flag
+
+    - name: self_service_events
+      display_name: "Self-Service Events"
+      description: "Self-service and AI chatbot interaction logs with deflection and escalation tracking."
+      columns:
+        - event_id
+        - session_id
+        - customer_id
+        - channel
+        - intent_detected
+        - confidence_score
+        - deflected
+        - escalated_to_agent
+        - resolution_achieved
+        - timestamp
+        - duration_sec
+
+    - name: customer_health_scores
+      display_name: "Customer Health Scores"
+      description: "Aggregated customer health scoring with churn risk, sentiment trends, and engagement metrics."
+      columns:
+        - customer_id
+        - account_name
+        - health_score
+        - churn_risk_score
+        - nps_latest
+        - csat_avg_90d
+        - ticket_volume_trend
+        - sentiment_trend
+        - last_interaction_date
+        - contract_renewal_date
+        - arr_value
+
+  sample_questions:
+    # --- Contact Center Operations (10) ---
+    - "What is the current average wait time by channel and how has it changed over the past 30 days?"
+    - "Show me the hourly call volume distribution for this week compared to last week."
+    - "Which channels have the highest abandonment rate and what is the trend?"
+    - "What is the service level performance (calls answered within 30 seconds) by time of day?"
+    - "How does our average handle time compare across channels and categories?"
+    - "Show me the real-time queue depth by channel and tier for the current shift."
+    - "What is the channel mix trend over the past 6 months and how is it shifting?"
+    - "Which regions have the longest average response times and what are the root causes?"
+    - "What is the peak hour staffing gap analysis showing overstaffed and understaffed intervals?"
+    - "Show the correlation between wait time and customer satisfaction scores by channel."
+
+    # --- Ticket Intelligence (10) ---
+    - "What is the current ticket backlog by category and priority, and how has it trended?"
+    - "Show me the top 10 ticket categories by volume and their average resolution times."
+    - "Which product has the highest ticket volume and what are the most common issue types?"
+    - "What is the average time to first response by priority level and are we meeting SLAs?"
+    - "Show the ticket escalation rate by tier and identify the most common escalation reasons."
+    - "How does ticket volume correlate with recent product releases or feature deployments?"
+    - "What is the reopened ticket rate and which categories have the highest reopen frequency?"
+    - "Show me the ticket routing accuracy for the ML model and where misroutes happen most."
+    - "What percentage of tickets are resolved within SLA by category and region?"
+    - "List the trending ticket topics this week compared to the rolling 30-day average."
+
+    # --- Agent Performance (8) ---
+    - "Who are the top 10 agents by customer satisfaction score and what is their ticket volume?"
+    - "Show me agent performance quartiles for handle time, FCR, and CSAT."
+    - "Which teams have the highest and lowest first contact resolution rates?"
+    - "What is the correlation between agent tenure and key performance metrics?"
+    - "How does agent performance vary across shifts and what are the patterns?"
+    - "Show the agent schedule adherence trend and identify chronic adherence issues."
+    - "What is the agent attrition rate by team and tenure cohort?"
+    - "Which agents have the most consistent quality scores over the past 90 days?"
+
+    # --- Quality Assurance (6) ---
+    - "What is the average QA score by team and how has it trended over the past quarter?"
+    - "Show me the QA score distribution and identify agents below the performance threshold."
+    - "Which evaluation criteria have the lowest average scores across all agents?"
+    - "What is the calibration variance between QA evaluators?"
+    - "How does QA score correlate with customer satisfaction and first contact resolution?"
+    - "Show the compliance adherence rate trend and flag any regulatory gaps."
+
+    # --- Customer Health & Success (8) ---
+    - "What is the customer health score distribution and how many accounts are in the red zone?"
+    - "Show me the top 20 accounts by churn risk score and their key risk drivers."
+    - "What is the overall NPS trend by product and region over the past 12 months?"
+    - "How does customer sentiment vary by channel and issue category?"
+    - "Which customer segments have the highest effort scores and what drives friction?"
+    - "Show the correlation between support ticket frequency and churn probability."
+    - "What is the customer lifetime value segmentation and how does support quality impact it?"
+    - "List accounts with declining health scores that have contract renewals in the next 90 days."
+
+    # --- Self-Service & AI (8) ---
+    - "What is the current self-service deflection rate and how has it trended monthly?"
+    - "Show me the top intents handled by the AI chatbot and their resolution rates."
+    - "Which self-service topics have the highest escalation-to-agent rate?"
+    - "What is the chatbot confidence score distribution and where does it fall below threshold?"
+    - "How does self-service satisfaction compare to agent-assisted satisfaction by topic?"
+    - "Show the cost savings from self-service deflection over the past 12 months."
+    - "What percentage of self-service interactions result in a follow-up ticket within 24 hours?"
+    - "Which knowledge base articles have the highest views but lowest helpfulness ratings?"
+
+# ----------------------------------------------------------
+# Dashboard
+# ----------------------------------------------------------
+dashboard:
+  kpis:
+    - title: "CSAT Score"
+      value: "4.32 / 5"
+      accent: "healthy"
+    - title: "First Contact Resolution"
+      value: "74.2%"
+      accent: "warning"
+    - title: "Avg Handle Time"
+      value: "8.4 min"
+      accent: "healthy"
+    - title: "Net Promoter Score"
+      value: "+47"
+      accent: "healthy"
+    - title: "SLA Compliance"
+      value: "92.1%"
+      accent: "healthy"
+    - title: "Ticket Backlog"
+      value: "1,284"
+      accent: "critical"
+      alert: true
+    - title: "Abandonment Rate"
+      value: "5.4%"
+      accent: "warning"
+    - title: "Self-Service Deflection"
+      value: "38.4%"
+      accent: "warning"
+    - title: "Cost per Ticket"
+      value: "$12.80"
+      accent: "healthy"
+    - title: "Agent Utilization"
+      value: "82%"
+      accent: "healthy"

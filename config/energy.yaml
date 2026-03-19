@@ -1,0 +1,302 @@
+# ============================================================
+# Blueprint EnergyIQ - Grid Operations, Asset Performance
+# & Energy Transition
+# Configuration for the EnergyIQ vertical in Blueprint IQ
+# ============================================================
+
+# ----------------------------------------------------------
+# App Metadata
+# ----------------------------------------------------------
+app:
+  name: EnergyIQ
+  title: "Blueprint EnergyIQ"
+  subtitle: "Grid Operations, Asset Performance & Energy Transition"
+  catalog: energy_iq
+  warehouse_http_path: /sql/1.0/warehouses/<YOUR_WAREHOUSE_ID>
+
+# ----------------------------------------------------------
+# Brand / Theme
+# ----------------------------------------------------------
+brand:
+  primary_color: '#233ED8'
+  accent_colors:
+    healthy: '#22C55E'
+    warning: '#F59E0B'
+    critical: '#EF4444'
+
+# ----------------------------------------------------------
+# Data Configuration
+# ----------------------------------------------------------
+data:
+  generation_types:
+    - Solar
+    - Wind
+    - Natural Gas
+    - Nuclear
+    - Hydro
+    - Battery Storage
+  service_territories:
+    - Northeast Grid
+    - Southeast Grid
+    - Midwest Grid
+    - Western Interconnect
+    - Texas ERCOT
+  customer_classes:
+    - Residential
+    - Commercial
+    - Industrial
+    - Municipal
+    - EV Charging
+  asset_types:
+    - Transmission Lines
+    - Substations
+    - Distribution Feeders
+    - Smart Meters
+    - DER Inverters
+  grid_metrics:
+    system_load_gw: 68.4
+    peak_demand_gw: 92.1
+    reserve_margin_pct: 0.148
+    renewable_penetration: 0.312
+    system_avg_cost_mwh: 42.60
+    saidi_minutes: 108.2
+    saifi_events: 1.04
+    caidi_minutes: 104.0
+    t_and_d_loss_pct: 0.054
+    generation_capacity_gw: 112.8
+    capacity_factor: 0.61
+    heat_rate_btu_kwh: 7420
+    customer_count: 4820000
+    avg_bill_residential: 142.30
+    demand_response_mw: 3850
+    ev_charging_stations: 12480
+  financial_metrics:
+    revenue_per_mwh: 68.40
+    opex_per_customer: 284.50
+    capex_annual: 4200000000
+    rate_base: 28500000000
+    roa: 0.038
+    regulatory_lag_months: 14.2
+  sustainability_metrics:
+    carbon_intensity_lbs_mwh: 720
+    renewable_target_pct: 0.50
+    renewable_actual_pct: 0.312
+    methane_leak_rate: 0.0024
+    tree_trimming_miles: 14200
+    wildfire_risk_miles: 3800
+
+# ----------------------------------------------------------
+# ML Models
+# ----------------------------------------------------------
+ml:
+  load_forecaster:
+    name: "Grid Load Forecaster"
+    algorithm: "LSTMTimeSeries"
+    features:
+      - historical_load_168h
+      - temperature_forecast
+      - humidity_pct
+      - day_of_week
+      - holiday_flag
+      - solar_irradiance_forecast
+      - ev_charging_demand
+      - industrial_schedule
+    target_metric: mape
+    target_value: 2.4
+  outage_predictor:
+    name: "Outage Probability Predictor"
+    algorithm: "XGBClassifier"
+    features:
+      - equipment_age_years
+      - maintenance_history_score
+      - weather_severity_index
+      - vegetation_proximity_ft
+      - load_factor_pct
+      - fault_history_count
+      - soil_moisture_index
+      - animal_contact_risk
+    target_metric: auc_roc
+    target_value: 0.91
+  vegetation_risk:
+    name: "Vegetation Risk Scorer"
+    algorithm: "RandomForestRegressor"
+    features:
+      - lidar_canopy_height_ft
+      - growth_rate_annual_in
+      - distance_to_conductor_ft
+      - species_risk_score
+      - last_trim_months
+      - wind_exposure_index
+      - storm_damage_history
+      - span_length_ft
+    target_metric: rmse
+    target_value: 0.18
+
+# ----------------------------------------------------------
+# Pages / Navigation
+# ----------------------------------------------------------
+pages:
+  - id: dashboard
+    label: "Grid Command Center"
+    icon: fa-bolt
+    group: ""
+    enabled: true
+
+  - id: generation
+    label: "Generation & Dispatch"
+    icon: fa-solar-panel
+    group: "Supply Side"
+    enabled: true
+
+  - id: grid_ops
+    label: "Grid Operations"
+    icon: fa-plug-circle-bolt
+    group: "Supply Side"
+    enabled: true
+
+  - id: customer_programs
+    label: "Customer Programs"
+    icon: fa-house-signal
+    group: "Demand Side"
+    enabled: true
+
+  - id: asset_health
+    label: "Asset Health & Reliability"
+    icon: fa-wrench
+    group: "Demand Side"
+    enabled: true
+
+  - id: energy_transition
+    label: "Energy Transition"
+    icon: fa-leaf
+    group: "Sustainability"
+    enabled: true
+
+  - id: regulatory
+    label: "Regulatory & Rates"
+    icon: fa-gavel
+    group: "Sustainability"
+    enabled: true
+
+# ----------------------------------------------------------
+# Genie - AI Assistant
+# ----------------------------------------------------------
+genie:
+  space_name: EnergyIQ Genie
+  tables:
+    - energy_iq.gold.grid_operations_kpis
+    - energy_iq.gold.generation_dispatch_log
+    - energy_iq.gold.outage_management_events
+    - energy_iq.gold.asset_condition_scores
+    - energy_iq.gold.customer_program_enrollment
+    - energy_iq.silver.scada_telemetry
+    - energy_iq.silver.ami_meter_reads
+    - energy_iq.silver.der_inverter_data
+  sample_questions:
+    # --- Grid Operations & Load (10) ---
+    - "What is the current system load in GW and how does it compare to forecasted demand?"
+    - "Show me the hourly load curve for each service territory over the past 7 days."
+    - "What is the reserve margin trend and are we approaching any reliability thresholds?"
+    - "Which service territories experienced the highest peak demand this summer?"
+    - "How does actual system load compare to the day-ahead forecast by hour for this week?"
+    - "What is the T&D loss percentage by service territory and how has it trended quarterly?"
+    - "Show me the frequency regulation performance and any NERC compliance deviations."
+    - "What is the current congestion cost by transmission corridor?"
+    - "How does real-time LMP vary across pricing nodes during peak hours?"
+    - "What is the spinning reserve availability and how close are we to minimum requirements?"
+    # --- Generation & Dispatch (8) ---
+    - "What is the current generation mix by fuel type and how has it changed over the past year?"
+    - "Show the capacity factor for each generation type over the past 12 months."
+    - "What is the heat rate efficiency trend for our natural gas fleet?"
+    - "Which generating units have the highest forced outage rates this quarter?"
+    - "What is the marginal cost of generation by fuel type and how does it drive dispatch order?"
+    - "Show the solar and wind curtailment volumes and the primary reasons for curtailment."
+    - "What is the battery storage utilization rate and average discharge duration?"
+    - "How does our generation fleet availability compare to NERC GADS benchmarks?"
+    # --- Outage & Reliability (8) ---
+    - "What are the current SAIDI, SAIFI, and CAIDI values by service territory?"
+    - "Show me the top 10 worst-performing circuits by customer minutes interrupted."
+    - "What is the trend of major event days over the past 5 years?"
+    - "How does our outage restoration time compare to regulatory performance targets?"
+    - "What are the primary causes of outages broken down by equipment failure, weather, and vegetation?"
+    - "Show the geographic heat map of outage frequency across our service territory."
+    - "What is the predicted outage risk for the next 72 hours based on the weather forecast?"
+    - "How many customers are currently without power and what is the estimated restoration time?"
+    # --- Asset Health & Maintenance (8) ---
+    - "What is the asset health index distribution for our transmission and distribution infrastructure?"
+    - "Which substations have the lowest condition scores and are due for replacement?"
+    - "Show the transformer dissolved gas analysis trends for units flagged as at-risk."
+    - "What is the average age of our distribution feeder infrastructure by service territory?"
+    - "How does predictive maintenance alert volume correlate with actual equipment failures?"
+    - "What is the vegetation management backlog in miles and which circuits are highest priority?"
+    - "Show the smart meter deployment status and communication failure rates by region."
+    - "What is the total capital investment needed to address all assets in poor or very poor condition?"
+    # --- Customer Programs & Demand Side (8) ---
+    - "What is the current enrollment in demand response programs by customer class?"
+    - "How much load reduction did demand response programs deliver during the last peak event?"
+    - "What is the average residential customer bill and how does it compare year over year?"
+    - "Show the EV charging station utilization rates by time of day and location."
+    - "What is the net metering solar adoption rate and how does it impact load forecasting?"
+    - "How does customer satisfaction (J.D. Power) trend across our service territories?"
+    - "What is the energy efficiency program participation rate and verified kWh savings?"
+    - "Show the time-of-use rate plan enrollment and its impact on peak demand shifting."
+    # --- Energy Transition & Sustainability (8) ---
+    - "What is our current renewable penetration percentage versus the regulatory target?"
+    - "Show the carbon intensity trend in lbs per MWh over the past 5 years."
+    - "What is the progress on our integrated resource plan generation retirement schedule?"
+    - "How much DER capacity is interconnected and what is the queue backlog?"
+    - "What is the methane leak detection and repair compliance status?"
+    - "Show the wildfire risk assessment scores by transmission corridor."
+    - "What is the projected timeline to reach our 50% renewable energy target?"
+    - "How does our carbon reduction trajectory compare to peer utilities and state mandates?"
+    # --- Regulatory & Rates (6) ---
+    - "What is the current regulatory lag in months and how does it impact earned ROE?"
+    - "Show the rate case filing schedule and status for all jurisdictions."
+    - "What is our authorized versus actual return on equity by operating company?"
+    - "How does our residential rate compare to the regional average and national median?"
+    - "What are the key performance metrics required by our performance-based ratemaking plan?"
+    - "Show the regulatory asset balance and amortization schedule for storm cost recovery."
+    # --- Financial & Cost (6) ---
+    - "What is the revenue per MWh trend and how is it affected by load growth and rate changes?"
+    - "Show the O&M cost per customer trend and identify the top cost drivers."
+    - "What is the annual capital expenditure breakdown by asset category?"
+    - "How does our rate base growth compare to our authorized ROE?"
+    - "What is the fuel cost variance versus the fuel adjustment clause recovery?"
+    - "Show the pension and OPEB liability trend and funded status."
+
+# ----------------------------------------------------------
+# Dashboard
+# ----------------------------------------------------------
+dashboard:
+  kpis:
+    - title: "System Load"
+      value: "68.4 GW"
+      accent: "blue"
+    - title: "Reserve Margin"
+      value: "14.8%"
+      accent: "green"
+    - title: "Renewable Penetration"
+      value: "31.2%"
+      accent: "green"
+    - title: "SAIDI"
+      value: "108.2 min"
+      accent: "warning"
+    - title: "Avg Cost / MWh"
+      value: "$42.60"
+      accent: "blue"
+    - title: "Peak Demand"
+      value: "92.1 GW"
+      accent: "critical"
+      alert: true
+    - title: "T&D Loss"
+      value: "5.4%"
+      accent: "warning"
+    - title: "Demand Response"
+      value: "3,850 MW"
+      accent: "green"
+    - title: "Capacity Factor"
+      value: "61%"
+      accent: "blue"
+    - title: "Carbon Intensity"
+      value: "720 lbs/MWh"
+      accent: "warning"

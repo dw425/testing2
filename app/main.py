@@ -57,6 +57,10 @@ from app.pages import financial_services as pages_finserv  # noqa: E402
 from app.pages import hls as pages_hls  # noqa: E402
 from app.pages import manufacturing as pages_manufacturing  # noqa: E402
 from app.pages import risk as pages_risk  # noqa: E402
+from app.pages import retail as pages_retail  # noqa: E402
+from app.pages import customer_support as pages_support  # noqa: E402
+from app.pages import real_estate as pages_realestate  # noqa: E402
+from app.pages import energy as pages_energy  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # App-level constants
@@ -99,7 +103,7 @@ _VERTICALS = [
     {
         "key": "financial_services",
         "icon": "fa-building-columns",
-        "color": "#288CFA",
+        "color": "#43A047",
         "north_star": "Net Interest Margin: 3.42%",
         "health": "amber",
         "stats": [("Strategic Views", "7"), ("AI Models", "3"), ("North Stars", "5")],
@@ -108,7 +112,7 @@ _VERTICALS = [
     {
         "key": "hls",
         "icon": "fa-heart-pulse",
-        "color": "#00897B",
+        "color": "#DC2626",
         "north_star": "Operating Margin: 12.4%",
         "health": "amber",
         "stats": [("Strategic Views", "7"), ("AI Models", "2"), ("North Stars", "4")],
@@ -126,11 +130,47 @@ _VERTICALS = [
     {
         "key": "risk",
         "icon": "fa-shield-halved",
-        "color": "#4B7BF5",
+        "color": "#1565C0",
         "north_star": "Risk Exposure Score: 72/100",
         "health": "amber",
         "stats": [("Strategic Views", "7"), ("AI Models", "2"), ("North Stars", "4")],
         "tagline": "Predictive risk, compliance governance, and cyber resilience",
+    },
+    {
+        "key": "retail",
+        "icon": "fa-store",
+        "color": "#00E5FF",
+        "north_star": "Gross Margin: 42.8%",
+        "health": "green",
+        "stats": [("Strategic Views", "7"), ("AI Models", "3"), ("North Stars", "4")],
+        "tagline": "Omnichannel commerce, merchandising, and customer intelligence",
+    },
+    {
+        "key": "customer_support",
+        "icon": "fa-headset",
+        "color": "#26A69A",
+        "north_star": "CSAT: 4.6 / 5.0",
+        "health": "green",
+        "stats": [("Strategic Views", "7"), ("AI Models", "3"), ("North Stars", "4")],
+        "tagline": "Contact center analytics, agent performance, and customer health",
+    },
+    {
+        "key": "real_estate",
+        "icon": "fa-building",
+        "color": "#8D6E63",
+        "north_star": "Portfolio NOI: $284M",
+        "health": "amber",
+        "stats": [("Strategic Views", "7"), ("AI Models", "3"), ("North Stars", "4")],
+        "tagline": "Property analytics, portfolio intelligence, and market insights",
+    },
+    {
+        "key": "energy",
+        "icon": "fa-bolt",
+        "color": "#FFB300",
+        "north_star": "System Reliability: 99.97%",
+        "health": "green",
+        "stats": [("Strategic Views", "7"), ("AI Models", "3"), ("North Stars", "4")],
+        "tagline": "Grid operations, asset performance, and energy transition",
     },
 ]
 
@@ -328,8 +368,8 @@ def _render_hub():
             className="vertical-card",
             children=[
                 html.Div(
-                    style={"display": "flex", "alignItems": "center", "gap": "12px",
-                           "marginBottom": "16px"},
+                    style={"display": "flex", "alignItems": "center", "gap": "10px",
+                           "marginBottom": "10px"},
                     children=[
                         html.Div(
                             className="vertical-card-icon",
@@ -349,20 +389,20 @@ def _render_hub():
                 ),
                 # Strategic tagline
                 html.Div(tagline, className="vertical-card-subtitle",
-                          style={"marginBottom": "12px"}),
+                          style={"marginBottom": "10px"}),
                 # North Star metric preview
                 html.Div(
                     style={"backgroundColor": f"{v['color']}10",
                            "borderLeft": f"3px solid {v['color']}",
-                           "borderRadius": "6px", "padding": "10px 14px",
-                           "marginBottom": "16px"},
+                           "borderRadius": "6px", "padding": "8px 12px",
+                           "marginBottom": "12px"},
                     children=[
                         html.Div("NORTH STAR", style={
                             "fontSize": "9px", "fontWeight": "700",
                             "color": COLORS["text_muted"], "letterSpacing": "1px",
-                            "marginBottom": "4px"}),
+                            "marginBottom": "3px"}),
                         html.Div(north_star, style={
-                            "fontSize": "15px", "fontWeight": "700",
+                            "fontSize": "14px", "fontWeight": "700",
                             "color": v["color"]}),
                     ],
                 ),
@@ -370,6 +410,35 @@ def _render_hub():
             ],
         )
         cards.append(card)
+
+    # ── "Coming Soon" placeholder card ──────────────────────────────
+    coming_soon = html.Div(
+        className="vertical-card",
+        style={"borderStyle": "dashed", "borderColor": COLORS["border"],
+               "display": "flex", "flexDirection": "column",
+               "alignItems": "center", "justifyContent": "center",
+               "textAlign": "center", "opacity": "0.6",
+               "cursor": "default", "minHeight": "180px"},
+        children=[
+            html.Div(
+                style={"width": "42px", "height": "42px", "borderRadius": "10px",
+                       "backgroundColor": f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.08)",
+                       "display": "flex", "alignItems": "center",
+                       "justifyContent": "center", "marginBottom": "12px"},
+                children=[
+                    html.I(className="fa-solid fa-plus",
+                           style={"color": COLORS["text_muted"], "fontSize": "18px"}),
+                ],
+            ),
+            html.Div("Coming Soon",
+                      style={"fontSize": "15px", "fontWeight": "700",
+                             "color": COLORS["text_muted"], "marginBottom": "4px"}),
+            html.Div("New vertical in development",
+                      style={"fontSize": "12px", "color": COLORS["text_muted"],
+                             "opacity": "0.7"}),
+        ],
+    )
+    cards.append(coming_soon)
 
     return html.Div(
         children=[
@@ -415,8 +484,15 @@ def _render_architecture():
     catalog = cfg["app"].get("catalog", "")
     genie_tables = cfg.get("genie", {}).get("tables", [])
 
-    silver_tables = [t.split(".")[-1] for t in genie_tables if ".silver." in t]
-    gold_tables = [t.split(".")[-1] for t in genie_tables if ".gold." in t]
+    # Normalize table entries — may be strings ("catalog.schema.table") or dicts ({"name": ...})
+    table_names = []
+    for t in genie_tables:
+        if isinstance(t, str):
+            table_names.append(t)
+        elif isinstance(t, dict):
+            table_names.append(t.get("name", ""))
+    silver_tables = [t.split(".")[-1] for t in table_names if ".silver." in t]
+    gold_tables = [t.split(".")[-1] for t in table_names if ".gold." in t]
 
     ml_cfg = cfg.get("ml", {})
     model_names = []
@@ -643,7 +719,7 @@ def _render_architecture():
     # ═══════════════════════════════════════════════════════════════════════
     # Build table schema from genie tables and ML config
     table_schemas = []
-    for tbl in genie_tables[:6]:
+    for tbl in table_names[:6]:
         parts = tbl.split(".")
         layer = parts[1] if len(parts) > 1 else "gold"
         tbl_name = parts[-1]
@@ -1182,6 +1258,42 @@ _VERTICAL_PAGES = {
         "compliance": pages_risk.render_compliance,
         "cyber_risk": pages_risk.render_cyber_risk,
     },
+    "retail": {
+        "dashboard": pages_retail.render_dashboard,
+        "merchandising": pages_retail.render_merchandising,
+        "customer_analytics": pages_retail.render_customer_analytics,
+        "store_ops": pages_retail.render_store_ops,
+        "supply_chain": pages_retail.render_supply_chain,
+        "ecommerce": pages_retail.render_ecommerce,
+        "loss_prevention": pages_retail.render_loss_prevention,
+    },
+    "customer_support": {
+        "dashboard": pages_support.render_dashboard,
+        "contact_center": pages_support.render_contact_center,
+        "ticket_analytics": pages_support.render_ticket_analytics,
+        "agent_performance": pages_support.render_agent_performance,
+        "quality_assurance": pages_support.render_quality_assurance,
+        "customer_health": pages_support.render_customer_health,
+        "self_service": pages_support.render_self_service,
+    },
+    "real_estate": {
+        "dashboard": pages_realestate.render_dashboard,
+        "portfolio_analytics": pages_realestate.render_portfolio_analytics,
+        "leasing": pages_realestate.render_leasing,
+        "market_intel": pages_realestate.render_market_intel,
+        "acquisitions": pages_realestate.render_acquisitions,
+        "asset_management": pages_realestate.render_asset_management,
+        "sustainability": pages_realestate.render_sustainability,
+    },
+    "energy": {
+        "dashboard": pages_energy.render_dashboard,
+        "generation": pages_energy.render_generation,
+        "grid_ops": pages_energy.render_grid_ops,
+        "customer_programs": pages_energy.render_customer_programs,
+        "asset_health": pages_energy.render_asset_health,
+        "energy_transition": pages_energy.render_energy_transition,
+        "regulatory": pages_energy.render_regulatory,
+    },
 }
 
 # Shared pages available across all verticals
@@ -1383,80 +1495,303 @@ def update_active_nav(pathname, nav_ids):
 @app.callback(
     Output({"type": "row-detail-panel", "index": ALL}, "children"),
     Output({"type": "row-detail-panel", "index": ALL}, "style"),
+    Input({"type": "interactive-table", "index": ALL}, "active_cell"),
     Input({"type": "interactive-table", "index": ALL}, "selected_rows"),
     State({"type": "interactive-table", "index": ALL}, "data"),
     State({"type": "interactive-table", "index": ALL}, "columns"),
     prevent_initial_call=True,
 )
-def show_row_detail(all_selected, all_data, all_columns):
-    """When a table row is clicked, show its details in a slide-out panel."""
-    n = len(all_selected)
+def show_row_detail(all_active, all_selected, all_data, all_columns):
+    """When a table cell is clicked, show insight-style narrative detail."""
+    n = len(all_active)
     children_out = [[] for _ in range(n)]
     styles_out = [{"display": "none"} for _ in range(n)]
 
+    _STATUS_COLORS = {
+        "healthy": COLORS["green"], "nominal": COLORS["blue"],
+        "warning": COLORS["yellow"], "critical": COLORS["red"],
+        "high": COLORS["red"], "medium": COLORS["yellow"],
+        "low": COLORS["green"], "active": COLORS["green"],
+        "inactive": COLORS["text_muted"], "online": COLORS["green"],
+        "offline": COLORS["red"], "degraded": COLORS["yellow"],
+        "a": COLORS["green"], "b": COLORS["blue"],
+        "c": COLORS["yellow"], "d": COLORS["red"],
+    }
+    _WARN_STATUSES = {"warning", "critical", "high", "degraded",
+                      "offline", "inactive", "d", "paused"}
+    _STATUS_KEYS = {"status", "risk_status", "health", "severity",
+                    "risk_grade", "state", "tier", "priority", "level"}
+
+    def _parse_num(v):
+        """Try to extract a float from a display value like '$1.82' or '42%'."""
+        if v is None or v == "":
+            return None
+        s = str(v).replace(",", "").replace("$", "").replace("%", "")
+        s = s.replace("x", "").replace("K", "e3").replace("M", "e6").strip()
+        try:
+            return float(s)
+        except ValueError:
+            return None
+
+    def _is_status_col(col_id):
+        return col_id.lower() in _STATUS_KEYS
+
+    def _rank_in_table(data, col_id, row_val_num, higher_is_better=True):
+        """Return (rank, total) for this value within the table column."""
+        vals = []
+        for r in data:
+            v = _parse_num(r.get(col_id, ""))
+            if v is not None:
+                vals.append(v)
+        if not vals or row_val_num is None:
+            return None, len(vals)
+        sorted_vals = sorted(vals, reverse=higher_is_better)
+        try:
+            rank = sorted_vals.index(row_val_num) + 1
+        except ValueError:
+            rank = len(vals)
+        return rank, len(vals)
+
+    # Cols where lower is better
+    _LOWER_BETTER = {"cpi", "cost", "cost_hr", "cost_per_unit", "latency",
+                     "p99_latency", "mttr", "cycle_time", "defect_rate",
+                     "scrap_rate", "rework_rate", "error_rate", "churn",
+                     "downtime", "response_time", "lead_time", "wait_time",
+                     "denial_rate", "fraud_rate", "incident_rate",
+                     "delinquency", "loss_ratio", "claims_cycle_days"}
+
     for i in range(n):
-        selected = all_selected[i]
-        if not selected:
+        row_idx = None
+        if all_active[i] and isinstance(all_active[i], dict):
+            row_idx = all_active[i].get("row")
+        elif all_selected[i]:
+            row_idx = all_selected[i][0]
+        if row_idx is None:
             continue
 
-        data = all_data[i]
+        tbl_data = all_data[i]
         cols = all_columns[i]
-        if not data or not cols:
+        if not tbl_data or not cols or row_idx >= len(tbl_data):
             continue
 
-        row_idx = selected[0]
-        if row_idx >= len(data):
-            continue
+        row = tbl_data[row_idx]
+        col_list = [(c["id"], c["name"]) for c in cols]
 
-        row = data[row_idx]
-        col_map = {c["id"]: c["name"] for c in cols}
+        # ── Classify columns ─────────────────────────────────────────
+        primary_id, primary_name = col_list[0]
+        primary_val = str(row.get(primary_id, ""))
 
-        detail_rows = []
-        for col_id, display_name in col_map.items():
+        metric_cols = []
+        status_cols = []
+        detail_cols = []
+        for col_id, col_name in col_list[1:]:
             val = row.get(col_id, "")
-            detail_rows.append(
+            if _is_status_col(col_id):
+                status_cols.append((col_id, col_name, val))
+            elif _parse_num(val) is not None:
+                metric_cols.append((col_id, col_name, val))
+            else:
+                detail_cols.append((col_id, col_name, val))
+
+        # ── Determine severity & hero metric ─────────────────────────
+        has_warning = any(
+            str(v).lower() in _WARN_STATUSES for _, _, v in status_cols
+        )
+        status_str = str(status_cols[0][2]) if status_cols else ""
+        status_lower = status_str.lower()
+
+        # Pick hero metric: first metric col (or best ranked)
+        hero_col_name = ""
+        hero_val = ""
+        hero_color = COLORS["blue"]
+        hero_direction = "up"
+        if metric_cols:
+            hero_col_id, hero_col_name, hero_val = metric_cols[0]
+            hero_num = _parse_num(hero_val)
+            higher_better = hero_col_id.lower() not in _LOWER_BETTER
+            rank, total = _rank_in_table(tbl_data, hero_col_id, hero_num, higher_better)
+            if rank and rank <= max(1, total // 3):
+                hero_color = COLORS["green"]
+                hero_direction = "up"
+            elif rank and rank > total - max(1, total // 3):
+                hero_color = COLORS["red"]
+                hero_direction = "down"
+            else:
+                hero_color = COLORS["blue"]
+                hero_direction = "up"
+
+        # ── Generate headline ────────────────────────────────────────
+        if has_warning and status_lower in ("critical", "high"):
+            headline = f"{primary_val} Flagged Critical — Immediate Review Required"
+            severity_color = COLORS["red"]
+        elif has_warning:
+            headline = f"{primary_val} Showing Warning Indicators — Monitor Closely"
+            severity_color = COLORS["yellow"]
+        elif hero_direction == "up" and hero_color == COLORS["green"]:
+            headline = f"{primary_val} Performing Above Average Across Key Metrics"
+            severity_color = COLORS["green"]
+        elif hero_direction == "down" and hero_color == COLORS["red"]:
+            headline = f"{primary_val} Underperforming on {hero_col_name} — Action Needed"
+            severity_color = COLORS["red"]
+        else:
+            headline = f"{primary_val} Operating Within Normal Parameters"
+            severity_color = COLORS["blue"]
+
+        # ── Generate narrative paragraph ─────────────────────────────
+        metric_phrases = []
+        for col_id, col_name, val in metric_cols[:6]:
+            v_num = _parse_num(val)
+            higher_better = col_id.lower() not in _LOWER_BETTER
+            rank, total = _rank_in_table(tbl_data, col_id, v_num, higher_better)
+            if rank and total > 1:
+                pct = int((1 - (rank - 1) / (total - 1)) * 100) if total > 1 else 50
+                if pct >= 75:
+                    metric_phrases.append(
+                        f"{col_name} of {val} (top {100 - pct}% across all rows)"
+                    )
+                elif pct <= 25:
+                    metric_phrases.append(
+                        f"{col_name} at {val} (bottom {pct + 1}% — below peers)"
+                    )
+                else:
+                    metric_phrases.append(f"{col_name} at {val}")
+            else:
+                metric_phrases.append(f"{col_name} at {val}")
+
+        # Build detail context from text columns
+        context_parts = []
+        for _, col_name, val in detail_cols[:3]:
+            if val:
+                context_parts.append(f"{col_name}: {val}")
+
+        narrative = f"{primary_val} reports "
+        narrative += ", ".join(metric_phrases[:4])
+        narrative += "."
+        if metric_phrases[4:]:
+            narrative += f" Additionally, {', '.join(metric_phrases[4:])}."
+        if context_parts:
+            narrative += " " + " | ".join(context_parts) + "."
+        if has_warning:
+            narrative += (
+                f" The current {status_cols[0][1].lower()} of \"{status_str}\""
+                f" suggests this {primary_name.lower()} requires closer monitoring"
+                f" and potential intervention."
+            )
+
+        # ── Generate action recommendation ───────────────────────────
+        if has_warning and status_lower in ("critical", "high"):
+            action = f"Escalate {primary_val} for immediate root-cause analysis and remediation"
+        elif has_warning:
+            action = f"Investigate {primary_val} warning signals and set up automated alerting"
+        elif hero_color == COLORS["green"]:
+            action = f"Document {primary_val} best practices for replication across peers"
+        elif hero_color == COLORS["red"]:
+            lowest_metric = metric_cols[-1][1] if metric_cols else "key metrics"
+            action = f"Review {primary_val} performance on {lowest_metric} and identify improvement levers"
+        else:
+            action = f"Continue standard monitoring for {primary_val} with next review in 7 days"
+
+        # ── Render insight card ──────────────────────────────────────
+        arrow = "\u25b2" if hero_direction == "up" else "\u25bc"
+        arrow_color = COLORS["green"] if hero_direction == "up" else COLORS["red"]
+
+        insight = html.Div(
+            style={"borderLeft": f"3px solid {severity_color}",
+                   "backgroundColor": COLORS["panel"],
+                   "border": f"1px solid {COLORS['border']}",
+                   "borderLeftWidth": "3px",
+                   "borderLeftStyle": "solid",
+                   "borderLeftColor": severity_color,
+                   "borderRadius": "12px", "padding": "20px 24px",
+                   "marginBottom": "16px"},
+            children=[
+                # Headline + hero metric
                 html.Div(
-                    style={"display": "flex", "padding": "8px 0",
-                           "borderBottom": f"1px solid {COLORS['border']}"},
+                    style={"display": "flex", "justifyContent": "space-between",
+                           "alignItems": "flex-start", "marginBottom": "12px"},
                     children=[
-                        html.Div(display_name,
-                                 style={"width": "40%", "fontSize": "12px",
-                                        "fontWeight": "600", "color": COLORS["text_muted"],
-                                        "textTransform": "uppercase", "letterSpacing": "0.3px"}),
+                        html.Span(headline,
+                                  style={"fontSize": "14px", "fontWeight": "600",
+                                         "color": COLORS["white"], "flex": "1",
+                                         "marginRight": "24px"}),
+                        html.Div(
+                            style={"display": "flex", "alignItems": "center",
+                                   "gap": "6px", "flexShrink": "0"},
+                            children=[
+                                html.Span(str(hero_val),
+                                          style={"fontSize": "22px", "fontWeight": "700",
+                                                 "color": hero_color}),
+                                html.Span(arrow,
+                                          style={"color": arrow_color, "fontSize": "14px"}),
+                            ],
+                        ) if hero_val else html.Div(),
+                    ],
+                ),
+                # Narrative paragraph
+                html.P(narrative, style={
+                    "fontSize": "13px", "color": COLORS["text_muted"],
+                    "lineHeight": "1.65", "margin": "0 0 12px 0",
+                }),
+                # Action recommendation
+                html.Div(
+                    style={"display": "flex", "alignItems": "center", "gap": "6px"},
+                    children=[
+                        html.I(className="fa-solid fa-bolt",
+                               style={"color": COLORS["yellow"], "fontSize": "11px"}),
+                        html.Span(action,
+                                  style={"fontSize": "12px", "color": COLORS["yellow"],
+                                         "fontWeight": "600"}),
+                    ],
+                ),
+            ],
+        )
+
+        # ── Metric strip below the insight ───────────────────────────
+        _METRIC_ACCENTS = [COLORS["blue"], COLORS["green"], COLORS["purple"],
+                           COLORS["cyan"], COLORS["orange"], COLORS["yellow"]]
+        metric_cards = []
+        for idx, (col_id, col_name, val) in enumerate(metric_cols):
+            accent = _METRIC_ACCENTS[idx % len(_METRIC_ACCENTS)]
+            metric_cards.append(
+                html.Div(
+                    style={"backgroundColor": COLORS["dark"],
+                           "border": f"1px solid {COLORS['border']}",
+                           "borderRadius": "10px", "padding": "12px 14px",
+                           "borderTop": f"2px solid {accent}",
+                           "textAlign": "center", "minWidth": "0"},
+                    children=[
                         html.Div(str(val),
-                                 style={"width": "60%", "fontSize": "13px",
-                                        "color": COLORS["white"], "fontWeight": "500"}),
+                                 style={"fontSize": "16px", "fontWeight": "700",
+                                        "color": COLORS["white"],
+                                        "marginBottom": "4px"}),
+                        html.Div(col_name,
+                                 style={"fontSize": "10px", "fontWeight": "600",
+                                        "color": COLORS["text_muted"],
+                                        "textTransform": "uppercase",
+                                        "letterSpacing": "0.3px",
+                                        "whiteSpace": "nowrap", "overflow": "hidden",
+                                        "textOverflow": "ellipsis"}),
                     ],
                 )
             )
 
-        children_out[i] = [
-            html.Div(
-                style={"display": "flex", "justifyContent": "space-between",
-                       "alignItems": "center", "marginBottom": "12px"},
-                children=[
-                    html.Div(
-                        style={"display": "flex", "alignItems": "center", "gap": "8px"},
-                        children=[
-                            html.I(className="fa-solid fa-magnifying-glass-plus",
-                                   style={"color": COLORS["blue"], "fontSize": "14px"}),
-                            html.Span("Row Details",
-                                      style={"fontSize": "14px", "fontWeight": "700",
-                                             "color": COLORS["white"]}),
-                        ],
-                    ),
-                    html.Div(f"Row {row_idx + 1}",
-                             style={"fontSize": "11px", "color": COLORS["text_muted"],
-                                    "backgroundColor": COLORS["dark"],
-                                    "padding": "4px 10px", "borderRadius": "12px"}),
-                ],
-            ),
-        ] + detail_rows
+        metrics_grid = html.Div(
+            style={"display": "grid",
+                   "gridTemplateColumns": f"repeat({min(len(metric_cards), 6)}, 1fr)",
+                   "gap": "10px"},
+            children=metric_cards,
+        ) if metric_cards else None
 
+        # ── Assemble ─────────────────────────────────────────────────
+        panel_children = [insight]
+        if metrics_grid:
+            panel_children.append(metrics_grid)
+
+        children_out[i] = panel_children
         styles_out[i] = {
             "display": "block",
-            "padding": "16px 20px",
-            "backgroundColor": f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.04)",
+            "padding": "20px 24px",
+            "backgroundColor": f"rgba({_hex_to_rgb(COLORS['blue'])}, 0.03)",
             "borderTop": f"2px solid {COLORS['blue']}",
             "animation": "pageFadeIn 0.2s ease-out",
         }

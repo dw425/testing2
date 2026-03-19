@@ -490,6 +490,16 @@ def data_table(columns, data, page_size=10, style_conditions=None):
             },
             style_data_conditional=conditions,
             style_as_list_view=True,
+            css=[
+                {"selector": "td.cell--active", "rule": f"background-color: rgba(75,123,245,0.15) !important; color: {COLORS['white']} !important;"},
+                {"selector": "td.cell--selected", "rule": f"background-color: rgba(75,123,245,0.15) !important; color: {COLORS['white']} !important;"},
+                {"selector": "td.focused", "rule": f"background-color: rgba(75,123,245,0.10) !important; color: {COLORS['white']} !important; outline: none !important;"},
+                {"selector": "td.cell--selected.cell--active", "rule": f"background-color: rgba(75,123,245,0.18) !important; color: {COLORS['white']} !important;"},
+                {"selector": "input.dash-cell-value", "rule": f"color: {COLORS['white']} !important; background-color: transparent !important; border: none !important;"},
+                {"selector": ".dash-cell-value", "rule": f"color: {COLORS['white']} !important;"},
+                {"selector": "td.dash-cell", "rule": f"color: {COLORS['white']} !important;"},
+                {"selector": "tr:hover td", "rule": f"background-color: {COLORS['surface_elevated']} !important; color: {COLORS['white']} !important;"},
+            ],
         )
     )
     children.append(

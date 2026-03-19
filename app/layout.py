@@ -15,7 +15,7 @@ The Genie chat modal is toggled via a floating button.
 from dash import dcc, html
 
 from app.data_access import get_config_for
-from app.theme import COLORS, FONT_FAMILY
+from app.theme import COLORS, FONT_FAMILY, get_vertical_theme
 
 
 # ---------------------------------------------------------------------------
@@ -30,6 +30,10 @@ _USE_CASE_ICONS = {
     "hls": "fa-heart-pulse",
     "manufacturing": "fa-industry",
     "risk": "fa-shield-halved",
+    "retail": "fa-store",
+    "customer_support": "fa-headset",
+    "real_estate": "fa-building",
+    "energy": "fa-bolt",
 }
 
 
@@ -44,7 +48,8 @@ def build_sidebar(vertical: str, active_page: str = "") -> html.Div:
     app_title = cfg["app"].get("title", "Blueprint IQ")
     app_subtitle = cfg["app"].get("subtitle", "")
     pages = cfg.get("pages", [])
-    brand_color = cfg.get("brand", {}).get("primary_color", COLORS["blue"])
+    vt = get_vertical_theme(vertical)
+    brand_color = vt.get("accent_primary", COLORS["blue"])
 
     nav_links = []
     current_group = None

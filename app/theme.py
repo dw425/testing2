@@ -57,17 +57,17 @@ VERTICAL_THEMES = {
         "chart_colorway": ["#0091D5", "#26A69A", "#4B7BF5", "#34D399", "#FBBF24", "#F87171"],
     },
     "financial_services": {
-        "accent_primary": "#1C4E80",
-        "accent_secondary": "#288CFA",
+        "accent_primary": "#43A047",
+        "accent_secondary": "#66BB6A",
         "bg_base": "#0D1117",
-        "chart_colorway": ["#288CFA", "#34D399", "#F87171", "#FBBF24", "#A78BFA", "#1C4E80"],
+        "chart_colorway": ["#43A047", "#66BB6A", "#F87171", "#FBBF24", "#A78BFA", "#4B7BF5"],
     },
     "hls": {
-        "accent_primary": "#00897B",
+        "accent_primary": "#DC2626",
         "accent_secondary": "#1976D2",
         "bg_base": "#FAFAFA",       # Light theme for healthcare
         "is_light": True,
-        "chart_colorway": ["#00897B", "#1976D2", "#F87171", "#FBBF24", "#A78BFA", "#34D399"],
+        "chart_colorway": ["#DC2626", "#1976D2", "#F87171", "#FBBF24", "#A78BFA", "#34D399"],
     },
     "manufacturing": {
         "accent_primary": "#FF6D00",
@@ -82,10 +82,34 @@ VERTICAL_THEMES = {
         "chart_colorway": ["#7C4DFF", "#FF5252", "#34D399", "#FBBF24", "#4B7BF5", "#A78BFA"],
     },
     "risk": {
-        "accent_primary": "#1A237E",
+        "accent_primary": "#1565C0",
+        "accent_secondary": "#42A5F5",
+        "bg_base": "#0D1117",
+        "chart_colorway": ["#1565C0", "#F87171", "#FBBF24", "#34D399", "#A78BFA", "#42A5F5"],
+    },
+    "retail": {
+        "accent_primary": "#00E5FF",
+        "accent_secondary": "#00B8D4",
+        "bg_base": "#0D1117",
+        "chart_colorway": ["#00E5FF", "#00B8D4", "#4B7BF5", "#FBBF24", "#F87171", "#A78BFA"],
+    },
+    "customer_support": {
+        "accent_primary": "#26A69A",
+        "accent_secondary": "#00BCD4",
+        "bg_base": "#0D1117",
+        "chart_colorway": ["#26A69A", "#00BCD4", "#4B7BF5", "#FBBF24", "#F87171", "#A78BFA"],
+    },
+    "real_estate": {
+        "accent_primary": "#8D6E63",
         "accent_secondary": "#4B7BF5",
         "bg_base": "#0D1117",
-        "chart_colorway": ["#4B7BF5", "#F87171", "#FBBF24", "#34D399", "#A78BFA", "#1A237E"],
+        "chart_colorway": ["#8D6E63", "#4B7BF5", "#34D399", "#FBBF24", "#F87171", "#A78BFA"],
+    },
+    "energy": {
+        "accent_primary": "#FFB300",
+        "accent_secondary": "#34D399",
+        "bg_base": "#0D1117",
+        "chart_colorway": ["#FFB300", "#34D399", "#4B7BF5", "#F87171", "#A78BFA", "#00E5FF"],
     },
 }
 
@@ -540,24 +564,24 @@ def get_base_stylesheet() -> str:
     .landing-enter-btn:hover {{ background: {COLORS["blue_hover"]}; color: white; }}
 
     /* ---------- hub grid ---------- */
-    .hub-header {{ text-align: center; padding: 48px 32px 32px; }}
+    .hub-header {{ text-align: center; padding: 32px 24px 20px; }}
     .hub-title {{ font-size: 32px; font-weight: 700; color: white; }}
     .hub-subtitle {{ font-size: 16px; color: {COLORS["text_muted"]}; margin-top: 8px; }}
     .hub-grid {{
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 24px; padding: 0 48px 48px; max-width: 1400px; margin: 0 auto;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 14px; padding: 0 28px 28px; max-width: 1300px; margin: 0 auto;
     }}
     .vertical-card {{
-        background: {COLORS["panel"]}; border: 1px solid {COLORS["border"]}; border-radius: 16px;
-        padding: 32px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: block;
+        background: {COLORS["panel"]}; border: 1px solid {COLORS["border"]}; border-radius: 12px;
+        padding: 20px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: block;
     }}
-    .vertical-card:hover {{ border-color: {COLORS["blue"]}; transform: translateY(-4px); box-shadow: 0 8px 32px rgba(35,62,216,0.15); }}
-    .vertical-card-icon {{ width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px; }}
-    .vertical-card-title {{ font-size: 20px; font-weight: 700; color: white; margin-bottom: 4px; }}
-    .vertical-card-subtitle {{ font-size: 14px; color: {COLORS["text_muted"]}; margin-bottom: 16px; }}
-    .vertical-card-stats {{ display: flex; gap: 24px; }}
-    .vertical-card-stat {{ font-size: 12px; color: {COLORS["text_muted"]}; }}
-    .vertical-card-stat strong {{ color: white; font-size: 14px; display: block; }}
+    .vertical-card:hover {{ border-color: {COLORS["blue"]}; transform: translateY(-3px); box-shadow: 0 6px 24px rgba(35,62,216,0.15); }}
+    .vertical-card-icon {{ width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 0; font-size: 20px; }}
+    .vertical-card-title {{ font-size: 17px; font-weight: 700; color: white; margin-bottom: 2px; }}
+    .vertical-card-subtitle {{ font-size: 13px; color: {COLORS["text_muted"]}; margin-bottom: 12px; line-height: 1.4; }}
+    .vertical-card-stats {{ display: flex; gap: 18px; }}
+    .vertical-card-stat {{ font-size: 11px; color: {COLORS["text_muted"]}; }}
+    .vertical-card-stat strong {{ color: white; font-size: 13px; display: block; }}
 
     /* ---------- back to hub link ---------- */
     .back-to-hub {{
@@ -713,7 +737,8 @@ def get_base_stylesheet() -> str:
         background-color: {COLORS["surface_elevated"]} !important;
         color: {COLORS["white"]} !important;
     }}
-    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected.focused {{
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected.focused,
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected.cell--active {{
         background-color: rgba(75, 123, 245, 0.18) !important;
         color: {COLORS["white"]} !important;
         outline: none !important;
@@ -723,6 +748,39 @@ def get_base_stylesheet() -> str:
         background-color: transparent !important;
         border: none !important;
         caret-color: {COLORS["white"]} !important;
+    }}
+    /* Catch ALL cell states including editing, clipboard, and any unclassed active states */
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td {{
+        color: {COLORS["white"]} !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td .dash-cell-value {{
+        color: {COLORS["white"]} !important;
+        background: transparent !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.dash-select-cell {{
+        background-color: {COLORS["panel"]} !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.dash-cell.column-header-0 {{
+        background-color: {COLORS["dark"]} !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td input {{
+        color: {COLORS["white"]} !important;
+        background-color: transparent !important;
+        background: transparent !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--active *,
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected * {{
+        color: {COLORS["white"]} !important;
+        background-color: transparent !important;
+    }}
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner .Select-control,
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner .Select-menu-outer {{
+        background-color: {COLORS["panel"]} !important;
+        color: {COLORS["white"]} !important;
+    }}
+    /* Clipboard paste indicator */
+    .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--active.clipboard {{
+        background-color: rgba(75, 123, 245, 0.15) !important;
     }}
 
     /* ---------- sample question chips ---------- */
