@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SupportIQ | Blueprint IQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'bp-accent': '#6366f1' },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .sharp-card { border: 1px solid #e5e7eb; background: #fff; }
+    .sharp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .arch-layer { transition: transform 0.2s; }
+    .arch-layer:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fa] min-h-screen">
+  <!-- Top Bar -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Blueprint</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: #6366f1">SupportIQ</span>
+      </div>
+      <a href="../index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">&larr; All Verticals</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-400">
+      <ol class="flex items-center gap-1.5">
+        <li><a href="../index.html" class="hover:text-gray-900 transition-colors">Blueprint IQ</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">SupportIQ</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-4xl">&#x1F3A7;</span>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">SupportIQ</h1>
+          <p class="text-lg font-medium mt-1" style="color: #6366f1">Contact center intelligence & customer success analytics</p>
+        </div>
+      </div>
+      <p class="text-base text-gray-600 leading-relaxed max-w-3xl mt-4">SupportIQ transforms contact center data into actionable intelligence &mdash; from intelligent ticket routing and agent performance to customer health scoring and self-service optimization.</p>
+    </header>
+
+    <!-- North Star KPIs -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">North Star Metrics</h2>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #6366f1">4.32 / 5</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">CSAT</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">customer satisfaction</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #6366f1">74.2%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">First Contact Resolution</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">resolved on first contact</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #6366f1">8.4 min</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Average Handle Time</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">per interaction</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #6366f1">+47</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">NPS</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">net promoter score</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #6366f1">92.1%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">SLA Compliance</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">within response target</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #6366f1">1,284</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Ticket Backlog</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">open tickets</p>
+            </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-12">
+      <!-- ══ Main Content (7 cols) ══ -->
+      <div class="lg:col-span-7 space-y-10">
+
+        <!-- The Challenge -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Challenge</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">Contact centers are the frontline of customer experience, yet they operate on outdated metrics and disconnected systems. With 2,840 daily tickets flowing through Phone, Chat, Email, Social Media, Self-Service, and Video channels, the volume alone creates triage challenges. Agents spend 8.4 minutes per handle while only resolving 74.2% of issues on first contact &mdash; meaning one in four customers must contact support again. Agent attrition runs at 22% annually, constantly draining institutional knowledge. Quality assurance evaluates only a sample of interactions, missing systemic issues. And the most critical signal &mdash; customer health as predicted by support patterns &mdash; is invisible because CRM, ticketing, and telephony systems don't share data.</p>
+        </section>
+
+        <!-- The Solution -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Solution</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">SupportIQ unifies every support interaction into a single Databricks Lakehouse, creating a complete picture of customer health derived from support behavior. An Intelligent Ticket Router uses ML to analyze ticket content, customer history, and agent expertise for optimal routing. A Real-Time Sentiment Analyzer flags escalation risks during live interactions. A Customer Churn Predictor connects support patterns to retention probability. Across 342 active agents and 4 global regions, SupportIQ turns the contact center from a cost center into a customer intelligence engine.</p>
+        </section>
+
+        <!-- Screenshot placeholder -->
+        <section class="sharp-card p-1 shadow-sm bg-[#0D1117]">
+          <div class="aspect-[16/7] w-full flex items-center justify-center">
+            <div class="text-center px-6">
+              <span class="text-6xl block mb-3">&#x1F3A7;</span>
+              <p class="text-gray-400 font-bold text-sm">SupportIQ Dashboard</p>
+              <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Databricks App &middot; Dark Theme &middot; 7 Purpose-Built Views</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why These Metrics Matter -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">Why These Metrics Matter</h2>
+          <p class="text-sm text-gray-500 mb-6">Every metric tracked in SupportIQ is tied to a business outcome. Here is why each one matters and how the platform measures it.</p>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #6366f1">4.32 / 5</span>
+                  <span class="text-sm font-bold text-gray-900">CSAT</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">customer satisfaction</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">CSAT measures post-interaction satisfaction. At 4.32/5, SupportIQ tracks this by channel, agent, issue category, and resolution path. The data reveals that Chat drives the highest CSAT (4.6) while Phone trails at 4.1 due to longer wait times. More importantly, SupportIQ correlates CSAT scores with downstream retention and upsell probability.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #6366f1">74.2%</span>
+                  <span class="text-sm font-bold text-gray-900">First Contact Resolution</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">resolved on first contact</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">FCR is the single most important operational metric in support &mdash; every repeat contact doubles cost and halves satisfaction. At 74.2%, SupportIQ identifies the 25.8% of issues that require callbacks and diagnoses why: skill gaps, knowledge base gaps, system limitations, or process failures. The intelligent routing model improves FCR by matching tickets to agents with proven expertise in the issue category.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #6366f1">8.4 min</span>
+                  <span class="text-sm font-bold text-gray-900">Average Handle Time</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">per interaction</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">AHT balances efficiency against quality. At 8.4 minutes, SupportIQ tracks handle time by agent, channel, and issue complexity. The key insight is that shorter AHT doesn't always mean better performance &mdash; agents who spend 10 minutes but achieve 90% FCR are more valuable than agents who handle calls in 6 minutes with 60% FCR. SupportIQ models this trade-off.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #6366f1">+47</span>
+                  <span class="text-sm font-bold text-gray-900">NPS</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">net promoter score</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">NPS measures customer loyalty and advocacy. At +47, SupportIQ tracks the relationship between support experiences and NPS trajectory. A single bad support interaction drops individual NPS by an average of 35 points. The sentiment analyzer catches negative experiences in real-time, enabling supervisor intervention before satisfaction damage is permanent.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #6366f1">92.1%</span>
+                  <span class="text-sm font-bold text-gray-900">SLA Compliance</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">within response target</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">SLA compliance measures the percentage of tickets resolved within promised timeframes by tier. At 92.1%, the 7.9% of breaches are concentrated in Tier 3 (Engineering) escalations. SupportIQ provides predictive SLA alerting, flagging tickets likely to breach 2 hours before the deadline so they can be reprioritized or escalated.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #6366f1">1,284</span>
+                  <span class="text-sm font-bold text-gray-900">Ticket Backlog</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">open tickets</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Backlog size and aging are leading indicators of service degradation. At 1,284 open tickets, SupportIQ monitors backlog growth rate, average age, and composition by category and priority. Trend analysis predicts when backlog will exceed capacity, enabling proactive staffing adjustments.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- Application Pages -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">What You Get: 7 Application Views</h2>
+          </div>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#6366f1">01</span>
+                  <h4 class="font-bold text-gray-900">Support Command Center</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Executive dashboard with real-time queue status, CSAT/NPS trends, backlog health, and AI morning briefing on overnight escalations, SLA risks, and staffing gaps.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#6366f1">02</span>
+                  <h4 class="font-bold text-gray-900">Contact Center Analytics</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Channel-level performance analytics across Phone, Chat, Email, Social, Self-Service, and Video. Volume forecasting, peak hour analysis, and channel migration effectiveness.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#6366f1">03</span>
+                  <h4 class="font-bold text-gray-900">Ticket Intelligence</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">ML-powered ticket categorization, routing optimization, resolution pattern analysis, and knowledge base effectiveness tracking. Identifies common issue clusters and automation opportunities.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#6366f1">04</span>
+                  <h4 class="font-bold text-gray-900">Agent Performance</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Individual and team performance dashboards covering handle time, FCR, CSAT, quality scores, and productivity. Skills matrix management and coaching opportunity identification.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#6366f1">05</span>
+                  <h4 class="font-bold text-gray-900">Quality Assurance</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">QA scoring analytics (average 87.4), compliance monitoring (96%), calibration tracking, and evaluation trend analysis. Moves QA from sample-based to ML-assisted comprehensive evaluation.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#6366f1">06</span>
+                  <h4 class="font-bold text-gray-900">Customer Health</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Support-derived customer health scoring combining CSAT, ticket frequency, resolution speed, sentiment, and product usage. The churn predictor identifies accounts at risk based on support interaction patterns.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#6366f1">07</span>
+                  <h4 class="font-bold text-gray-900">Self-Service & AI</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Chatbot performance analytics, knowledge base utilization, deflection rate tracking, and self-service adoption measurement. Customer Effort Score (CES) of 3.8 tracked by self-service journey.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- ML & AI Models -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">ML Models in Production</h2>
+            <span class="text-xs text-gray-400 font-medium">3 models &middot; MLflow Registry</span>
+          </div>
+          <div class="space-y-4">
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Intelligent Ticket Router</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#6366f1; border-color:#6366f1">XGBClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">accuracy = 0.91</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">ticket_text_embedding, customer_tier, product_category, historical_resolution_path, sentiment_score, urgency_keywords +2 more</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Customer Churn Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#6366f1; border-color:#6366f1">LightGBMClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.88</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">ticket_frequency_30d, csat_trend, nps_score, product_usage_decline, billing_dispute_count, escalation_history +2 more</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Real-Time Sentiment Analyzer</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#6366f1; border-color:#6366f1">DistilBERT-finetuned</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">f1_score = 0.93</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">conversation_text, agent_response_text, customer_tone_shift, emoji_usage, caps_ratio, response_latency</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <!-- Genie AI -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
+            <span class="text-2xl">&#x1F9DE;</span>
+            <h2 class="text-xl font-bold text-gray-900">Genie AI Assistant</h2>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">SupportIQ's Genie AI understands contact center operations. Ask 'Which agents have the highest FCR rate for billing issues?' or 'What is the average resolution time for Tier 2 escalations this week?' across 40+ pre-trained questions with more being added continuously.</p>
+        </section>
+
+        <!-- Architecture -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Lakehouse Architecture</h2>
+          <p class="text-sm text-gray-500 mb-6">
+            SupportIQ is built on the Databricks Medallion Architecture &mdash; a three-layer data pipeline that
+            transforms raw source data into business-ready analytics with built-in quality, governance, and ML scoring at every stage.
+          </p>
+          <div class="space-y-3">
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#92400e">Bronze</div>
+              <div class="flex-1 bg-amber-50 border border-amber-200 p-4">
+                <p class="text-xs font-bold text-amber-900 mb-1">Raw Ingestion Layer</p>
+                <p class="text-[11px] text-amber-700">Auto Loader streaming and batch ingestion from source systems &mdash; transactional databases, IoT sensors, ERP feeds, and external APIs. Schema-on-read with audit columns and lineage tracking. Data arrives in its original form, immutable and queryable.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6b7280">Silver</div>
+              <div class="flex-1 bg-gray-50 border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-900 mb-1">Curated &amp; Enriched</p>
+                <p class="text-[11px] text-gray-600">Data quality checks, deduplication, business rule application, cross-source joins, and ML scoring. This is where models run &mdash; anomaly detection, churn scoring, and feature engineering happen in Silver, creating enriched records ready for analytics.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6366f1">Gold</div>
+              <div class="flex-1 border p-4" style="background:#6366f108; border-color:#6366f130">
+                <p class="text-xs font-bold text-gray-900 mb-1">Business-Ready Analytics</p>
+                <p class="text-[11px] text-gray-600">KPI aggregates, time-series snapshots, forecast outputs, and model health metrics &mdash; all optimized for dashboard queries. Gold tables power every chart, metric, and insight card in the SupportIQ interface.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unity Catalog</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">support_iq</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">MLflow Registry</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">3 Models</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Genie AI</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">50+ Questions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business Impact -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Business Impact</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #6366f1">2 hrs</p>
+                <p class="text-xs text-gray-600 mt-1">advance SLA breach prediction</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #6366f1">342</p>
+                <p class="text-xs text-gray-600 mt-1">agents managed on one platform</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #6366f1">6</p>
+                <p class="text-xs text-gray-600 mt-1">support channels unified</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #6366f1">22%</p>
+                <p class="text-xs text-gray-600 mt-1">attrition rate tracked with retention signals</p>
+              </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ Sidebar (3 cols) ══ -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 space-y-6">
+          <div class="sharp-card p-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-5" style="color:#6366f1">Quick Facts</h3>
+            <div class="space-y-4 text-sm">
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Application Pages</span><span class="font-bold text-gray-900">7</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">ML Models</span><span class="font-bold text-gray-900">3</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Genie Questions</span><span class="font-bold text-gray-900">50+</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Unity Catalog</span><span class="font-bold text-gray-900 font-mono text-xs">support_iq</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="font-bold text-gray-900">Databricks</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Core Capabilities</h3>
+            <div class="flex flex-wrap gap-2"><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Support Command Center</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Contact Center Analytics</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Ticket Intelligence</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Agent Performance</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Quality Assurance</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Customer Health</span></div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Lakehouse Tables</h3>
+            <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#6366f1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">{'name': 'ticket_master', 'display_name': 'Ticket Master', 'description': 'Comprehensive ticket data including creation, assignment, resolution, and customer feedback.', 'columns': ['ticket_id', 'created_at', 'channel', 'category', 'priority', 'status', 'assigned_agent', 'tier', 'product', 'region', 'resolution_time_min', 'csat_score', 'first_contact_resolved']}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#6366f1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">{'name': 'agent_metrics', 'display_name': 'Agent Metrics', 'description': 'Agent-level performance metrics including handle times, quality scores, and utilization.', 'columns': ['agent_id', 'agent_name', 'team', 'shift', 'tickets_handled', 'avg_handle_time_min', 'first_contact_resolution_rate', 'csat_avg', 'qa_score', 'adherence_rate', 'occupancy_rate', 'utilization']}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#6366f1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">{'name': 'customer_interactions', 'display_name': 'Customer Interactions', 'description': 'Interaction-level data with sentiment analysis, effort scoring, and journey mapping.', 'columns': ['interaction_id', 'customer_id', 'ticket_id', 'channel', 'timestamp', 'duration_sec', 'sentiment_score', 'effort_score', 'transferred', 'escalated', 'resolution_outcome']}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#6366f1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">{'name': 'quality_evaluations', 'display_name': 'Quality Evaluations', 'description': 'QA evaluation records with scoring breakdowns and calibration data.', 'columns': ['evaluation_id', 'agent_id', 'evaluator_id', 'ticket_id', 'overall_score', 'greeting_score', 'empathy_score', 'resolution_score', 'compliance_score', 'evaluated_at', 'calibration_flag']}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#6366f1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">{'name': 'self_service_events', 'display_name': 'Self-Service Events', 'description': 'Self-service and AI chatbot interaction logs with deflection and escalation tracking.', 'columns': ['event_id', 'session_id', 'customer_id', 'channel', 'intent_detected', 'confidence_score', 'deflected', 'escalated_to_agent', 'resolution_achieved', 'timestamp', 'duration_sec']}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#6366f1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">{'name': 'customer_health_scores', 'display_name': 'Customer Health Scores', 'description': 'Aggregated customer health scoring with churn risk, sentiment trends, and engagement metrics.', 'columns': ['customer_id', 'account_name', 'health_score', 'churn_risk_score', 'nps_latest', 'csat_avg_90d', 'ticket_volume_trend', 'sentiment_trend', 'last_interaction_date', 'contract_renewal_date', 'arr_value']}</span>
+                  </div></div>
+          </div>
+
+          <div class="sharp-card p-6 border-t-4" style="border-top-color:#6366f1">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Technology Stack</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#6366f1"></div><span class="text-xs text-gray-700">Databricks Lakehouse</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#6366f1"></div><span class="text-xs text-gray-700">Unity Catalog</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#6366f1"></div><span class="text-xs text-gray-700">MLflow Model Registry</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#6366f1"></div><span class="text-xs text-gray-700">Genie AI (Claude Sonnet)</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#6366f1"></div><span class="text-xs text-gray-700">Dash / Plotly</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#6366f1"></div><span class="text-xs text-gray-700">Delta Lake</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#6366f1"></div><span class="text-xs text-gray-700">SHAP Explainability</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Resources</h3>
+            <ul class="space-y-3">
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#6366f1">View Technical Architecture</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#6366f1">Download Sample Data</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#6366f1">Case Studies</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 mt-20 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by Databricks &middot; Blueprint AI Platform</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TelecomIQ | Blueprint IQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'bp-accent': '#14b8a6' },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .sharp-card { border: 1px solid #e5e7eb; background: #fff; }
+    .sharp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .arch-layer { transition: transform 0.2s; }
+    .arch-layer:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fa] min-h-screen">
+  <!-- Top Bar -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Blueprint</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: #14b8a6">TelecomIQ</span>
+      </div>
+      <a href="../index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">&larr; All Verticals</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-400">
+      <ol class="flex items-center gap-1.5">
+        <li><a href="../index.html" class="hover:text-gray-900 transition-colors">Blueprint IQ</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">TelecomIQ</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-4xl">&#x1F4E1;</span>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">TelecomIQ</h1>
+          <p class="text-lg font-medium mt-1" style="color: #14b8a6">Network intelligence & customer experience for modern telcos</p>
+        </div>
+      </div>
+      <p class="text-base text-gray-600 leading-relaxed max-w-3xl mt-4">TelecomIQ delivers end-to-end visibility across subscriber lifecycle, network operations, and field services for telecom operators managing millions of connections.</p>
+    </header>
+
+    <!-- North Star KPIs -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">North Star Metrics</h2>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #14b8a6">14.2M</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Subscriber Base</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">total active subscribers</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #14b8a6">1.8%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Monthly Churn</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">subscriber loss rate</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #14b8a6">$52.30</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">ARPU</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">average revenue per user</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #14b8a6">99.97%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Network Uptime</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">availability SLA</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #14b8a6">229</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Fraud Blocked (24h)</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">daily fraud prevention</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #14b8a6">67%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">5G Coverage</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">network footprint</p>
+            </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-12">
+      <!-- ══ Main Content (7 cols) ══ -->
+      <div class="lg:col-span-7 space-y-10">
+
+        <!-- The Challenge -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Challenge</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">Telecom operators manage some of the most complex infrastructure on the planet &mdash; millions of subscribers across 4G LTE, 5G, Fiber, and Fixed Wireless networks generating petabytes of CDR, network performance, and customer interaction data daily. Subscriber churn at 1.8% monthly means losing over 250,000 customers every month, with each lost subscriber costing $300-500 to replace. Meanwhile, 5G rollouts require billions in capital expenditure with uncertain ROI timelines. Fraud costs the industry $38 billion globally. Field operations dispatch 32% unnecessary truck rolls. And through all of this, subscribers expect 99.99% uptime and instant issue resolution.</p>
+        </section>
+
+        <!-- The Solution -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Solution</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">TelecomIQ consolidates subscriber data, network telemetry, field service records, and fraud signals into a unified Databricks Lakehouse. A Subscriber Churn Predictor (AUC 0.88) scores every customer daily, feeding retention teams with prioritized intervention lists. The Fraud Detector screens transactions in real-time with 96.2% accuracy, preventing $4.2M in monthly losses. Network operations get real-time visibility across all technologies with 99.97% uptime monitoring. Field operations analytics reduce truck roll rates and improve first-call resolution.</p>
+        </section>
+
+        <!-- Screenshot placeholder -->
+        <section class="sharp-card p-1 shadow-sm bg-[#0D1117]">
+          <div class="aspect-[16/7] w-full flex items-center justify-center">
+            <div class="text-center px-6">
+              <span class="text-6xl block mb-3">&#x1F4E1;</span>
+              <p class="text-gray-400 font-bold text-sm">TelecomIQ Dashboard</p>
+              <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Databricks App &middot; Dark Theme &middot; 7 Purpose-Built Views</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why These Metrics Matter -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">Why These Metrics Matter</h2>
+          <p class="text-sm text-gray-500 mb-6">Every metric tracked in TelecomIQ is tied to a business outcome. Here is why each one matters and how the platform measures it.</p>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #14b8a6">14.2M</span>
+                  <span class="text-sm font-bold text-gray-900">Subscriber Base</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">total active subscribers</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">TelecomIQ tracks the full subscriber base across Consumer, SMB, Enterprise, and Government segments with real-time adds, disconnects, and migration between plan types (Prepaid, Postpaid, Family, Business, IoT). Segmentation analytics reveal that Enterprise accounts represent 8% of subscribers but 34% of revenue.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #14b8a6">1.8%</span>
+                  <span class="text-sm font-bold text-gray-900">Monthly Churn</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">subscriber loss rate</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">At 14.2M subscribers, 1.8% monthly churn means 255,600 lost customers every month. Each lost subscriber costs $300-500 to replace through acquisition. TelecomIQ's churn model predicts at-risk subscribers 30 days ahead, considering usage patterns, billing history, service interactions, and network quality in their area. Retention offers are optimized by predicted save probability and customer value.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #14b8a6">$52.30</span>
+                  <span class="text-sm font-bold text-gray-900">ARPU</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">average revenue per user</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">ARPU is the fundamental revenue metric for telecom. At $52.30, TelecomIQ decomposes this by segment (Consumer $42, SMB $68, Enterprise $124), plan type, and service mix (voice, data, IoT). Trending ARPU against data usage reveals pricing optimization opportunities.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #14b8a6">99.97%</span>
+                  <span class="text-sm font-bold text-gray-900">Network Uptime</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">availability SLA</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">99.97% uptime translates to approximately 13 minutes of total downtime per month. TelecomIQ monitors every cell site, fiber node, and switching center with real-time health scoring. Predictive models identify degradation patterns before they cause outages, while automated incident response workflows reduce MTTR.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #14b8a6">229</span>
+                  <span class="text-sm font-bold text-gray-900">Fraud Blocked (24h)</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">daily fraud prevention</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">The Telecom Fraud Detector screens every subscriber event &mdash; SIM swaps, international calls, unusual data patterns &mdash; in real-time. Blocking 229 fraudulent events daily at an average value of $18,300 each prevents $4.2M in monthly losses. The model achieves 96.2% detection with low false-positive rates to avoid blocking legitimate customers.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #14b8a6">67%</span>
+                  <span class="text-sm font-bold text-gray-900">5G Coverage</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">network footprint</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">5G coverage tracks the percentage of the service territory with active 5G service. At 67%, TelecomIQ monitors 2.4M IoT devices on the 5G network and tracks migration from 4G. Coverage expansion ROI is modeled by geography, showing which expansion zones will generate the fastest subscriber and revenue uplift.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- Application Pages -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">What You Get: 7 Application Views</h2>
+          </div>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#14b8a6">01</span>
+                  <h4 class="font-bold text-gray-900">Telecom Outcome Hub</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Executive command center with subscriber health, network status, revenue metrics, and AI morning briefing on overnight network events, churn alerts, and fraud activity.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#14b8a6">02</span>
+                  <h4 class="font-bold text-gray-900">Consumer CX & Growth</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Subscriber lifecycle analytics from acquisition through retention. NPS tracking (42), CSAT monitoring (4.1/5), churn prediction, and personalized offer effectiveness measurement.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#14b8a6">03</span>
+                  <h4 class="font-bold text-gray-900">B2B / SMB / Enterprise</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Business subscriber analytics with contract lifecycle management, SLA compliance tracking, solution profitability, and enterprise account health scoring.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#14b8a6">04</span>
+                  <h4 class="font-bold text-gray-900">Network Operations</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Real-time network health monitoring across 4G LTE, 5G, Fiber, and Fixed Wireless. Cell site performance, capacity planning, and technology migration analytics.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#14b8a6">05</span>
+                  <h4 class="font-bold text-gray-900">Field Ops & Energy</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Field service optimization with truck roll reduction (currently 32%), first-call resolution (78% FCR), MTTR tracking (3.2 hrs), and technician scheduling optimization. Energy cost tracking by site.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#14b8a6">06</span>
+                  <h4 class="font-bold text-gray-900">Fraud Prevention</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Real-time fraud detection across SIM swap, subscription fraud, and usage fraud patterns. 96.2% detection rate with $4.2M monthly prevented losses.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#14b8a6">07</span>
+                  <h4 class="font-bold text-gray-900">Cyber Security</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Network security monitoring, DDoS protection, subscriber data protection, and security incident response tracking. Connects cyber threats to subscriber impact.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- ML & AI Models -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">ML Models in Production</h2>
+            <span class="text-xs text-gray-400 font-medium">2 models &middot; MLflow Registry</span>
+          </div>
+          <div class="space-y-4">
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Subscriber Churn Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#14b8a6; border-color:#14b8a6">XGBClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.92</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">tenure_months, data_usage_gb, support_tickets_90d, arpu, contract_remaining_days, nps_score</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Telecom Fraud Detector</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#14b8a6; border-color:#14b8a6">IsolationForest</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">precision = 0.94</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">sim_swap_velocity, international_call_ratio, usage_spike_score, account_age_days, device_change_count, ip_anomaly_score</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <!-- Genie AI -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
+            <span class="text-2xl">&#x1F9DE;</span>
+            <h2 class="text-xl font-bold text-gray-900">Genie AI Assistant</h2>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">TelecomIQ's Genie AI understands telecom operations natively. Ask 'What is the churn rate for postpaid subscribers in the Northeast region?' or 'Which cell sites had the most dropped calls last week?' across 237+ pre-trained questions.</p>
+        </section>
+
+        <!-- Architecture -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Lakehouse Architecture</h2>
+          <p class="text-sm text-gray-500 mb-6">
+            TelecomIQ is built on the Databricks Medallion Architecture &mdash; a three-layer data pipeline that
+            transforms raw source data into business-ready analytics with built-in quality, governance, and ML scoring at every stage.
+          </p>
+          <div class="space-y-3">
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#92400e">Bronze</div>
+              <div class="flex-1 bg-amber-50 border border-amber-200 p-4">
+                <p class="text-xs font-bold text-amber-900 mb-1">Raw Ingestion Layer</p>
+                <p class="text-[11px] text-amber-700">Auto Loader streaming and batch ingestion from source systems &mdash; transactional databases, IoT sensors, ERP feeds, and external APIs. Schema-on-read with audit columns and lineage tracking. Data arrives in its original form, immutable and queryable.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6b7280">Silver</div>
+              <div class="flex-1 bg-gray-50 border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-900 mb-1">Curated &amp; Enriched</p>
+                <p class="text-[11px] text-gray-600">Data quality checks, deduplication, business rule application, cross-source joins, and ML scoring. This is where models run &mdash; anomaly detection, churn scoring, and feature engineering happen in Silver, creating enriched records ready for analytics.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#14b8a6">Gold</div>
+              <div class="flex-1 border p-4" style="background:#14b8a608; border-color:#14b8a630">
+                <p class="text-xs font-bold text-gray-900 mb-1">Business-Ready Analytics</p>
+                <p class="text-[11px] text-gray-600">KPI aggregates, time-series snapshots, forecast outputs, and model health metrics &mdash; all optimized for dashboard queries. Gold tables power every chart, metric, and insight card in the TelecomIQ interface.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unity Catalog</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">telecom_iq</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">MLflow Registry</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">2 Models</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Genie AI</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">100+ Questions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business Impact -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Business Impact</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #14b8a6">$4.2M/mo</p>
+                <p class="text-xs text-gray-600 mt-1">fraud losses prevented</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #14b8a6">30 days</p>
+                <p class="text-xs text-gray-600 mt-1">advance churn prediction</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #14b8a6">14.2M</p>
+                <p class="text-xs text-gray-600 mt-1">subscribers monitored in real-time</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #14b8a6">32%</p>
+                <p class="text-xs text-gray-600 mt-1">truck roll reduction opportunity</p>
+              </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ Sidebar (3 cols) ══ -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 space-y-6">
+          <div class="sharp-card p-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-5" style="color:#14b8a6">Quick Facts</h3>
+            <div class="space-y-4 text-sm">
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Application Pages</span><span class="font-bold text-gray-900">7</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">ML Models</span><span class="font-bold text-gray-900">2</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Genie Questions</span><span class="font-bold text-gray-900">100+</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Unity Catalog</span><span class="font-bold text-gray-900 font-mono text-xs">telecom_iq</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="font-bold text-gray-900">Databricks</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Core Capabilities</h3>
+            <div class="flex flex-wrap gap-2"><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Telecom Outcome Hub</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Consumer CX & Growth</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">B2B / SMB / Enterprise</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Network Operations</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Field Ops & Energy</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Fraud Prevention</span></div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Lakehouse Tables</h3>
+            <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#14b8a6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">telecom_iq.gold.subscriber_metrics</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#14b8a6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">telecom_iq.gold.network_performance</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#14b8a6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">telecom_iq.gold.fraud_events</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#14b8a6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">telecom_iq.gold.field_operations</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#14b8a6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">telecom_iq.silver.call_detail_records</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#14b8a6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">telecom_iq.silver.network_events</span>
+                  </div></div>
+          </div>
+
+          <div class="sharp-card p-6 border-t-4" style="border-top-color:#14b8a6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Technology Stack</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#14b8a6"></div><span class="text-xs text-gray-700">Databricks Lakehouse</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#14b8a6"></div><span class="text-xs text-gray-700">Unity Catalog</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#14b8a6"></div><span class="text-xs text-gray-700">MLflow Model Registry</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#14b8a6"></div><span class="text-xs text-gray-700">Genie AI (Claude Sonnet)</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#14b8a6"></div><span class="text-xs text-gray-700">Dash / Plotly</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#14b8a6"></div><span class="text-xs text-gray-700">Delta Lake</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#14b8a6"></div><span class="text-xs text-gray-700">SHAP Explainability</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Resources</h3>
+            <ul class="space-y-3">
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#14b8a6">View Technical Architecture</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#14b8a6">Download Sample Data</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#14b8a6">Case Studies</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 mt-20 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by Databricks &middot; Blueprint AI Platform</p>
+    </div>
+  </footer>
+</body>
+</html>

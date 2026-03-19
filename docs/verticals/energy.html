@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EnergyIQ | Blueprint IQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'bp-accent': '#f59e0b' },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .sharp-card { border: 1px solid #e5e7eb; background: #fff; }
+    .sharp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .arch-layer { transition: transform 0.2s; }
+    .arch-layer:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fa] min-h-screen">
+  <!-- Top Bar -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Blueprint</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: #f59e0b">EnergyIQ</span>
+      </div>
+      <a href="../index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">&larr; All Verticals</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-400">
+      <ol class="flex items-center gap-1.5">
+        <li><a href="../index.html" class="hover:text-gray-900 transition-colors">Blueprint IQ</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">EnergyIQ</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-4xl">&#x26A1;</span>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">EnergyIQ</h1>
+          <p class="text-lg font-medium mt-1" style="color: #f59e0b">Grid operations, asset performance & energy transition analytics</p>
+        </div>
+      </div>
+      <p class="text-base text-gray-600 leading-relaxed max-w-3xl mt-4">EnergyIQ provides utilities and energy companies with real-time grid visibility, predictive asset management, and energy transition tracking to maintain reliability while accelerating decarbonization.</p>
+    </header>
+
+    <!-- North Star KPIs -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">North Star Metrics</h2>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #f59e0b">68.4 GW</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">System Load</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">current demand</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #f59e0b">14.8%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Reserve Margin</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">capacity buffer</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #f59e0b">31.2%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Renewable Penetration</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">vs 50% target</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #f59e0b">108.2 min</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">SAIDI</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">avg interruption duration</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #f59e0b">92.1 GW</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Peak Demand</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">seasonal maximum</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #f59e0b">5.4%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">T&D Loss</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">transmission efficiency</p>
+            </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-12">
+      <!-- ══ Main Content (7 cols) ══ -->
+      <div class="lg:col-span-7 space-y-10">
+
+        <!-- The Challenge -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Challenge</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">The energy sector is undergoing its most profound transformation in a century. Utilities must simultaneously maintain grid reliability (customers expect 99.99% uptime), integrate intermittent renewable sources (currently 31.2% penetration against 50% targets), modernize aging infrastructure (average T&D asset age exceeds 30 years), and navigate complex rate case proceedings. A single grid disruption affecting 100,000 customers can cost $50M in emergency response, regulatory penalties, and reputation damage. Meanwhile, the proliferation of distributed energy resources (solar panels, battery storage, EV chargers) is turning the traditional one-way grid into a complex two-way network that existing SCADA systems weren't designed to manage.</p>
+        </section>
+
+        <!-- The Solution -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Solution</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">EnergyIQ unifies SCADA telemetry, AMI meter reads, DER inverter data, outage management events, and asset condition scores into a single Databricks Lakehouse. An LSTM-based Grid Load Forecaster predicts system load with 2.4% MAPE, enabling optimal dispatch. An XGBoost Outage Predictor (AUC 0.91) identifies failure-prone assets before they cause customer interruptions. A Vegetation Risk Scorer uses RandomForest models to prioritize tree trimming in right-of-way corridors. Across 5 service territories and 6 generation types, EnergyIQ delivers the intelligence needed to operate a modern grid while tracking progress toward clean energy mandates.</p>
+        </section>
+
+        <!-- Screenshot placeholder -->
+        <section class="sharp-card p-1 shadow-sm bg-[#0D1117]">
+          <div class="aspect-[16/7] w-full flex items-center justify-center">
+            <div class="text-center px-6">
+              <span class="text-6xl block mb-3">&#x26A1;</span>
+              <p class="text-gray-400 font-bold text-sm">EnergyIQ Dashboard</p>
+              <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Databricks App &middot; Dark Theme &middot; 7 Purpose-Built Views</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why These Metrics Matter -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">Why These Metrics Matter</h2>
+          <p class="text-sm text-gray-500 mb-6">Every metric tracked in EnergyIQ is tied to a business outcome. Here is why each one matters and how the platform measures it.</p>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #f59e0b">68.4 GW</span>
+                  <span class="text-sm font-bold text-gray-900">System Load</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">current demand</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Real-time system load is the fundamental grid metric. At 68.4 GW against 92.1 GW peak capacity, EnergyIQ monitors load by service territory and customer class (Residential, Commercial, Industrial, Municipal, EV Charging). The LSTM forecaster predicts load 24 hours ahead with 2.4% MAPE, enabling generation dispatch optimization and demand response program activation.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #f59e0b">14.8%</span>
+                  <span class="text-sm font-bold text-gray-900">Reserve Margin</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">capacity buffer</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Reserve margin measures available generation capacity above peak demand. At 14.8%, EnergyIQ tracks this against NERC reliability standards (typically 15% minimum). Margin is decomposed by generation type &mdash; intermittent renewables reduce effective reserve unless paired with battery storage. The platform models seasonal and weather-driven margin compression scenarios.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #f59e0b">31.2%</span>
+                  <span class="text-sm font-bold text-gray-900">Renewable Penetration</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">vs 50% target</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Renewable penetration measures the percentage of generation from clean sources. At 31.2% against a 50% regulatory target, EnergyIQ tracks solar, wind, hydro, and battery storage output in real-time. The platform models the impact of planned renewable additions on grid stability, curtailment risk, and carbon intensity reduction.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #f59e0b">108.2 min</span>
+                  <span class="text-sm font-bold text-gray-900">SAIDI</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">avg interruption duration</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">System Average Interruption Duration Index measures the average total minutes of interruption per customer per year. At 108.2 minutes, EnergyIQ decomposes SAIDI by cause (weather, equipment failure, vegetation, third-party damage), feeder, and territory. The Outage Predictor identifies assets most likely to cause interruptions, enabling preventive maintenance prioritization.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #f59e0b">92.1 GW</span>
+                  <span class="text-sm font-bold text-gray-900">Peak Demand</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">seasonal maximum</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Peak demand drives infrastructure investment requirements. EnergyIQ forecasts seasonal peaks, tracks demand growth trends by territory, and models the impact of EV charging adoption on future peaks. Demand response program analytics show how much peak can be shaved through customer programs.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #f59e0b">5.4%</span>
+                  <span class="text-sm font-bold text-gray-900">T&D Loss</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">transmission efficiency</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Transmission and distribution losses represent energy generated but not delivered to customers. At 5.4%, EnergyIQ identifies loss hotspots by feeder and substation, detecting both technical losses (resistance, transformer inefficiency) and non-technical losses (theft, metering errors). Every 0.1% reduction in losses represents significant revenue recovery.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- Application Pages -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">What You Get: 7 Application Views</h2>
+          </div>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#f59e0b">01</span>
+                  <h4 class="font-bold text-gray-900">Grid Command Center</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Real-time grid status with system frequency, voltage profiles, load curves, and generation mix. Morning briefing with overnight events, weather-driven demand forecasts, and renewable availability projections.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#f59e0b">02</span>
+                  <h4 class="font-bold text-gray-900">Generation & Dispatch</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Generation unit performance by type (Solar, Wind, Gas, Nuclear, Hydro, Battery), dispatch optimization, fuel cost tracking, and capacity factor analysis. Real-time renewable output vs. forecast.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#f59e0b">03</span>
+                  <h4 class="font-bold text-gray-900">Grid Operations</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Transmission and distribution monitoring with outage tracking, switching operations, power quality metrics, and load balancing across territories. SCADA integration for real-time grid state estimation.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#f59e0b">04</span>
+                  <h4 class="font-bold text-gray-900">Customer Programs</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Demand response enrollment and performance, energy efficiency program tracking, EV charging analytics, time-of-use rate adoption, and net metering management across customer classes.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#f59e0b">05</span>
+                  <h4 class="font-bold text-gray-900">Asset Health & Reliability</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Asset condition scoring, predictive maintenance scheduling, vegetation management prioritization, and reliability metrics (SAIDI/SAIFI/CAIDI). Outage predictor flags high-risk assets.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#f59e0b">06</span>
+                  <h4 class="font-bold text-gray-900">Energy Transition</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Renewable integration tracking, carbon intensity monitoring (720 lbs/MWh), DER management, battery storage analytics, and progress toward clean energy mandates. Models pathway to 50% renewable target.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#f59e0b">07</span>
+                  <h4 class="font-bold text-gray-900">Regulatory & Rates</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Rate case analytics, cost allocation modeling, regulatory filing support, and customer impact analysis. Tracks regulatory lag and revenue requirement recovery.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- ML & AI Models -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">ML Models in Production</h2>
+            <span class="text-xs text-gray-400 font-medium">3 models &middot; MLflow Registry</span>
+          </div>
+          <div class="space-y-4">
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Grid Load Forecaster</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#f59e0b; border-color:#f59e0b">LSTMTimeSeries</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">mape = 2.4</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">historical_load_168h, temperature_forecast, humidity_pct, day_of_week, holiday_flag, solar_irradiance_forecast +2 more</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Outage Probability Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#f59e0b; border-color:#f59e0b">XGBClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.91</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">equipment_age_years, maintenance_history_score, weather_severity_index, vegetation_proximity_ft, load_factor_pct, fault_history_count +2 more</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Vegetation Risk Scorer</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#f59e0b; border-color:#f59e0b">RandomForestRegressor</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">rmse = 0.18</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">lidar_canopy_height_ft, growth_rate_annual_in, distance_to_conductor_ft, species_risk_score, last_trim_months, wind_exposure_index +2 more</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <!-- Genie AI -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
+            <span class="text-2xl">&#x1F9DE;</span>
+            <h2 class="text-xl font-bold text-gray-900">Genie AI Assistant</h2>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">EnergyIQ's Genie AI understands grid operations natively. Ask 'What is the current renewable penetration by territory?' or 'Which substations have the highest outage frequency this year?' across 260+ pre-trained energy-specific questions.</p>
+        </section>
+
+        <!-- Architecture -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Lakehouse Architecture</h2>
+          <p class="text-sm text-gray-500 mb-6">
+            EnergyIQ is built on the Databricks Medallion Architecture &mdash; a three-layer data pipeline that
+            transforms raw source data into business-ready analytics with built-in quality, governance, and ML scoring at every stage.
+          </p>
+          <div class="space-y-3">
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#92400e">Bronze</div>
+              <div class="flex-1 bg-amber-50 border border-amber-200 p-4">
+                <p class="text-xs font-bold text-amber-900 mb-1">Raw Ingestion Layer</p>
+                <p class="text-[11px] text-amber-700">Auto Loader streaming and batch ingestion from source systems &mdash; transactional databases, IoT sensors, ERP feeds, and external APIs. Schema-on-read with audit columns and lineage tracking. Data arrives in its original form, immutable and queryable.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6b7280">Silver</div>
+              <div class="flex-1 bg-gray-50 border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-900 mb-1">Curated &amp; Enriched</p>
+                <p class="text-[11px] text-gray-600">Data quality checks, deduplication, business rule application, cross-source joins, and ML scoring. This is where models run &mdash; anomaly detection, churn scoring, and feature engineering happen in Silver, creating enriched records ready for analytics.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#f59e0b">Gold</div>
+              <div class="flex-1 border p-4" style="background:#f59e0b08; border-color:#f59e0b30">
+                <p class="text-xs font-bold text-gray-900 mb-1">Business-Ready Analytics</p>
+                <p class="text-[11px] text-gray-600">KPI aggregates, time-series snapshots, forecast outputs, and model health metrics &mdash; all optimized for dashboard queries. Gold tables power every chart, metric, and insight card in the EnergyIQ interface.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unity Catalog</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">energy_iq</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">MLflow Registry</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">3 Models</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Genie AI</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">62+ Questions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business Impact -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Business Impact</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #f59e0b">24 hrs</p>
+                <p class="text-xs text-gray-600 mt-1">ahead load forecasting with 2.4% MAPE</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #f59e0b">5</p>
+                <p class="text-xs text-gray-600 mt-1">service territories managed on one platform</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #f59e0b">$50M+</p>
+                <p class="text-xs text-gray-600 mt-1">potential avoided cost per major grid event</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #f59e0b">31.2%</p>
+                <p class="text-xs text-gray-600 mt-1">renewable penetration tracked toward 50% goal</p>
+              </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ Sidebar (3 cols) ══ -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 space-y-6">
+          <div class="sharp-card p-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-5" style="color:#f59e0b">Quick Facts</h3>
+            <div class="space-y-4 text-sm">
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Application Pages</span><span class="font-bold text-gray-900">7</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">ML Models</span><span class="font-bold text-gray-900">3</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Genie Questions</span><span class="font-bold text-gray-900">62+</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Unity Catalog</span><span class="font-bold text-gray-900 font-mono text-xs">energy_iq</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="font-bold text-gray-900">Databricks</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Core Capabilities</h3>
+            <div class="flex flex-wrap gap-2"><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Grid Command Center</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Generation & Dispatch</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Grid Operations</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Customer Programs</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Asset Health & Reliability</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Energy Transition</span></div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Lakehouse Tables</h3>
+            <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#f59e0b" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">energy_iq.gold.grid_operations_kpis</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#f59e0b" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">energy_iq.gold.generation_dispatch_log</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#f59e0b" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">energy_iq.gold.outage_management_events</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#f59e0b" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">energy_iq.gold.asset_condition_scores</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#f59e0b" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">energy_iq.gold.customer_program_enrollment</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#f59e0b" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">energy_iq.silver.scada_telemetry</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#f59e0b" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">energy_iq.silver.ami_meter_reads</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#f59e0b" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">energy_iq.silver.der_inverter_data</span>
+                  </div></div>
+          </div>
+
+          <div class="sharp-card p-6 border-t-4" style="border-top-color:#f59e0b">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Technology Stack</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#f59e0b"></div><span class="text-xs text-gray-700">Databricks Lakehouse</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#f59e0b"></div><span class="text-xs text-gray-700">Unity Catalog</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#f59e0b"></div><span class="text-xs text-gray-700">MLflow Model Registry</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#f59e0b"></div><span class="text-xs text-gray-700">Genie AI (Claude Sonnet)</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#f59e0b"></div><span class="text-xs text-gray-700">Dash / Plotly</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#f59e0b"></div><span class="text-xs text-gray-700">Delta Lake</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#f59e0b"></div><span class="text-xs text-gray-700">SHAP Explainability</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Resources</h3>
+            <ul class="space-y-3">
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#f59e0b">View Technical Architecture</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#f59e0b">Download Sample Data</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#f59e0b">Case Studies</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 mt-20 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by Databricks &middot; Blueprint AI Platform</p>
+    </div>
+  </footer>
+</body>
+</html>

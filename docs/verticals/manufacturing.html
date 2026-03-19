@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MakerIQ | Blueprint IQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'bp-accent': '#8b5cf6' },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .sharp-card { border: 1px solid #e5e7eb; background: #fff; }
+    .sharp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .arch-layer { transition: transform 0.2s; }
+    .arch-layer:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fa] min-h-screen">
+  <!-- Top Bar -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Blueprint</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: #8b5cf6">MakerIQ</span>
+      </div>
+      <a href="../index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">&larr; All Verticals</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-400">
+      <ol class="flex items-center gap-1.5">
+        <li><a href="../index.html" class="hover:text-gray-900 transition-colors">Blueprint IQ</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">MakerIQ</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-4xl">&#x1F3ED;</span>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">MakerIQ</h1>
+          <p class="text-lg font-medium mt-1" style="color: #8b5cf6">Production analytics, predictive maintenance & supply chain intelligence</p>
+        </div>
+      </div>
+      <p class="text-base text-gray-600 leading-relaxed max-w-3xl mt-4">MakerIQ transforms raw sensor telemetry, ERP data, and quality inspections into real-time operational intelligence. With ML-powered anomaly detection, demand forecasting, and SHAP explainability, it helps manufacturers maximize OEE and eliminate unplanned downtime.</p>
+    </header>
+
+    <!-- North Star KPIs -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">North Star Metrics</h2>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #8b5cf6">84.7%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Overall Equipment Effectiveness</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">world-class target: 85%+</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #8b5cf6">96.3%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">First Pass Yield</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">quality rate</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #8b5cf6">93%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">On-Time Delivery</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">supply chain reliability</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #8b5cf6">3.2%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Unplanned Downtime</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">target: below 5%</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #8b5cf6">620 PPM</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Defect Rate</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">parts per million</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #8b5cf6">8.6x</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Inventory Turns</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">annual turnover</p>
+            </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-12">
+      <!-- ══ Main Content (7 cols) ══ -->
+      <div class="lg:col-span-7 space-y-10">
+
+        <!-- The Challenge -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Challenge</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">Modern manufacturing generates more data than any other industry &mdash; a single CNC machine produces thousands of telemetry readings per second across vibration, temperature, spindle RPM, and tool wear. Yet most plants still rely on threshold-based alerts that either fire too late (after the machine has already failed) or too often (creating alert fatigue that gets ignored). Unplanned downtime costs manufacturers an estimated $50 billion annually. Meanwhile, supply chain volatility means demand forecasts made 90 days ago are already obsolete, leading to either excess inventory (tying up working capital) or stockouts (stopping production lines). Quality teams catch defects at end-of-line inspection when the cost of scrap is already incurred, instead of at the source where root causes can be addressed in real-time.</p>
+        </section>
+
+        <!-- The Solution -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Solution</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">MakerIQ is the most fully-realized vertical in the Blueprint IQ platform, with a complete end-to-end implementation from raw data ingestion to production ML models. Auto Loader streams IoT telemetry from CNC machines into Bronze tables, where it's enriched in Silver with ML-scored anomaly detection (GradientBoosting on vibration, temperature, spindle RPM, tool wear, and feed rate). A Prophet-based demand forecaster generates 90-day inventory projections per site and component. SHAP explainability shows operators exactly which sensor reading drove each anomaly flag. Gold tables aggregate production KPIs, inventory forecasts, and model health metrics into dashboard-ready views across 5 global facilities.</p>
+        </section>
+
+        <!-- Screenshot placeholder -->
+        <section class="sharp-card p-1 shadow-sm bg-[#0D1117]">
+          <div class="aspect-[16/7] w-full flex items-center justify-center">
+            <div class="text-center px-6">
+              <span class="text-6xl block mb-3">&#x1F3ED;</span>
+              <p class="text-gray-400 font-bold text-sm">MakerIQ Dashboard</p>
+              <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Databricks App &middot; Dark Theme &middot; 7 Purpose-Built Views</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why These Metrics Matter -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">Why These Metrics Matter</h2>
+          <p class="text-sm text-gray-500 mb-6">Every metric tracked in MakerIQ is tied to a business outcome. Here is why each one matters and how the platform measures it.</p>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #8b5cf6">84.7%</span>
+                  <span class="text-sm font-bold text-gray-900">Overall Equipment Effectiveness</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">world-class target: 85%+</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">OEE is the gold standard for manufacturing productivity, combining Availability (uptime), Performance (speed), and Quality (yield) into a single percentage. At 84.7%, MakerIQ-equipped plants are approaching world-class levels (85%+). The platform decomposes OEE by facility, production line, shift, and machine &mdash; revealing that the Austin Assembly plant runs at 89% OEE while Shanghai Precision Works lags at 79% due to higher changeover times. This granularity enables targeted improvement programs rather than blanket initiatives.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #8b5cf6">96.3%</span>
+                  <span class="text-sm font-bold text-gray-900">First Pass Yield</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">quality rate</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">FPY measures the percentage of units that pass quality inspection without rework. Each point of FPY improvement can represent millions in saved scrap and rework costs across high-volume production. MakerIQ's Quality Defect Predictor uses XGBoost trained on raw material lot scores, machine age, ambient conditions, operator experience, and tool wear to predict defects before they occur &mdash; shifting quality from detection to prevention. The current defect rate of 620 PPM is tracked by component, process step, and shift.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #8b5cf6">93%</span>
+                  <span class="text-sm font-bold text-gray-900">On-Time Delivery</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">supply chain reliability</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">On-time delivery measures the percentage of customer orders shipped within the promised window. At 93%, MakerIQ tracks this across the full supply chain from supplier lead times (14.2 days average) through production scheduling to final shipment. The demand forecast model (LightGBM, MAPE 6.2%) predicts component needs 90 days out, while inventory turn tracking at 8.6x ensures working capital isn't trapped in excess stock.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #8b5cf6">3.2%</span>
+                  <span class="text-sm font-bold text-gray-900">Unplanned Downtime</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">target: below 5%</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Unplanned downtime is the single most expensive operational failure in manufacturing. Even a 1% reduction in downtime across a 5-plant operation can save millions annually. MakerIQ's Equipment Anomaly Detector runs IsolationForest models on real-time sensor streams, identifying failure signatures 24-72 hours before breakdown. SHAP values tell maintenance teams exactly which sensor (vibration, temperature, tool wear) is driving the anomaly, enabling precision maintenance instead of reactive repair.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #8b5cf6">620 PPM</span>
+                  <span class="text-sm font-bold text-gray-900">Defect Rate</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">parts per million</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">PPM defect rate is the universal quality benchmark in manufacturing. 620 PPM means 620 defective parts per million produced. MakerIQ tracks PPM by facility, product line, and process step, with Cpk analysis (average 1.54) showing process capability relative to specification limits. Real-time tolerance monitoring catches drift before it becomes out-of-spec product.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #8b5cf6">8.6x</span>
+                  <span class="text-sm font-bold text-gray-900">Inventory Turns</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">annual turnover</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Inventory turns measure how many times stock is sold and replaced in a year. Higher turns mean less capital tied up in inventory. At 8.6x with 28.4 days of supply, MakerIQ balances just-in-time efficiency against stockout risk using ML-based demand forecasting. The platform classifies every component as HEALTHY, LOW, or CRITICAL based on predicted days of stock and forecast demand.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- Application Pages -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">What You Get: 7 Application Views</h2>
+          </div>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#8b5cf6">01</span>
+                  <h4 class="font-bold text-gray-900">Plant Performance Hub</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Executive command center with real-time OEE, production output, quality metrics, and AI morning briefing. Covers all 5 global facilities (Austin, Detroit, Shanghai, Stuttgart, Guadalajara) with drill-down to individual production lines.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#8b5cf6">02</span>
+                  <h4 class="font-bold text-gray-900">Production Analytics</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Throughput tracking at 1,240 units/hour, cycle time analysis (42.6 sec average), changeover optimization, and shift-level performance comparisons. Identifies bottleneck machines and scheduling optimization opportunities.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#8b5cf6">03</span>
+                  <h4 class="font-bold text-gray-900">Quality Control</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">SPC charts, tolerance monitoring, FPY tracking, and root-cause analysis with SHAP-powered defect attribution. Cpk analysis by process step with real-time alerts when capability indices drop below threshold.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#8b5cf6">04</span>
+                  <h4 class="font-bold text-gray-900">Supply Chain & Inventory</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Demand forecasting with 90-day horizon, stock level monitoring with HEALTHY/LOW/CRITICAL classification, supplier lead time tracking, and purchase order optimization. Prevents both stockouts and excess inventory.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#8b5cf6">05</span>
+                  <h4 class="font-bold text-gray-900">Predictive Maintenance</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">ML-scored anomaly detection on CNC machine telemetry (vibration, temperature, tool wear). SHAP explainability for every flag, MTTR tracking at 2.4 hours, and maintenance schedule optimization. The heart of MakerIQ's value proposition.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#8b5cf6">06</span>
+                  <h4 class="font-bold text-gray-900">Energy & Sustainability</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Energy consumption by facility and line, carbon footprint tracking, utility cost optimization, and sustainability KPI monitoring. Connects energy usage to production output for efficiency benchmarking.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#8b5cf6">07</span>
+                  <h4 class="font-bold text-gray-900">Workforce Operations</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Headcount tracking (2,840 across 5 plants), overtime analysis (12% rate), safety incident monitoring (1.2 rate), and skills matrix management. Workforce scheduling optimization based on production demand forecasts.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- ML & AI Models -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">ML Models in Production</h2>
+            <span class="text-xs text-gray-400 font-medium">3 models &middot; MLflow Registry</span>
+          </div>
+          <div class="space-y-4">
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Equipment Anomaly Detector</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#8b5cf6; border-color:#8b5cf6">IsolationForest</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">f1_score = 0.93</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">vibration_rms, temperature_delta, current_draw_amps, acoustic_emission_db, cycle_time_deviation, oil_particulate_count</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Demand Forecast Model</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#8b5cf6; border-color:#8b5cf6">LightGBMRegressor</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">mape = 6.2</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">historical_orders_90d, seasonal_index, customer_backlog, economic_indicator, lead_time_variability, promotion_flag</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Quality Defect Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#8b5cf6; border-color:#8b5cf6">XGBClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.89</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">raw_material_lot_score, machine_age_hours, ambient_temperature, humidity_pct, operator_experience_months, tool_wear_index</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <!-- Genie AI -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
+            <span class="text-2xl">&#x1F9DE;</span>
+            <h2 class="text-xl font-bold text-gray-900">Genie AI Assistant</h2>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">MakerIQ's Genie AI is tuned for manufacturing operations. Ask 'Which machines had anomaly scores above 0.85 in the last 24 hours?' and get a prioritized maintenance list. Ask 'What is our projected stockout risk for EV Drive Units at the Austin plant?' and get a forecast with confidence intervals. The assistant understands OEE decomposition, SPC terminology, and supply chain concepts natively across 285+ pre-trained questions.</p>
+        </section>
+
+        <!-- Architecture -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Lakehouse Architecture</h2>
+          <p class="text-sm text-gray-500 mb-6">
+            MakerIQ is built on the Databricks Medallion Architecture &mdash; a three-layer data pipeline that
+            transforms raw source data into business-ready analytics with built-in quality, governance, and ML scoring at every stage.
+          </p>
+          <div class="space-y-3">
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#92400e">Bronze</div>
+              <div class="flex-1 bg-amber-50 border border-amber-200 p-4">
+                <p class="text-xs font-bold text-amber-900 mb-1">Raw Ingestion Layer</p>
+                <p class="text-[11px] text-amber-700">Auto Loader streaming and batch ingestion from source systems &mdash; transactional databases, IoT sensors, ERP feeds, and external APIs. Schema-on-read with audit columns and lineage tracking. Data arrives in its original form, immutable and queryable.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6b7280">Silver</div>
+              <div class="flex-1 bg-gray-50 border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-900 mb-1">Curated &amp; Enriched</p>
+                <p class="text-[11px] text-gray-600">Data quality checks, deduplication, business rule application, cross-source joins, and ML scoring. This is where models run &mdash; anomaly detection, churn scoring, and feature engineering happen in Silver, creating enriched records ready for analytics.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#8b5cf6">Gold</div>
+              <div class="flex-1 border p-4" style="background:#8b5cf608; border-color:#8b5cf630">
+                <p class="text-xs font-bold text-gray-900 mb-1">Business-Ready Analytics</p>
+                <p class="text-[11px] text-gray-600">KPI aggregates, time-series snapshots, forecast outputs, and model health metrics &mdash; all optimized for dashboard queries. Gold tables power every chart, metric, and insight card in the MakerIQ interface.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unity Catalog</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">manufacturing_iq</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">MLflow Registry</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">3 Models</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Genie AI</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">100+ Questions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business Impact -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Business Impact</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #8b5cf6">24-72 hrs</p>
+                <p class="text-xs text-gray-600 mt-1">advance failure prediction window</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #8b5cf6">90 days</p>
+                <p class="text-xs text-gray-600 mt-1">demand forecast horizon per component</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #8b5cf6">5 plants</p>
+                <p class="text-xs text-gray-600 mt-1">monitored from one unified platform</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #8b5cf6">40%</p>
+                <p class="text-xs text-gray-600 mt-1">reduction in unplanned downtime with ML</p>
+              </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ Sidebar (3 cols) ══ -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 space-y-6">
+          <div class="sharp-card p-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-5" style="color:#8b5cf6">Quick Facts</h3>
+            <div class="space-y-4 text-sm">
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Application Pages</span><span class="font-bold text-gray-900">7</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">ML Models</span><span class="font-bold text-gray-900">3</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Genie Questions</span><span class="font-bold text-gray-900">100+</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Unity Catalog</span><span class="font-bold text-gray-900 font-mono text-xs">manufacturing_iq</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="font-bold text-gray-900">Databricks</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Core Capabilities</h3>
+            <div class="flex flex-wrap gap-2"><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Plant Performance Hub</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Production Analytics</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Quality Control</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Supply Chain & Inventory</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Predictive Maintenance</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Energy & Sustainability</span></div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Lakehouse Tables</h3>
+            <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#8b5cf6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">manufacturing_iq.gold.production_line_kpis</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#8b5cf6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">manufacturing_iq.gold.quality_inspection_results</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#8b5cf6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">manufacturing_iq.gold.equipment_health_metrics</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#8b5cf6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">manufacturing_iq.gold.supply_chain_performance</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#8b5cf6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">manufacturing_iq.silver.sensor_telemetry</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#8b5cf6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">manufacturing_iq.silver.work_order_log</span>
+                  </div></div>
+          </div>
+
+          <div class="sharp-card p-6 border-t-4" style="border-top-color:#8b5cf6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Technology Stack</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#8b5cf6"></div><span class="text-xs text-gray-700">Databricks Lakehouse</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#8b5cf6"></div><span class="text-xs text-gray-700">Unity Catalog</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#8b5cf6"></div><span class="text-xs text-gray-700">MLflow Model Registry</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#8b5cf6"></div><span class="text-xs text-gray-700">Genie AI (Claude Sonnet)</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#8b5cf6"></div><span class="text-xs text-gray-700">Dash / Plotly</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#8b5cf6"></div><span class="text-xs text-gray-700">Delta Lake</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#8b5cf6"></div><span class="text-xs text-gray-700">SHAP Explainability</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Resources</h3>
+            <ul class="space-y-3">
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#8b5cf6">View Technical Architecture</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#8b5cf6">Download Sample Data</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#8b5cf6">Case Studies</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 mt-20 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by Databricks &middot; Blueprint AI Platform</p>
+    </div>
+  </footer>
+</body>
+</html>

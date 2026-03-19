@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HLSIQ | Blueprint IQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'bp-accent': '#10b981' },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .sharp-card { border: 1px solid #e5e7eb; background: #fff; }
+    .sharp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .arch-layer { transition: transform 0.2s; }
+    .arch-layer:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fa] min-h-screen">
+  <!-- Top Bar -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Blueprint</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: #10b981">HLSIQ</span>
+      </div>
+      <a href="../index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">&larr; All Verticals</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-400">
+      <ol class="flex items-center gap-1.5">
+        <li><a href="../index.html" class="hover:text-gray-900 transition-colors">Blueprint IQ</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">HLSIQ</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-4xl">&#x1F3E5;</span>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">HLSIQ</h1>
+          <p class="text-lg font-medium mt-1" style="color: #10b981">Outcome-driven intelligence for Providers, Payers & Pharma</p>
+        </div>
+      </div>
+      <p class="text-base text-gray-600 leading-relaxed max-w-3xl mt-4">HLSIQ unifies clinical, operational, and financial data to improve patient outcomes, reduce readmissions, and optimize resource utilization across the healthcare continuum.</p>
+    </header>
+
+    <!-- North Star KPIs -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">North Star Metrics</h2>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #10b981">87.3%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Bed Utilization</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">capacity efficiency</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #10b981">8.2%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">30-Day Readmission Rate</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">all-cause readmissions</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #10b981">4.2 / 5</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Star Rating</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">CMS quality composite</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #10b981">4.7%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">FWA Detection Rate</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">fraud, waste & abuse identified</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #10b981">34 min</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">ED Wait Time</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">door-to-provider average</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #10b981">84.2%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Medical Loss Ratio</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">claims cost to premium ratio</p>
+            </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-12">
+      <!-- ══ Main Content (7 cols) ══ -->
+      <div class="lg:col-span-7 space-y-10">
+
+        <!-- The Challenge -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Challenge</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">Healthcare organizations sit on vast stores of clinical, claims, and operational data &mdash; yet struggle to turn it into timely, actionable intelligence. Emergency departments face 34-minute average wait times while bed utilization hovers at 87%, indicating both capacity constraints and flow inefficiencies. Readmission rates of 8.2% carry massive financial penalties under CMS programs, and health plans lose millions annually to fraud, waste, and abuse that slips through rule-based screening systems. BioPharma companies spend $2.6B on average to bring a drug to market, yet clinical trial enrollment sits at just 78% of target. The common thread is disconnected data: EHRs don't talk to claims systems, supply chain data lives in separate ERPs, and quality measures are computed quarterly when they should be monitored daily.</p>
+        </section>
+
+        <!-- The Solution -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Solution</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">HLSIQ breaks these silos by unifying patient records, claims data, supply chain feeds, and quality metrics on a single Databricks Lakehouse. The platform serves four sub-verticals &mdash; Providers, Health Plans, BioPharma, and MedTech &mdash; each with domain-specific analytics, ML models, and Genie AI capabilities. A Readmission Risk Predictor (AUC 0.89) scores every discharged patient, enabling care coordinators to intervene before costly re-hospitalizations. An FWA Detection Model screens claims in real-time, catching anomalous billing patterns that rule-based systems miss. Across three facilities and six departments, HLSIQ delivers the operational intelligence needed to reduce wait times, improve bed turnover, and drive Star Rating improvements.</p>
+        </section>
+
+        <!-- Screenshot placeholder -->
+        <section class="sharp-card p-1 shadow-sm bg-[#0D1117]">
+          <div class="aspect-[16/7] w-full flex items-center justify-center">
+            <div class="text-center px-6">
+              <span class="text-6xl block mb-3">&#x1F3E5;</span>
+              <p class="text-gray-400 font-bold text-sm">HLSIQ Dashboard</p>
+              <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Databricks App &middot; Dark Theme &middot; 7 Purpose-Built Views</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why These Metrics Matter -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">Why These Metrics Matter</h2>
+          <p class="text-sm text-gray-500 mb-6">Every metric tracked in HLSIQ is tied to a business outcome. Here is why each one matters and how the platform measures it.</p>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #10b981">87.3%</span>
+                  <span class="text-sm font-bold text-gray-900">Bed Utilization</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">capacity efficiency</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Bed utilization measures the percentage of available beds occupied at any given time. While 87.3% suggests strong demand, the real insight is in the variance: ICU runs at 94% (dangerously tight) while medical/surgical wards operate at 78%. HLSIQ tracks utilization by department, floor, and hour &mdash; enabling patient flow teams to predict bottlenecks 6 hours ahead and trigger early discharge planning, transfer coordination, or temporary bed expansion before capacity crises hit.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #10b981">8.2%</span>
+                  <span class="text-sm font-bold text-gray-900">30-Day Readmission Rate</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">all-cause readmissions</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Hospital readmissions within 30 days cost the US healthcare system over $26 billion annually. CMS penalizes hospitals with excess readmission rates through the Hospital Readmissions Reduction Program, making this metric directly tied to reimbursement. HLSIQ's ML model scores every discharged patient on readmission probability, factoring in diagnosis, comorbidities, social determinants, medication complexity, and prior utilization. High-risk patients are automatically flagged for post-discharge follow-up, reducing avoidable readmissions by targeting interventions where they matter most.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #10b981">4.2 / 5</span>
+                  <span class="text-sm font-bold text-gray-900">Star Rating</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">CMS quality composite</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">CMS Star Ratings directly impact Medicare Advantage reimbursement and patient choice. Each half-star improvement can represent millions in bonus payments. HLSIQ tracks all 40+ underlying quality measures in real-time rather than waiting for annual CMS reporting cycles, allowing quality teams to identify and address measure gaps months before they impact ratings.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #10b981">4.7%</span>
+                  <span class="text-sm font-bold text-gray-900">FWA Detection Rate</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">fraud, waste & abuse identified</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Industry estimates suggest 3-10% of healthcare spending is lost to fraud, waste, and abuse. HLSIQ's FWA model screens claims data in real-time, identifying upcoding patterns, unbundling schemes, phantom billing, and duplicate claims. At a 4.7% detection rate on a large health plan book, this translates to tens of millions in annual savings &mdash; far exceeding what rule-based systems catch.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #10b981">34 min</span>
+                  <span class="text-sm font-bold text-gray-900">ED Wait Time</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">door-to-provider average</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Emergency department wait time is a critical patient experience metric and a leading indicator of operational efficiency. At 34 minutes, HLSIQ tracks this in real-time by facility and acuity level, correlating wait times with staffing levels, arrival patterns, and bed availability. Predictive models forecast ED volume 4 hours ahead, enabling proactive staffing adjustments.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #10b981">84.2%</span>
+                  <span class="text-sm font-bold text-gray-900">Medical Loss Ratio</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">claims cost to premium ratio</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">MLR measures the percentage of premium revenue spent on medical claims. The ACA requires a minimum 80% MLR for individual plans and 85% for large group. At 84.2%, the health plan is operating within regulatory compliance while maintaining margin. HLSIQ decomposes MLR by plan type (HMO, PPO, Medicare Advantage, Medicaid), therapeutic area, and provider network to identify cost drivers.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- Application Pages -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">What You Get: 7 Application Views</h2>
+          </div>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#10b981">01</span>
+                  <h4 class="font-bold text-gray-900">HLS Outcome Hub</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Executive dashboard showing patient volume, quality metrics, financial performance, and AI-generated morning briefing on overnight census changes, quality alerts, and operational flags across all facilities.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#10b981">02</span>
+                  <h4 class="font-bold text-gray-900">Healthcare Operations</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Real-time patient flow analytics covering ED throughput, bed management, surgical scheduling, and discharge planning. Tracks door-to-provider times, length of stay by DRG, and staffing ratio compliance.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#10b981">03</span>
+                  <h4 class="font-bold text-gray-900">Network & Quality</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Provider network performance with Star Rating tracking, HEDIS measure compliance, provider profiling, and narrow network analysis. Identifies high-value providers and quality improvement opportunities.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#10b981">04</span>
+                  <h4 class="font-bold text-gray-900">BioPharma Intelligence</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Clinical trial enrollment tracking, drug pipeline analytics, HCP engagement scoring, and manufacturing yield monitoring. Connects R&D investment to market outcomes across therapeutic areas.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#10b981">05</span>
+                  <h4 class="font-bold text-gray-900">Supply Chain</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Medical supply chain visibility covering inventory levels, procurement costs, vendor performance, and demand forecasting for critical items (PPE, pharmaceuticals, surgical supplies). Tracks par levels by department.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#10b981">06</span>
+                  <h4 class="font-bold text-gray-900">MedTech & Surgical</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Medical device pipeline analytics, surgical outcome tracking, device utilization rates, and post-market surveillance. Connects device performance data to patient outcomes for regulatory and quality reporting.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#10b981">07</span>
+                  <h4 class="font-bold text-gray-900">Patient Outcomes</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Population health analytics with risk stratification, care gap identification, chronic disease management tracking, and social determinants of health integration. The readmission ML model scores every discharge.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- ML & AI Models -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">ML Models in Production</h2>
+            <span class="text-xs text-gray-400 font-medium">2 models &middot; MLflow Registry</span>
+          </div>
+          <div class="space-y-4">
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Readmission Risk Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#10b981; border-color:#10b981">GradientBoostingClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.89</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">age, diagnosis_code, los_days, prior_admissions_12m, comorbidity_index, sdoh_risk_factors</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">FWA Detection Model</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#10b981; border-color:#10b981">IsolationForest</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">precision = 0.91</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">claim_amount, provider_history, diagnosis_frequency, billing_pattern, member_risk_score</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <!-- Genie AI -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
+            <span class="text-2xl">&#x1F9DE;</span>
+            <h2 class="text-xl font-bold text-gray-900">Genie AI Assistant</h2>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">HLSIQ's Genie AI speaks the language of healthcare natively. Ask 'What is our current readmission rate for heart failure patients?' and get an instant analysis by facility, payer, and discharge disposition. Ask 'Which departments are over 90% bed utilization right now?' and get a real-time capacity view. The assistant understands clinical terminology, quality measure definitions, and regulatory reporting requirements across 260+ pre-trained healthcare questions.</p>
+        </section>
+
+        <!-- Architecture -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Lakehouse Architecture</h2>
+          <p class="text-sm text-gray-500 mb-6">
+            HLSIQ is built on the Databricks Medallion Architecture &mdash; a three-layer data pipeline that
+            transforms raw source data into business-ready analytics with built-in quality, governance, and ML scoring at every stage.
+          </p>
+          <div class="space-y-3">
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#92400e">Bronze</div>
+              <div class="flex-1 bg-amber-50 border border-amber-200 p-4">
+                <p class="text-xs font-bold text-amber-900 mb-1">Raw Ingestion Layer</p>
+                <p class="text-[11px] text-amber-700">Auto Loader streaming and batch ingestion from source systems &mdash; transactional databases, IoT sensors, ERP feeds, and external APIs. Schema-on-read with audit columns and lineage tracking. Data arrives in its original form, immutable and queryable.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6b7280">Silver</div>
+              <div class="flex-1 bg-gray-50 border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-900 mb-1">Curated &amp; Enriched</p>
+                <p class="text-[11px] text-gray-600">Data quality checks, deduplication, business rule application, cross-source joins, and ML scoring. This is where models run &mdash; anomaly detection, churn scoring, and feature engineering happen in Silver, creating enriched records ready for analytics.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#10b981">Gold</div>
+              <div class="flex-1 border p-4" style="background:#10b98108; border-color:#10b98130">
+                <p class="text-xs font-bold text-gray-900 mb-1">Business-Ready Analytics</p>
+                <p class="text-[11px] text-gray-600">KPI aggregates, time-series snapshots, forecast outputs, and model health metrics &mdash; all optimized for dashboard queries. Gold tables power every chart, metric, and insight card in the HLSIQ interface.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unity Catalog</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">hls_iq</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">MLflow Registry</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">2 Models</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Genie AI</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">100+ Questions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business Impact -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Business Impact</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #10b981">6 hrs</p>
+                <p class="text-xs text-gray-600 mt-1">advance prediction of capacity bottlenecks</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #10b981">$26B</p>
+                <p class="text-xs text-gray-600 mt-1">industry readmission cost HLSIQ helps reduce</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #10b981">40+</p>
+                <p class="text-xs text-gray-600 mt-1">CMS quality measures tracked in real-time</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #10b981">3</p>
+                <p class="text-xs text-gray-600 mt-1">facilities monitored from one unified platform</p>
+              </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ Sidebar (3 cols) ══ -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 space-y-6">
+          <div class="sharp-card p-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-5" style="color:#10b981">Quick Facts</h3>
+            <div class="space-y-4 text-sm">
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Application Pages</span><span class="font-bold text-gray-900">7</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">ML Models</span><span class="font-bold text-gray-900">2</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Genie Questions</span><span class="font-bold text-gray-900">100+</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Unity Catalog</span><span class="font-bold text-gray-900 font-mono text-xs">hls_iq</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="font-bold text-gray-900">Databricks</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Core Capabilities</h3>
+            <div class="flex flex-wrap gap-2"><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">HLS Outcome Hub</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Healthcare Operations</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Network & Quality</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">BioPharma Intelligence</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Supply Chain</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">MedTech & Surgical</span></div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Lakehouse Tables</h3>
+            <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#10b981" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">hls_iq.gold.patient_encounters</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#10b981" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">hls_iq.gold.revenue_cycle</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#10b981" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">hls_iq.gold.health_plan_claims</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#10b981" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">hls_iq.gold.clinical_quality</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#10b981" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">hls_iq.silver.admission_events</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#10b981" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">hls_iq.silver.claims_raw</span>
+                  </div></div>
+          </div>
+
+          <div class="sharp-card p-6 border-t-4" style="border-top-color:#10b981">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Technology Stack</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#10b981"></div><span class="text-xs text-gray-700">Databricks Lakehouse</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#10b981"></div><span class="text-xs text-gray-700">Unity Catalog</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#10b981"></div><span class="text-xs text-gray-700">MLflow Model Registry</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#10b981"></div><span class="text-xs text-gray-700">Genie AI (Claude Sonnet)</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#10b981"></div><span class="text-xs text-gray-700">Dash / Plotly</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#10b981"></div><span class="text-xs text-gray-700">Delta Lake</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#10b981"></div><span class="text-xs text-gray-700">SHAP Explainability</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Resources</h3>
+            <ul class="space-y-3">
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#10b981">View Technical Architecture</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#10b981">Download Sample Data</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#10b981">Case Studies</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 mt-20 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by Databricks &middot; Blueprint AI Platform</p>
+    </div>
+  </footer>
+</body>
+</html>

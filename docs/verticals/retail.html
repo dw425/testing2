@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RetailIQ | Blueprint IQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'bp-accent': '#ec4899' },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .sharp-card { border: 1px solid #e5e7eb; background: #fff; }
+    .sharp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .arch-layer { transition: transform 0.2s; }
+    .arch-layer:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fa] min-h-screen">
+  <!-- Top Bar -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Blueprint</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: #ec4899">RetailIQ</span>
+      </div>
+      <a href="../index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">&larr; All Verticals</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-400">
+      <ol class="flex items-center gap-1.5">
+        <li><a href="../index.html" class="hover:text-gray-900 transition-colors">Blueprint IQ</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">RetailIQ</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-4xl">&#x1F6D2;</span>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">RetailIQ</h1>
+          <p class="text-lg font-medium mt-1" style="color: #ec4899">Omnichannel retail analytics & commerce intelligence</p>
+        </div>
+      </div>
+      <p class="text-base text-gray-600 leading-relaxed max-w-3xl mt-4">RetailIQ connects every channel &mdash; in-store, e-commerce, mobile, and marketplace &mdash; into a unified analytics platform for demand planning, customer intelligence, and margin optimization.</p>
+    </header>
+
+    <!-- North Star KPIs -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">North Star Metrics</h2>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #ec4899">$148M</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Revenue MTD</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">month-to-date sales</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #ec4899">+4.2%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Comp Store Sales</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">same-store YoY growth</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #ec4899">38.2%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Gross Margin</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">revenue minus COGS</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #ec4899">3.4%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Conversion Rate</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">traffic to purchase</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #ec4899">34%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">E-Commerce Share</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">digital revenue mix</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #ec4899">1.4%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Shrinkage</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">inventory loss rate</p>
+            </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-12">
+      <!-- ══ Main Content (7 cols) ══ -->
+      <div class="lg:col-span-7 space-y-10">
+
+        <!-- The Challenge -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Challenge</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">Retail is in the middle of an omnichannel transformation. With $148M in monthly revenue flowing through physical stores, e-commerce (34% and growing), mobile apps, and marketplace channels, the complexity of demand planning has exploded. A stockout in a flagship location costs immediate sales; excess inventory in an outlet ties up working capital and eventually gets marked down, destroying margin. Customer behavior is increasingly unpredictable &mdash; a shopper browses on mobile, buys online, returns in-store. Loss prevention teams face a 1.4% shrinkage rate across 42K daily foot traffic. And through all of this, maintaining a 38.2% gross margin requires precision pricing, markdown timing, and promotional strategy that most retail analytics tools can't deliver.</p>
+        </section>
+
+        <!-- The Solution -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Solution</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">RetailIQ unifies POS transactions, e-commerce sessions, foot traffic counts, inventory positions, and customer profiles into a single Databricks Lakehouse. A Demand Forecast Model (LightGBM, MAPE 5.8%) predicts demand by SKU and location. A Markdown Optimizer (Bayesian, 8.4% margin lift) times price reductions for maximum sell-through with minimum margin erosion. A Customer Churn Predictor (XGBoost, AUC 0.91) identifies at-risk loyalty members. Across 5 regions and 6 departments, RetailIQ gives retailers the intelligence to compete in an omnichannel world.</p>
+        </section>
+
+        <!-- Screenshot placeholder -->
+        <section class="sharp-card p-1 shadow-sm bg-[#0D1117]">
+          <div class="aspect-[16/7] w-full flex items-center justify-center">
+            <div class="text-center px-6">
+              <span class="text-6xl block mb-3">&#x1F6D2;</span>
+              <p class="text-gray-400 font-bold text-sm">RetailIQ Dashboard</p>
+              <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Databricks App &middot; Dark Theme &middot; 7 Purpose-Built Views</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why These Metrics Matter -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">Why These Metrics Matter</h2>
+          <p class="text-sm text-gray-500 mb-6">Every metric tracked in RetailIQ is tied to a business outcome. Here is why each one matters and how the platform measures it.</p>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #ec4899">$148M</span>
+                  <span class="text-sm font-bold text-gray-900">Revenue MTD</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">month-to-date sales</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Monthly revenue is tracked in real-time across all channels with drill-down by store, department, and category. At $148M, RetailIQ decomposes revenue by channel (66% in-store, 34% digital), comp store performance (+4.2% YoY), and new store contribution. The platform identifies revenue risks early by comparing daily actuals against demand forecasts.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #ec4899">+4.2%</span>
+                  <span class="text-sm font-bold text-gray-900">Comp Store Sales</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">same-store YoY growth</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Comp store sales growth strips out new store openings to show organic performance. At +4.2%, RetailIQ tracks comps by store format (Flagship, Mall, Outlet, Express, Dark Store), region, and department. This metric is the primary indicator Wall Street uses to evaluate retail health, making real-time visibility essential for investor relations and operational planning.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #ec4899">38.2%</span>
+                  <span class="text-sm font-bold text-gray-900">Gross Margin</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">revenue minus COGS</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Gross margin is the single most important profitability metric in retail. At 38.2%, RetailIQ tracks margin by category, vendor, and channel &mdash; revealing that e-commerce runs at 42% margin (no rent) while outlet stores operate at 28% (deep discounts). The Markdown Optimizer protects margin by timing price reductions to maximize revenue capture while minimizing margin erosion.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #ec4899">3.4%</span>
+                  <span class="text-sm font-bold text-gray-900">Conversion Rate</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">traffic to purchase</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Conversion rate connects customer traffic to actual purchases. At 3.4%, RetailIQ tracks conversion by channel, store, hour, and department. In-store conversion runs at 24% (foot traffic to transaction) while e-commerce sits at 3.4% (sessions to orders). The platform correlates conversion with staffing levels, merchandising changes, and promotional activity.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #ec4899">34%</span>
+                  <span class="text-sm font-bold text-gray-900">E-Commerce Share</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">digital revenue mix</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Digital revenue share tracks the omnichannel transition. At 34% and growing, RetailIQ monitors the shift from physical to digital, tracking cannibalization vs. incremental growth. Fulfillment analytics cover the 4.6-hour average fulfillment time, 8.9% return rate, and BOPIS (buy online, pick up in store) adoption. Digital margin profiles differ from physical, making mix shifts strategically significant.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #ec4899">1.4%</span>
+                  <span class="text-sm font-bold text-gray-900">Shrinkage</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">inventory loss rate</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Shrinkage costs the US retail industry $100+ billion annually. At 1.4%, RetailIQ's loss prevention analytics decompose shrink by store, department, and cause (theft, vendor fraud, administrative error, spoilage). Anomaly detection flags unusual POS patterns, void rates, and inventory discrepancies that indicate organized retail crime.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- Application Pages -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">What You Get: 7 Application Views</h2>
+          </div>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#ec4899">01</span>
+                  <h4 class="font-bold text-gray-900">Retail Command Center</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Executive dashboard with real-time revenue, comp store performance, margin health, and AI morning briefing on overnight e-commerce activity, inventory alerts, and store-level anomalies.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#ec4899">02</span>
+                  <h4 class="font-bold text-gray-900">Merchandising & Assortment</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Category management analytics with sell-through rates, inventory depth, markdown effectiveness, and vendor performance. Assortment optimization by store cluster and season.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#ec4899">03</span>
+                  <h4 class="font-bold text-gray-900">Customer Analytics</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Customer segmentation across Loyalty tiers (Platinum, Gold, Silver, Casual, New), RFM analysis, basket analysis, and churn prediction. 58% loyalty penetration tracking with lifetime value by segment.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#ec4899">04</span>
+                  <h4 class="font-bold text-gray-900">Store Operations</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Store-level P&L, labor scheduling optimization, traffic pattern analysis, and associate productivity metrics. 42K daily foot traffic tracked with conversion correlation.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#ec4899">05</span>
+                  <h4 class="font-bold text-gray-900">Supply Chain & Inventory</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Demand forecasting by SKU/location, inventory position monitoring, fill rate tracking (96.4%), and stockout prevention (3.1% rate). 28.4 days of supply managed across distribution network.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#ec4899">06</span>
+                  <h4 class="font-bold text-gray-900">E-Commerce & Digital</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Digital analytics covering session metrics, conversion funnels, search performance, personalization effectiveness, and fulfillment operations. 34% digital revenue share tracked in real-time.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#ec4899">07</span>
+                  <h4 class="font-bold text-gray-900">Loss Prevention & Shrink</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Shrinkage analytics by cause and location, POS exception monitoring, high-risk transaction flagging, and organized retail crime detection. 1.4% shrink rate decomposed by driver.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- ML & AI Models -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">ML Models in Production</h2>
+            <span class="text-xs text-gray-400 font-medium">3 models &middot; MLflow Registry</span>
+          </div>
+          <div class="space-y-4">
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Demand Forecast Model</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#ec4899; border-color:#ec4899">LightGBMRegressor</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">mape = 5.8</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">historical_sales_90d, seasonal_index, promotion_flag, weather_index, local_events_flag, price_elasticity_score +2 more</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Customer Churn Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#ec4899; border-color:#ec4899">XGBClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.91</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">days_since_last_purchase, purchase_frequency_90d, avg_basket_value, loyalty_tier, return_rate, nps_score +2 more</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Markdown Optimization Engine</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#ec4899; border-color:#ec4899">BayesianOptimization</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">margin_lift_pct = 8.4</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">current_inventory_level, weeks_of_supply, sell_through_rate, seasonality_factor, competitor_price, margin_target +1 more</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <!-- Genie AI -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
+            <span class="text-2xl">&#x1F9DE;</span>
+            <h2 class="text-xl font-bold text-gray-900">Genie AI Assistant</h2>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">RetailIQ's Genie AI understands retail operations natively. Ask 'What is the sell-through rate for winter apparel in the Northeast?' or 'Which stores have shrinkage above 2%?' across 240+ pre-trained retail questions.</p>
+        </section>
+
+        <!-- Architecture -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Lakehouse Architecture</h2>
+          <p class="text-sm text-gray-500 mb-6">
+            RetailIQ is built on the Databricks Medallion Architecture &mdash; a three-layer data pipeline that
+            transforms raw source data into business-ready analytics with built-in quality, governance, and ML scoring at every stage.
+          </p>
+          <div class="space-y-3">
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#92400e">Bronze</div>
+              <div class="flex-1 bg-amber-50 border border-amber-200 p-4">
+                <p class="text-xs font-bold text-amber-900 mb-1">Raw Ingestion Layer</p>
+                <p class="text-[11px] text-amber-700">Auto Loader streaming and batch ingestion from source systems &mdash; transactional databases, IoT sensors, ERP feeds, and external APIs. Schema-on-read with audit columns and lineage tracking. Data arrives in its original form, immutable and queryable.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6b7280">Silver</div>
+              <div class="flex-1 bg-gray-50 border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-900 mb-1">Curated &amp; Enriched</p>
+                <p class="text-[11px] text-gray-600">Data quality checks, deduplication, business rule application, cross-source joins, and ML scoring. This is where models run &mdash; anomaly detection, churn scoring, and feature engineering happen in Silver, creating enriched records ready for analytics.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#ec4899">Gold</div>
+              <div class="flex-1 border p-4" style="background:#ec489908; border-color:#ec489930">
+                <p class="text-xs font-bold text-gray-900 mb-1">Business-Ready Analytics</p>
+                <p class="text-[11px] text-gray-600">KPI aggregates, time-series snapshots, forecast outputs, and model health metrics &mdash; all optimized for dashboard queries. Gold tables power every chart, metric, and insight card in the RetailIQ interface.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unity Catalog</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">retail_iq</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">MLflow Registry</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">3 Models</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Genie AI</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">42+ Questions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business Impact -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Business Impact</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #ec4899">8.4%</p>
+                <p class="text-xs text-gray-600 mt-1">margin lift from markdown optimization</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #ec4899">5.8%</p>
+                <p class="text-xs text-gray-600 mt-1">demand forecast accuracy (MAPE)</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #ec4899">5 regions</p>
+                <p class="text-xs text-gray-600 mt-1">managed from one unified platform</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #ec4899">58%</p>
+                <p class="text-xs text-gray-600 mt-1">loyalty penetration driving repeat revenue</p>
+              </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ Sidebar (3 cols) ══ -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 space-y-6">
+          <div class="sharp-card p-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-5" style="color:#ec4899">Quick Facts</h3>
+            <div class="space-y-4 text-sm">
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Application Pages</span><span class="font-bold text-gray-900">7</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">ML Models</span><span class="font-bold text-gray-900">3</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Genie Questions</span><span class="font-bold text-gray-900">42+</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Unity Catalog</span><span class="font-bold text-gray-900 font-mono text-xs">retail_iq</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="font-bold text-gray-900">Databricks</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Core Capabilities</h3>
+            <div class="flex flex-wrap gap-2"><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Retail Command Center</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Merchandising & Assortment</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Customer Analytics</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Store Operations</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Supply Chain & Inventory</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">E-Commerce & Digital</span></div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Lakehouse Tables</h3>
+            <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#ec4899" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">retail_iq.gold.store_performance</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#ec4899" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">retail_iq.gold.product_sales</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#ec4899" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">retail_iq.gold.customer_profiles</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#ec4899" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">retail_iq.gold.inventory_positions</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#ec4899" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">retail_iq.gold.ecommerce_sessions</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#ec4899" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">retail_iq.gold.loss_prevention_events</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#ec4899" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">retail_iq.silver.pos_transactions</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#ec4899" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">retail_iq.silver.traffic_counts</span>
+                  </div></div>
+          </div>
+
+          <div class="sharp-card p-6 border-t-4" style="border-top-color:#ec4899">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Technology Stack</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#ec4899"></div><span class="text-xs text-gray-700">Databricks Lakehouse</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#ec4899"></div><span class="text-xs text-gray-700">Unity Catalog</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#ec4899"></div><span class="text-xs text-gray-700">MLflow Model Registry</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#ec4899"></div><span class="text-xs text-gray-700">Genie AI (Claude Sonnet)</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#ec4899"></div><span class="text-xs text-gray-700">Dash / Plotly</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#ec4899"></div><span class="text-xs text-gray-700">Delta Lake</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#ec4899"></div><span class="text-xs text-gray-700">SHAP Explainability</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Resources</h3>
+            <ul class="space-y-3">
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#ec4899">View Technical Architecture</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#ec4899">Download Sample Data</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#ec4899">Case Studies</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 mt-20 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by Databricks &middot; Blueprint AI Platform</p>
+    </div>
+  </footer>
+</body>
+</html>

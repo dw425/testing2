@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GamingIQ | Blueprint IQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'bp-accent': '#06b6d4' },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .sharp-card { border: 1px solid #e5e7eb; background: #fff; }
+    .sharp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .arch-layer { transition: transform 0.2s; }
+    .arch-layer:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fa] min-h-screen">
+  <!-- Top Bar -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Blueprint</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: #06b6d4">GamingIQ</span>
+      </div>
+      <a href="../index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">&larr; All Verticals</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-400">
+      <ol class="flex items-center gap-1.5">
+        <li><a href="../index.html" class="hover:text-gray-900 transition-colors">Blueprint IQ</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">GamingIQ</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-4xl">&#x1F3AE;</span>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">GamingIQ</h1>
+          <p class="text-lg font-medium mt-1" style="color: #06b6d4">Player intelligence that drives retention, revenue & growth</p>
+        </div>
+      </div>
+      <p class="text-base text-gray-600 leading-relaxed max-w-3xl mt-4">GamingIQ gives studios and publishers a 360-degree view of player behavior, monetization, and live operations. From cohort retention analysis to real-time economy monitoring, it connects every signal &mdash; acquisition, engagement, spend, and churn &mdash; into actionable intelligence powered by Databricks and ML.</p>
+    </header>
+
+    <!-- North Star KPIs -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">North Star Metrics</h2>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #06b6d4">$47.80</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Player LTV</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">average lifetime value</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #06b6d4">41%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">D7 Retention</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">day-7 return rate</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #06b6d4">$0.118</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">ARPDAU</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">avg revenue per daily active user</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #06b6d4">1.52x</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">ROAS</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">return on ad spend</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #06b6d4">2.4M</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">DAU</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">daily active users</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #06b6d4">68.4%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Contribution Margin</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">net profitability after UA & platform fees</p>
+            </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-12">
+      <!-- ══ Main Content (7 cols) ══ -->
+      <div class="lg:col-span-7 space-y-10">
+
+        <!-- The Challenge -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Challenge</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">The gaming industry operates on razor-thin margins between viral success and costly failure. A title with 2.4 million daily active users generates terabytes of behavioral telemetry every day &mdash; session starts, level completions, IAP events, ad impressions, social interactions, and crash logs. Studios need to understand not just what players are doing, but why they leave. Player acquisition costs have risen 40% year-over-year, making retention the single most important lever for profitability. Yet most studios still rely on fragmented analytics tools that show surface-level metrics without connecting acquisition spend to lifetime value, or game economy health to churn risk. By the time a player churns, the revenue opportunity is already lost.</p>
+        </section>
+
+        <!-- The Solution -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Solution</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">GamingIQ consolidates every player signal into a unified lakehouse &mdash; from first install through years of engagement. The platform tracks players across three live titles (Stellar Conquest, Shadow Realms, Velocity Rush) and six global regions, segmenting users into behavioral cohorts (Whale, Dolphin, Minnow, Free-to-Play) with ML-driven predictions for churn, spend propensity, and lifetime value. Real-time dashboards monitor the in-game economy (currency sinks vs. sources, item pricing elasticity, IAP conversion funnels) while the UA analytics module connects every dollar of acquisition spend to downstream revenue through ROAS attribution. Live ops teams get instant visibility into event performance, server health, and content engagement across all titles.</p>
+        </section>
+
+        <!-- Screenshot placeholder -->
+        <section class="sharp-card p-1 shadow-sm bg-[#0D1117]">
+          <div class="aspect-[16/7] w-full flex items-center justify-center">
+            <div class="text-center px-6">
+              <span class="text-6xl block mb-3">&#x1F3AE;</span>
+              <p class="text-gray-400 font-bold text-sm">GamingIQ Dashboard</p>
+              <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Databricks App &middot; Dark Theme &middot; 7 Purpose-Built Views</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why These Metrics Matter -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">Why These Metrics Matter</h2>
+          <p class="text-sm text-gray-500 mb-6">Every metric tracked in GamingIQ is tied to a business outcome. Here is why each one matters and how the platform measures it.</p>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #06b6d4">$47.80</span>
+                  <span class="text-sm font-bold text-gray-900">Player LTV</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">average lifetime value</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Lifetime value is the total revenue a player generates from install to churn. At $47.80, GamingIQ benchmarks and forecasts LTV across segments and titles. Whale players (top 2% of spenders) drive 45% of revenue with LTVs exceeding $800, while the long tail of minnow and free-to-play users contribute through ad impressions and social virality. GamingIQ's LTV Predictor model estimates 90-day projected value within 48 hours of install, allowing UA teams to optimize bidding and creative targeting in real-time.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #06b6d4">41%</span>
+                  <span class="text-sm font-bold text-gray-900">D7 Retention</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">day-7 return rate</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Day-7 retention is the gold standard early indicator of product-market fit in gaming. A 41% D7 rate means more than 4 in 10 players return a full week after install &mdash; well above the 25-30% industry median for mobile. GamingIQ tracks retention curves by cohort, source, device, region, and first-session behavior, identifying exactly where and why players drop off. The churn prediction model (AUC 0.91) flags at-risk players 7 days before they leave, giving live ops teams a window to intervene with targeted offers, content, or re-engagement campaigns.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #06b6d4">$0.118</span>
+                  <span class="text-sm font-bold text-gray-900">ARPDAU</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">avg revenue per daily active user</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">ARPDAU combines IAP revenue (72%), ad revenue (18%), and subscription revenue (10%) into a single per-user metric. At $0.118, every 100K DAU generates $11,800 in daily revenue. GamingIQ decomposes ARPDAU by monetization channel, player segment, and title &mdash; revealing that Stellar Conquest's ARPDAU is 2.1x higher than Shadow Realms due to its battle pass structure. This insight drives game design decisions and cross-title monetization strategy.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #06b6d4">1.52x</span>
+                  <span class="text-sm font-bold text-gray-900">ROAS</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">return on ad spend</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">With $420K in monthly UA spend across Google, Meta, TikTok, Apple Search Ads, and cross-promo channels, ROAS measures every dollar's return. A 1.52x ROAS means each dollar generates $1.52 in attributed revenue. GamingIQ connects UA spend to downstream LTV through multi-touch attribution, showing that TikTok creatives drive the highest D7 retention while Google delivers the highest initial volume. This data powers real-time bid optimization and budget reallocation.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #06b6d4">2.4M</span>
+                  <span class="text-sm font-bold text-gray-900">DAU</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">daily active users</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Daily active users is the heartbeat of a live-service game. GamingIQ tracks 2.4M DAU with 847K concurrent peak across all titles and regions. The platform monitors DAU trends by hour, correlating drops with server issues, content gaps, or competitive launches. The 68% D1 retention rate means strong first-day hooks, while the 22% D30 retention shows healthy long-term engagement loops.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #06b6d4">68.4%</span>
+                  <span class="text-sm font-bold text-gray-900">Contribution Margin</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">net profitability after UA & platform fees</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Contribution margin strips out UA costs, platform fees (Apple/Google 30%), and server costs to show true per-title profitability. At 68.4%, the portfolio is generating strong margin after variable costs. GamingIQ tracks this at the title, region, and cohort level &mdash; revealing that mature cohorts (90+ days) have near-zero UA cost and 85%+ contribution margin, making retention investment the highest-ROI activity in the business.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- Application Pages -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">What You Get: 7 Application Views</h2>
+          </div>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#06b6d4">01</span>
+                  <h4 class="font-bold text-gray-900">Player Experience Hub</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Executive dashboard with real-time DAU, revenue, retention curves, and morning briefing on overnight performance. Shows cross-title portfolio health with drill-down into each game's player funnel and economy metrics.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#06b6d4">02</span>
+                  <h4 class="font-bold text-gray-900">Know the Player</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Deep player segmentation with behavioral clustering, spend propensity scoring, and session-level journey analysis. Answers the fundamental question: who are our players, what do they value, and how do we keep them?</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#06b6d4">03</span>
+                  <h4 class="font-bold text-gray-900">Grow the Playerbase</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">User acquisition analytics connecting spend to installs, installs to D1/D7/D30 retention, and retention to LTV. ROAS tracking by channel, creative, and geo with budget optimization recommendations.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#06b6d4">04</span>
+                  <h4 class="font-bold text-gray-900">Grow Revenue</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Monetization intelligence covering IAP funnels, ad yield by placement, subscription conversion, and battle pass engagement. Price elasticity testing and offer targeting by player segment.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#06b6d4">05</span>
+                  <h4 class="font-bold text-gray-900">Build Games</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Development analytics tracking milestone completion, build pipeline health, QA bug resolution rates, and feature adoption after release. Connects development velocity to player-facing outcomes.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#06b6d4">06</span>
+                  <h4 class="font-bold text-gray-900">Live Ops</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Real-time event monitoring, A/B test results, content rotation performance, and player engagement with live events. Server health metrics, matchmaking quality, and latency tracking across all regions.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#06b6d4">07</span>
+                  <h4 class="font-bold text-gray-900">Efficient Ops</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Infrastructure cost analytics, cloud spend optimization, support ticket analysis, and operational efficiency metrics. Tracks cost-per-DAU and identifies opportunities to reduce server and support overhead.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- ML & AI Models -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">ML Models in Production</h2>
+            <span class="text-xs text-gray-400 font-medium">3 models &middot; MLflow Registry</span>
+          </div>
+          <div class="space-y-4">
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Player Churn Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#06b6d4; border-color:#06b6d4">XGBClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.91</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">days_since_last_login, session_frequency_7d, purchase_count_30d, friend_count, skill_rating_delta, matches_played_7d</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Economy Fraud Detector</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#06b6d4; border-color:#06b6d4">IsolationForest</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900"> = </p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">transaction_velocity, gold_delta_1h, item_rarity_traded, account_age_days, ip_change_count</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Player LTV Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#06b6d4; border-color:#06b6d4">GradientBoostingRegressor</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">rmse = 8.4</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">total_spend, session_frequency, friend_count, content_engagement, acquisition_source</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <!-- Genie AI -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
+            <span class="text-2xl">&#x1F9DE;</span>
+            <h2 class="text-xl font-bold text-gray-900">Genie AI Assistant</h2>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">GamingIQ's Genie AI understands gaming-native concepts out of the box. Ask 'What is D7 retention for Stellar Conquest players acquired through TikTok last month?' and get an instant cohort analysis. Ask 'Which player segment has the highest churn risk this week?' and get a ranked list with confidence scores. The assistant has been trained on 260+ gaming-specific questions covering retention, monetization, UA, economy health, live ops, and development velocity &mdash; no SQL required.</p>
+        </section>
+
+        <!-- Architecture -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Lakehouse Architecture</h2>
+          <p class="text-sm text-gray-500 mb-6">
+            GamingIQ is built on the Databricks Medallion Architecture &mdash; a three-layer data pipeline that
+            transforms raw source data into business-ready analytics with built-in quality, governance, and ML scoring at every stage.
+          </p>
+          <div class="space-y-3">
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#92400e">Bronze</div>
+              <div class="flex-1 bg-amber-50 border border-amber-200 p-4">
+                <p class="text-xs font-bold text-amber-900 mb-1">Raw Ingestion Layer</p>
+                <p class="text-[11px] text-amber-700">Auto Loader streaming and batch ingestion from source systems &mdash; transactional databases, IoT sensors, ERP feeds, and external APIs. Schema-on-read with audit columns and lineage tracking. Data arrives in its original form, immutable and queryable.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6b7280">Silver</div>
+              <div class="flex-1 bg-gray-50 border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-900 mb-1">Curated &amp; Enriched</p>
+                <p class="text-[11px] text-gray-600">Data quality checks, deduplication, business rule application, cross-source joins, and ML scoring. This is where models run &mdash; anomaly detection, churn scoring, and feature engineering happen in Silver, creating enriched records ready for analytics.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#06b6d4">Gold</div>
+              <div class="flex-1 border p-4" style="background:#06b6d408; border-color:#06b6d430">
+                <p class="text-xs font-bold text-gray-900 mb-1">Business-Ready Analytics</p>
+                <p class="text-[11px] text-gray-600">KPI aggregates, time-series snapshots, forecast outputs, and model health metrics &mdash; all optimized for dashboard queries. Gold tables power every chart, metric, and insight card in the GamingIQ interface.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unity Catalog</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">gaming_iq</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">MLflow Registry</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">3 Models</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Genie AI</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">100+ Questions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business Impact -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Business Impact</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #06b6d4">7 days</p>
+                <p class="text-xs text-gray-600 mt-1">advance warning on player churn</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #06b6d4">2.4M</p>
+                <p class="text-xs text-gray-600 mt-1">daily active users tracked in real-time</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #06b6d4">$420K/mo</p>
+                <p class="text-xs text-gray-600 mt-1">UA spend optimized through ROAS attribution</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #06b6d4">3 titles</p>
+                <p class="text-xs text-gray-600 mt-1">managed from a single unified platform</p>
+              </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ Sidebar (3 cols) ══ -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 space-y-6">
+          <div class="sharp-card p-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-5" style="color:#06b6d4">Quick Facts</h3>
+            <div class="space-y-4 text-sm">
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Application Pages</span><span class="font-bold text-gray-900">7</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">ML Models</span><span class="font-bold text-gray-900">3</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Genie Questions</span><span class="font-bold text-gray-900">100+</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Unity Catalog</span><span class="font-bold text-gray-900 font-mono text-xs">gaming_iq</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="font-bold text-gray-900">Databricks</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Core Capabilities</h3>
+            <div class="flex flex-wrap gap-2"><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Player Experience Hub</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Know the Player</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Grow the Playerbase</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Grow Revenue</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Build Games</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Live Ops</span></div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Lakehouse Tables</h3>
+            <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#06b6d4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">gaming_iq.gold.live_ops_kpis</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#06b6d4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">gaming_iq.gold.player_retention_cohorts</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#06b6d4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">gaming_iq.gold.economy_health_metrics</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#06b6d4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">gaming_iq.gold.matchmaking_fairness</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#06b6d4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">gaming_iq.silver.player_telemetry</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#06b6d4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">gaming_iq.silver.transaction_log</span>
+                  </div></div>
+          </div>
+
+          <div class="sharp-card p-6 border-t-4" style="border-top-color:#06b6d4">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Technology Stack</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#06b6d4"></div><span class="text-xs text-gray-700">Databricks Lakehouse</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#06b6d4"></div><span class="text-xs text-gray-700">Unity Catalog</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#06b6d4"></div><span class="text-xs text-gray-700">MLflow Model Registry</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#06b6d4"></div><span class="text-xs text-gray-700">Genie AI (Claude Sonnet)</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#06b6d4"></div><span class="text-xs text-gray-700">Dash / Plotly</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#06b6d4"></div><span class="text-xs text-gray-700">Delta Lake</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#06b6d4"></div><span class="text-xs text-gray-700">SHAP Explainability</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Resources</h3>
+            <ul class="space-y-3">
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#06b6d4">View Technical Architecture</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#06b6d4">Download Sample Data</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#06b6d4">Case Studies</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 mt-20 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by Databricks &middot; Blueprint AI Platform</p>
+    </div>
+  </footer>
+</body>
+</html>

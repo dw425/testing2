@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinServIQ | Blueprint IQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 'bp-accent': '#1d4ed8' },
+          fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .sharp-card { border: 1px solid #e5e7eb; background: #fff; }
+    .sharp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .arch-layer { transition: transform 0.2s; }
+    .arch-layer:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-[#f8f9fa] min-h-screen">
+  <!-- Top Bar -->
+  <div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Blueprint</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: #1d4ed8">FinServIQ</span>
+      </div>
+      <a href="../index.html" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">&larr; All Verticals</a>
+    </div>
+  </div>
+
+  <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-400">
+      <ol class="flex items-center gap-1.5">
+        <li><a href="../index.html" class="hover:text-gray-900 transition-colors">Blueprint IQ</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-900 font-medium">FinServIQ</li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <header class="mb-10">
+      <div class="flex items-center gap-4 mb-3">
+        <span class="text-4xl">&#x1F3E6;</span>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">FinServIQ</h1>
+          <p class="text-lg font-medium mt-1" style="color: #1d4ed8">Unified intelligence across Banking, Capital Markets & Insurance</p>
+        </div>
+      </div>
+      <p class="text-base text-gray-600 leading-relaxed max-w-3xl mt-4">FinServIQ transforms fragmented financial data into a single pane of glass for portfolio analytics, fraud detection, risk management, and regulatory compliance. Built on Databricks Lakehouse, it delivers real-time insights that drive alpha, reduce losses, and accelerate reporting.</p>
+    </header>
+
+    <!-- North Star KPIs -->
+    <section class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">North Star Metrics</h2>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #1d4ed8">+180 bps</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Alpha Generation</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">vs. benchmark</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #1d4ed8">$47M</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Value at Risk (95%)</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">daily portfolio exposure</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #1d4ed8">96.2%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Fraud Detection Rate</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">ML model accuracy</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #1d4ed8">3.1%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Net Interest Margin</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">core banking profitability</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #1d4ed8">96.4%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">Combined Ratio</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">insurance underwriting profitability</p>
+            </div>
+            <div class="text-center p-5 bg-white border border-gray-100 hover:shadow-sm transition-shadow">
+              <p class="text-2xl font-bold tracking-tight" style="color: #1d4ed8">94%</p>
+              <p class="text-xs font-bold text-gray-900 uppercase tracking-wider mt-1">STP Rate</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">straight-through processing</p>
+            </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-10 gap-12">
+      <!-- ══ Main Content (7 cols) ══ -->
+      <div class="lg:col-span-7 space-y-10">
+
+        <!-- The Challenge -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Challenge</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">Financial institutions operate in one of the most data-intensive industries on Earth. A mid-size bank processes over 12 million transactions daily across retail, commercial, and investment lines. Each transaction must be screened for fraud, assessed for credit risk, and recorded for regulatory compliance &mdash; often across disconnected systems that were built decades apart. Capital markets desks need sub-second risk calculations while compliance teams need audit-ready reporting on demand. Insurance underwriters need real-time loss ratio visibility while claims adjusters need fraud signals at the point of triage. The result is a fragmented data landscape where critical signals are lost between silos, decisions are made on stale data, and regulatory reporting consumes thousands of analyst hours per quarter.</p>
+        </section>
+
+        <!-- The Solution -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">The Solution</h2>
+          <p class="text-sm text-gray-600 leading-relaxed">FinServIQ unifies these workstreams on a single Databricks Lakehouse, creating one source of truth that spans banking operations, capital markets trading, insurance underwriting, and enterprise compliance. Raw transaction feeds, market data, and claims records flow through a medallion architecture &mdash; Bronze for raw ingestion, Silver for enrichment and ML scoring, Gold for business-ready analytics. ML models run in real-time against this unified data layer: a Transaction Fraud Detector screens every payment, a Credit Default Predictor scores every loan, and a Claims Fraud Detector flags suspicious patterns before payouts are approved. The Genie AI assistant lets any stakeholder &mdash; from a portfolio manager to a compliance officer &mdash; ask natural-language questions and get instant, data-backed answers.</p>
+        </section>
+
+        <!-- Screenshot placeholder -->
+        <section class="sharp-card p-1 shadow-sm bg-[#0D1117]">
+          <div class="aspect-[16/7] w-full flex items-center justify-center">
+            <div class="text-center px-6">
+              <span class="text-6xl block mb-3">&#x1F3E6;</span>
+              <p class="text-gray-400 font-bold text-sm">FinServIQ Dashboard</p>
+              <p class="text-gray-500 text-[10px] uppercase tracking-widest mt-2">Databricks App &middot; Dark Theme &middot; 7 Purpose-Built Views</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why These Metrics Matter -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5">Why These Metrics Matter</h2>
+          <p class="text-sm text-gray-500 mb-6">Every metric tracked in FinServIQ is tied to a business outcome. Here is why each one matters and how the platform measures it.</p>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #1d4ed8">+180 bps</span>
+                  <span class="text-sm font-bold text-gray-900">Alpha Generation</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">vs. benchmark</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Alpha measures the excess return generated above a benchmark index. At +180 basis points, FinServIQ-equipped portfolio teams are outperforming their benchmarks by 1.8% &mdash; a significant edge in institutional asset management where even 50 bps of consistent alpha can differentiate a top-quartile fund. This is driven by real-time factor attribution, sector rotation signals, and ML-powered anomaly detection on trading patterns that surface opportunities before they become consensus.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #1d4ed8">$47M</span>
+                  <span class="text-sm font-bold text-gray-900">Value at Risk (95%)</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">daily portfolio exposure</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">VaR quantifies the maximum expected loss over a one-day horizon at a 95% confidence level. A $47M daily VaR means that on 19 out of 20 trading days, the portfolio will not lose more than this amount. FinServIQ computes VaR continuously rather than in overnight batch &mdash; giving risk managers intraday visibility into exposure shifts from market movements, new positions, or counterparty events. This real-time capability is critical for firms subject to Basel III market risk capital requirements.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #1d4ed8">96.2%</span>
+                  <span class="text-sm font-bold text-gray-900">Fraud Detection Rate</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">ML model accuracy</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Transaction fraud costs the global banking industry over $30 billion annually. FinServIQ's fraud detection model achieves 96.2% accuracy on a stream of 12.5 million daily transactions, blocking an average of 847 fraudulent events per day. The model uses gradient-boosted decision trees trained on transaction velocity, geolocation, merchant category, device fingerprinting, and behavioral biometrics. SHAP explainability is built in, so fraud analysts can see exactly why a transaction was flagged &mdash; critical for regulatory defensibility.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #1d4ed8">3.1%</span>
+                  <span class="text-sm font-bold text-gray-900">Net Interest Margin</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">core banking profitability</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">NIM is the fundamental measure of bank profitability &mdash; the spread between interest earned on loans and interest paid on deposits. At 3.1%, FinServIQ tracks NIM in real-time across retail banking, commercial lending, and wealth management divisions. The dashboard decomposes NIM by product line, vintage, and region, allowing treasury teams to identify margin compression early and adjust pricing strategies before quarterly earnings pressure.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #1d4ed8">96.4%</span>
+                  <span class="text-sm font-bold text-gray-900">Combined Ratio</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">insurance underwriting profitability</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">The combined ratio measures whether an insurance operation is profitable from underwriting alone. A ratio below 100% means the insurer earns more in premiums than it pays in claims and expenses. At 96.4%, the insurance division is generating a 3.6% underwriting profit. FinServIQ breaks this down by line of business &mdash; Auto, Home, Life, Commercial, Health &mdash; and uses ML-based claims fraud detection (catching 8.2% fraud rate) to keep loss ratios in check.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100">
+                <div class="flex items-baseline gap-3 mb-3">
+                  <span class="text-xl font-bold" style="color: #1d4ed8">94%</span>
+                  <span class="text-sm font-bold text-gray-900">STP Rate</span>
+                  <span class="text-[10px] text-gray-400 ml-auto">straight-through processing</span>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Straight-through processing measures the percentage of transactions that complete without manual intervention. A 94% STP rate means only 6% of trades, payments, or claims require human touch &mdash; reducing operational cost per transaction by up to 80%. FinServIQ monitors STP rates across settlement, clearing, and reconciliation workflows, flagging automation breakdowns in real-time.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- Application Pages -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">What You Get: 7 Application Views</h2>
+          </div>
+          <div class="space-y-4">
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#1d4ed8">01</span>
+                  <h4 class="font-bold text-gray-900">Capital Markets Hub</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Executive command center with real-time P&L, exposure heatmaps, morning briefing with overnight market moves, and cross-desk performance attribution. Designed for CIOs and desk heads who need a single view of the trading floor.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#1d4ed8">02</span>
+                  <h4 class="font-bold text-gray-900">Investment Analytics & Alpha</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Portfolio construction analytics including factor decomposition, sector rotation signals, benchmark tracking, and alpha attribution by strategy. Integrates with ML-based opportunity scoring to surface high-conviction trade ideas.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#1d4ed8">03</span>
+                  <h4 class="font-bold text-gray-900">Trading & Advisory</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Flow analytics, execution quality metrics, client activity heatmaps, and advisory performance tracking. Helps sales traders and advisors prioritize client engagement based on revenue potential and activity patterns.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#1d4ed8">04</span>
+                  <h4 class="font-bold text-gray-900">Risk Management</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Multi-dimensional risk dashboard covering market risk (VaR, Greeks), credit risk (PD/LGD/EAD), and counterparty exposure. Stress testing scenarios run on-demand against the live portfolio with results in minutes, not hours.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#1d4ed8">05</span>
+                  <h4 class="font-bold text-gray-900">Regulatory & Compliance</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Automated regulatory reporting for Basel III capital requirements, SOX controls testing, and AML transaction monitoring. Reduces quarterly reporting cycles from weeks to days with pre-built report templates and audit trails.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#1d4ed8">06</span>
+                  <h4 class="font-bold text-gray-900">Fraud & Cybersecurity</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Real-time fraud screening across card transactions, wire transfers, and ACH payments. The ML fraud model processes 12.5M transactions/day with SHAP-powered explainability for every flagged event. Cyber threat monitoring tracks login anomalies and data exfiltration patterns.</p>
+              </div>
+              <div class="p-6 bg-gray-50 border border-gray-100 hover:border-gray-300 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 text-white" style="background:#1d4ed8">07</span>
+                  <h4 class="font-bold text-gray-900">Operations & Efficiency</h4>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">Back-office operations analytics covering settlement fails, reconciliation breaks, and STP rates. Identifies automation opportunities and tracks operational risk events across the trade lifecycle.</p>
+              </div>
+          </div>
+        </section>
+
+        <!-- ML & AI Models -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4">
+            <h2 class="text-xl font-bold text-gray-900">ML Models in Production</h2>
+            <span class="text-xs text-gray-400 font-medium">3 models &middot; MLflow Registry</span>
+          </div>
+          <div class="space-y-4">
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Transaction Fraud Detector</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#1d4ed8; border-color:#1d4ed8">XGBClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.97</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">amount, merchant_category, time_since_last_txn, distance_from_home, device_risk_score, velocity_1h</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Credit Default Predictor</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#1d4ed8; border-color:#1d4ed8">GradientBoostingClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.88</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">credit_score, dti_ratio, employment_years, loan_amount, payment_history_12m, utilization_ratio</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-gray-900">Claims Fraud Detector</h4>
+                  <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 border" style="color:#1d4ed8; border-color:#1d4ed8">XGBClassifier</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-600 mt-3">
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Target Metric</span>
+                    <p class="mt-1 font-bold text-gray-900">auc_roc = 0.93</p>
+                  </div>
+                  <div>
+                    <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Features</span>
+                    <p class="mt-1">claim_amount, claim_frequency, provider_pattern, policy_age, claimant_history, geographic_anomaly</p>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <!-- Genie AI -->
+        <section class="bg-white p-8 border border-gray-200">
+          <div class="flex items-center gap-3 mb-5 border-b border-gray-100 pb-3">
+            <span class="text-2xl">&#x1F9DE;</span>
+            <h2 class="text-xl font-bold text-gray-900">Genie AI Assistant</h2>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">FinServIQ includes over 100 pre-trained Genie AI questions spanning portfolio analytics, fraud investigation, credit risk assessment, and regulatory reporting. A portfolio manager can ask 'What is our current VaR by desk?' and get an instant answer with supporting SQL. A compliance officer can ask 'Show me all AML alerts above $100K in the last 30 days' and receive a filterable dataset. Genie understands the financial services data model natively &mdash; it knows the difference between a limit order and a market order, between a debit and a credit, between a premium and a deductible.</p>
+        </section>
+
+        <!-- Architecture -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Lakehouse Architecture</h2>
+          <p class="text-sm text-gray-500 mb-6">
+            FinServIQ is built on the Databricks Medallion Architecture &mdash; a three-layer data pipeline that
+            transforms raw source data into business-ready analytics with built-in quality, governance, and ML scoring at every stage.
+          </p>
+          <div class="space-y-3">
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#92400e">Bronze</div>
+              <div class="flex-1 bg-amber-50 border border-amber-200 p-4">
+                <p class="text-xs font-bold text-amber-900 mb-1">Raw Ingestion Layer</p>
+                <p class="text-[11px] text-amber-700">Auto Loader streaming and batch ingestion from source systems &mdash; transactional databases, IoT sensors, ERP feeds, and external APIs. Schema-on-read with audit columns and lineage tracking. Data arrives in its original form, immutable and queryable.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#6b7280">Silver</div>
+              <div class="flex-1 bg-gray-50 border border-gray-200 p-4">
+                <p class="text-xs font-bold text-gray-900 mb-1">Curated &amp; Enriched</p>
+                <p class="text-[11px] text-gray-600">Data quality checks, deduplication, business rule application, cross-source joins, and ML scoring. This is where models run &mdash; anomaly detection, churn scoring, and feature engineering happen in Silver, creating enriched records ready for analytics.</p>
+              </div>
+            </div>
+            <div class="arch-layer flex items-stretch">
+              <div class="w-28 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-widest p-3" style="background:#1d4ed8">Gold</div>
+              <div class="flex-1 border p-4" style="background:#1d4ed808; border-color:#1d4ed830">
+                <p class="text-xs font-bold text-gray-900 mb-1">Business-Ready Analytics</p>
+                <p class="text-[11px] text-gray-600">KPI aggregates, time-series snapshots, forecast outputs, and model health metrics &mdash; all optimized for dashboard queries. Gold tables power every chart, metric, and insight card in the FinServIQ interface.</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Unity Catalog</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">financial_services_iq</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">MLflow Registry</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">3 Models</p>
+            </div>
+            <div class="p-4 bg-gray-50 border border-gray-100 text-center">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Genie AI</p>
+              <p class="text-sm font-bold text-gray-900 mt-1">100+ Questions</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Business Impact -->
+        <section class="bg-white p-8 border border-gray-200">
+          <h2 class="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6">Business Impact</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #1d4ed8">60%</p>
+                <p class="text-xs text-gray-600 mt-1">reduction in regulatory reporting time</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #1d4ed8">847+</p>
+                <p class="text-xs text-gray-600 mt-1">fraudulent transactions blocked daily</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #1d4ed8">$24.5B</p>
+                <p class="text-xs text-gray-600 mt-1">in assets under management visibility</p>
+              </div>
+              <div class="text-center p-6 bg-white border border-gray-100">
+                <p class="text-2xl font-bold" style="color: #1d4ed8">94%</p>
+                <p class="text-xs text-gray-600 mt-1">straight-through processing rate</p>
+              </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ══ Sidebar (3 cols) ══ -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-20 space-y-6">
+          <div class="sharp-card p-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] mb-5" style="color:#1d4ed8">Quick Facts</h3>
+            <div class="space-y-4 text-sm">
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Application Pages</span><span class="font-bold text-gray-900">7</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">ML Models</span><span class="font-bold text-gray-900">3</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Genie Questions</span><span class="font-bold text-gray-900">100+</span></div>
+              <div class="flex justify-between pb-3 border-b border-gray-100"><span class="text-gray-500">Unity Catalog</span><span class="font-bold text-gray-900 font-mono text-xs">financial_services_iq</span></div>
+              <div class="flex justify-between"><span class="text-gray-500">Platform</span><span class="font-bold text-gray-900">Databricks</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Core Capabilities</h3>
+            <div class="flex flex-wrap gap-2"><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Capital Markets Hub</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Investment Analytics & Alpha</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Trading & Advisory</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Risk Management</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Regulatory & Compliance</span><span class="px-3 py-1.5 bg-gray-100 text-xs text-gray-700 border border-gray-200">Fraud & Cybersecurity</span></div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Lakehouse Tables</h3>
+            <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#1d4ed8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">financial_services_iq.gold.transactions</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#1d4ed8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">financial_services_iq.gold.customer_profiles</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#1d4ed8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">financial_services_iq.gold.credit_portfolio</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#1d4ed8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">financial_services_iq.gold.portfolio_positions</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#1d4ed8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">financial_services_iq.gold.insurance_policies</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#1d4ed8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">financial_services_iq.gold.claims</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#1d4ed8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">financial_services_iq.silver.transaction_raw</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <svg class="w-3 h-3 flex-shrink-0" style="color:#1d4ed8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span class="font-mono">financial_services_iq.silver.market_data</span>
+                  </div></div>
+          </div>
+
+          <div class="sharp-card p-6 border-t-4" style="border-top-color:#1d4ed8">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Technology Stack</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#1d4ed8"></div><span class="text-xs text-gray-700">Databricks Lakehouse</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#1d4ed8"></div><span class="text-xs text-gray-700">Unity Catalog</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#1d4ed8"></div><span class="text-xs text-gray-700">MLflow Model Registry</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#1d4ed8"></div><span class="text-xs text-gray-700">Genie AI (Claude Sonnet)</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#1d4ed8"></div><span class="text-xs text-gray-700">Dash / Plotly</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#1d4ed8"></div><span class="text-xs text-gray-700">Delta Lake</span></div><div class="flex items-center gap-3"><div class="w-2 h-2 flex-shrink-0" style="background:#1d4ed8"></div><span class="text-xs text-gray-700">SHAP Explainability</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 border border-gray-200">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-4">Resources</h3>
+            <ul class="space-y-3">
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#1d4ed8">View Technical Architecture</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#1d4ed8">Download Sample Data</span></li>
+              <li><span class="text-sm font-bold cursor-pointer" style="color:#1d4ed8">Case Studies</span></li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-200 mt-20 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Powered by Databricks &middot; Blueprint AI Platform</p>
+    </div>
+  </footer>
+</body>
+</html>
