@@ -39,10 +39,7 @@ def _fmt_bytes(b):
 
 
 # Blueprint Logo SVG
-LOGO_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" fill="none" style="height:40px">
-  <g fill="white"><polygon points="0,5 18,30 0,55"/><polygon points="14,5 32,30 14,55"/><polygon points="28,5 46,30 28,55"/></g>
-  <text x="56" y="42" font-family="'DM Sans','Inter',sans-serif" font-size="36" font-weight="700" fill="white">Blueprint</text>
-</svg>'''
+LOGO_SVG = '<img src="/static/blueprint-logo.png" alt="Blueprint" style="height:26px">'
 
 
 def render_dashboard(snapshot: dict, findings=None, security_score=None,
@@ -239,8 +236,9 @@ def render_dashboard(snapshot: dict, findings=None, security_score=None,
     # Infrastructure KPIs
     running_clusters = sum(1 for c in cluster_raw if c.get("state") == "RUNNING")
 
-    # Cost estimates
-    sql_cost = round(total_min * 0.07, 2)
+    # Cost estimates — compute minutes -> DBUs (1 DBU ≈ 1 compute-minute for serverless SQL)
+    total_dbu = round(total_min, 1)
+    sql_cost = round(total_dbu * 0.07, 2)
     app_cost_est = len(app_list) * 15  # rough per-app estimate
     storage_cost = round(est_mb * 0.023 / 1024, 2) if est_mb else 5
     total_cost_est = round(sql_cost + app_cost_est + storage_cost, 2)
@@ -325,7 +323,9 @@ body{{background:var(--bg);color:var(--text);font-family:var(--font);font-size:1
 
 /* KPI */
 .kpi-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}}
-.kpi{{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}}
+.kpi{{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color .15s,transform .15s}}
+.kpi[data-goto]{{cursor:pointer}}.kpi[data-goto]:hover{{border-color:var(--accent);transform:translateY(-2px)}}
+.clickable-row{{cursor:pointer;transition:background .15s}}.clickable-row:hover{{background:rgba(75,123,245,.08)}}
 .kpi::before{{content:'';position:absolute;top:0;left:0;right:0;height:3px}}
 .kpi.blue::before{{background:var(--accent)}}.kpi.green::before{{background:var(--green)}}.kpi.purple::before{{background:var(--purple)}}.kpi.red::before{{background:var(--red)}}.kpi.yellow::before{{background:var(--yellow)}}.kpi.cyan::before{{background:var(--cyan)}}
 .kpi-label{{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px}}
@@ -435,6 +435,9 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
           <option value="7">Last 7 days</option>
           <option value="14">Last 14 days</option>
           <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last 1 year</option>
+          <option value="0">All time</option>
         </select>
         <span>{last_refresh}</span>
         <button class="btn-refresh" id="refresh-btn" onclick="triggerRefresh()"><i class="fas fa-sync-alt"></i> Refresh</button>
@@ -448,21 +451,21 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
 <section class="tab active" id="tab-executive">
   <div class="section-title">Executive Summary</div>
   <div class="kpi-grid">
-    <div class="kpi blue"><div class="kpi-icon"><i class="fas fa-search"></i></div><div class="kpi-label">Total Queries</div><div class="kpi-value" id="kpi-exec-queries">{total_queries:,}</div><div class="kpi-sub">{success_pct}% success rate</div></div>
-    <div class="kpi green"><div class="kpi-icon"><i class="fas fa-users"></i></div><div class="kpi-label">Active Users</div><div class="kpi-value">{active_users}</div><div class="kpi-sub">Last 30 days</div></div>
-    <div class="kpi purple"><div class="kpi-icon"><i class="fas fa-database"></i></div><div class="kpi-label">Total Tables</div><div class="kpi-value">{total_tables}</div><div class="kpi-sub">~{est_mb} MB estimated</div></div>
-    <div class="kpi cyan"><div class="kpi-icon"><i class="fas fa-shield-halved"></i></div><div class="kpi-label">Security Grade</div><div class="kpi-value" style="color:{grade_color}">{grade}</div><div class="kpi-sub">{score_val}/100 &bull; {security_score.get("total_findings",0)} findings</div></div>
+    <div class="kpi blue" data-goto="daily"><div class="kpi-icon"><i class="fas fa-search"></i></div><div class="kpi-label">Total Queries</div><div class="kpi-value" id="kpi-exec-queries">{total_queries:,}</div><div class="kpi-sub">{success_pct}% success rate</div></div>
+    <div class="kpi green" data-goto="cost"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Est. Monthly Cost</div><div class="kpi-value">${total_cost_est:,.2f}</div><div class="kpi-sub">SQL ${sql_cost:,.0f} &bull; Apps ${app_cost_est:,.0f} &bull; Storage ${storage_cost:,.0f}</div></div>
+    <div class="kpi purple" data-goto="cost"><div class="kpi-icon"><i class="fas fa-bolt"></i></div><div class="kpi-label">DBUs Consumed (30d)</div><div class="kpi-value">{total_dbu:,.0f}</div><div class="kpi-sub">{total_gb} GB read &bull; {active_users} users</div></div>
+    <div class="kpi cyan" data-goto="compliance"><div class="kpi-icon"><i class="fas fa-shield-halved"></i></div><div class="kpi-label">Security Grade</div><div class="kpi-value" style="color:{grade_color}">{grade}</div><div class="kpi-sub">{score_val}/100 &bull; {security_score.get("total_findings",0)} findings</div></div>
   </div>
   <div class="grid-2">
     <div class="card"><div class="card-hdr">Daily Query Volume</div><div class="card-body"><div class="chart-box h300"><canvas id="exec-daily"></canvas></div></div></div>
     <div class="card"><div class="card-hdr">Resource Inventory</div><div class="card-body">
       <table class="dtable">
         <tr><td style="font-weight:600">Cloud</td><td>{cloud}</td></tr>
-        <tr><td style="font-weight:600">Active Apps</td><td>{len(app_list)}</td></tr>
-        <tr><td style="font-weight:600">Model Endpoints</td><td>{len(model_list)}</td></tr>
-        <tr><td style="font-weight:600">Data Read (30d)</td><td>{total_gb} GB</td></tr>
-        <tr><td style="font-weight:600">Compute Time (30d)</td><td>{total_min} min</td></tr>
-        <tr><td style="font-weight:600">Security Findings</td><td>{security_score.get("critical",0)} critical, {security_score.get("high",0)} high</td></tr>
+        <tr class="clickable-row" data-goto="apps"><td style="font-weight:600">Active Apps</td><td>{len(app_list)} <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
+        <tr class="clickable-row" data-goto="apps"><td style="font-weight:600">Model Endpoints</td><td>{len(model_list)} <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
+        <tr class="clickable-row" data-goto="daily"><td style="font-weight:600">Data Read (30d)</td><td>{total_gb} GB <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
+        <tr class="clickable-row" data-goto="cost"><td style="font-weight:600">DBUs Consumed (30d)</td><td>{total_dbu:,.0f} DBU <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
+        <tr class="clickable-row" data-goto="compliance"><td style="font-weight:600">Security Findings</td><td>{security_score.get("critical",0)} critical, {security_score.get("high",0)} high <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
       </table>
     </div></div>
   </div>
@@ -479,9 +482,9 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
     <div class="kpi blue"><div class="kpi-label">Cloud</div><div class="kpi-value" style="font-size:20px">{wp_cloud}</div></div>
     <div class="kpi green"><div class="kpi-label">Region</div><div class="kpi-value" style="font-size:16px">{wp_region}</div></div>
     <div class="kpi purple"><div class="kpi-label">Tier</div><div class="kpi-value" style="font-size:18px">{wp_tier}</div></div>
-    <div class="kpi cyan"><div class="kpi-label">Total Users</div><div class="kpi-value">{wp_users}</div></div>
-    <div class="kpi yellow"><div class="kpi-label">Clusters</div><div class="kpi-value">{wp_clusters}</div></div>
-    <div class="kpi red"><div class="kpi-label">Warehouses</div><div class="kpi-value">{wp_warehouses}</div></div>
+    <div class="kpi cyan" data-goto="users"><div class="kpi-label">Total Users</div><div class="kpi-value">{wp_users}</div></div>
+    <div class="kpi yellow" data-goto="infrastructure"><div class="kpi-label">Clusters</div><div class="kpi-value">{wp_clusters}</div></div>
+    <div class="kpi red" data-goto="infrastructure"><div class="kpi-label">Warehouses</div><div class="kpi-value">{wp_warehouses}</div></div>
   </div>
   <div class="grid-2">
     <div class="card"><div class="card-hdr">Workspace Configuration</div><div class="card-body"><div style="max-height:400px;overflow-y:auto"><table class="dtable" id="ws-config-table"><thead><tr><th>Setting</th><th>Value</th></tr></thead><tbody></tbody></table></div></div></div>
@@ -502,10 +505,10 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
       <div class="grade-circle" style="border:3px solid {grade_color};color:{grade_color}">{grade}</div>
       <div class="kpi-sub" style="text-align:center">{score_val}/100</div>
     </div>
-    <div class="kpi red"><div class="kpi-label">Critical</div><div class="kpi-value" style="color:var(--red)">{security_score.get("critical",0)}</div></div>
-    <div class="kpi yellow"><div class="kpi-label">High</div><div class="kpi-value" style="color:var(--yellow)">{security_score.get("high",0)}</div></div>
-    <div class="kpi blue"><div class="kpi-label">Medium</div><div class="kpi-value" style="color:var(--accent)">{security_score.get("medium",0)}</div></div>
-    <div class="kpi green"><div class="kpi-label">Low</div><div class="kpi-value" style="color:var(--green)">{security_score.get("low",0)}</div></div>
+    <div class="kpi red" style="cursor:pointer" onclick="document.getElementById('findings-table').scrollIntoView({{behavior:'smooth'}})"><div class="kpi-label">Critical</div><div class="kpi-value" style="color:var(--red)">{security_score.get("critical",0)}</div></div>
+    <div class="kpi yellow" style="cursor:pointer" onclick="document.getElementById('findings-table').scrollIntoView({{behavior:'smooth'}})"><div class="kpi-label">High</div><div class="kpi-value" style="color:var(--yellow)">{security_score.get("high",0)}</div></div>
+    <div class="kpi blue" style="cursor:pointer" onclick="document.getElementById('findings-table').scrollIntoView({{behavior:'smooth'}})"><div class="kpi-label">Medium</div><div class="kpi-value" style="color:var(--accent)">{security_score.get("medium",0)}</div></div>
+    <div class="kpi green" style="cursor:pointer" onclick="document.getElementById('findings-table').scrollIntoView({{behavior:'smooth'}})"><div class="kpi-label">Low</div><div class="kpi-value" style="color:var(--green)">{security_score.get("low",0)}</div></div>
   </div>
   <div class="framework-grid" id="framework-grid"></div>
   <div id="framework-details"></div>
@@ -553,7 +556,7 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
     <div class="card"><div class="card-hdr">Cost by Category</div><div class="card-body"><div class="chart-box h400"><canvas id="cost-category"></canvas></div></div></div>
   </div>
   <div class="card"><div class="card-hdr">Cost Breakdown (Monthly)</div><div class="card-body">
-    <div class="cost-row"><span class="cost-comp">Serverless SQL Compute</span><span class="cost-est">${sql_cost:,.2f}</span><span class="cost-basis">~{total_min} min compute * $0.07/DBU</span></div>
+    <div class="cost-row"><span class="cost-comp">Serverless SQL Compute</span><span class="cost-est">${sql_cost:,.2f}</span><span class="cost-basis">~{total_dbu:,.0f} DBU * $0.07/DBU</span></div>
     <div class="cost-row"><span class="cost-comp">Apps ({len(app_list)}x)</span><span class="cost-est">${app_cost_est:,.2f}</span><span class="cost-basis">~$15/app estimated</span></div>
     <div class="cost-row"><span class="cost-comp">Managed Storage</span><span class="cost-est">${storage_cost:,.2f}</span><span class="cost-basis">~{est_mb} MB across {total_tables} tables</span></div>
     <div class="cost-row"><span class="cost-comp">Foundation Models</span><span class="cost-est">Pay-per-token</span><span class="cost-basis">{len(model_list)} endpoints</span></div>
@@ -592,7 +595,7 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi blue"><div class="kpi-label">Total Queries</div><div class="kpi-value">{total_queries:,}</div></div>
     <div class="kpi green"><div class="kpi-label">Data Read</div><div class="kpi-value">{total_gb} GB</div></div>
-    <div class="kpi yellow"><div class="kpi-label">Compute Time</div><div class="kpi-value">{total_min} min</div></div>
+    <div class="kpi yellow"><div class="kpi-label">DBUs Consumed</div><div class="kpi-value">{total_dbu:,.0f}</div></div>
   </div>
   <div class="grid-2">
     <div class="card"><div class="card-hdr">Query Distribution</div><div class="card-body"><div class="chart-box h300"><canvas id="user-donut"></canvas></div></div></div>
@@ -645,10 +648,14 @@ D._filteredUsers = D.users;
 // Date range filter
 function applyDateFilter(){{
   const range = parseInt(document.getElementById('date-range').value);
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - range);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
-  D._filteredDaily = D.daily.filter(d => d.date >= cutoffStr);
+  if(range === 0){{
+    D._filteredDaily = D.daily;
+  }} else {{
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - range);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    D._filteredDaily = D.daily.filter(d => d.date >= cutoffStr);
+  }}
   D._filteredUsers = D.users;
   // Destroy existing charts for affected tabs before re-render
   ['exec-daily','exec-users','exec-findings','user-donut','user-bar','daily-stacked','daily-dual','cost-by-user','cost-category'].forEach(id=>{{
@@ -669,6 +676,17 @@ tabs.forEach(t=>t.addEventListener('click',()=>{{
   t.classList.add('active');document.getElementById('tab-'+t.dataset.tab).classList.add('active');
   renderTab(t.dataset.tab);
 }}));
+
+// ---- goTab: programmatic tab switch ----
+function goTab(tabId){{
+  const target=document.querySelector(`.nav-item[data-tab="${{tabId}}"]`);
+  if(target)target.click();
+}}
+
+// KPI cards & clickable rows -> goTab on click
+document.querySelectorAll('[data-goto]').forEach(el=>{{
+  el.addEventListener('click',()=>goTab(el.dataset.goto));
+}});
 
 function renderTab(id){{if(rendered[id])return;rendered[id]=true;
   if(id==='executive')renderExec();
@@ -702,7 +720,15 @@ function renderExec(){{
   new Chart(document.getElementById('exec-users'),{{type:'bar',data:{{labels:sorted.map(s=>shortN(s[0])),datasets:[{{data:sorted.map(s=>s[1]),backgroundColor:COLORS.slice(0,sorted.length),borderRadius:4}}]}},options:{{...chartDef,indexAxis:'y',plugins:{{legend:{{display:false}}}},scales:{{x:{{beginAtZero:true}}}}}}}});
 
   const sc=D.score;
-  new Chart(document.getElementById('exec-findings'),{{type:'doughnut',data:{{labels:['Critical','High','Medium','Low'],datasets:[{{data:[sc.critical||0,sc.high||0,sc.medium||0,sc.low||0],backgroundColor:['#F87171','#FBBF24','#4B7BF5','#34D399']}}]}},options:{{...chartDef,cutout:'60%',plugins:{{legend:{{position:'right',labels:{{boxWidth:10,font:{{size:11}}}}}}}}}}}});
+  const findingsChart=new Chart(document.getElementById('exec-findings'),{{type:'doughnut',data:{{labels:['Critical','High','Medium','Low'],datasets:[{{data:[sc.critical||0,sc.high||0,sc.medium||0,sc.low||0],backgroundColor:['#F87171','#FBBF24','#4B7BF5','#34D399']}}]}},options:{{...chartDef,cutout:'60%',plugins:{{legend:{{position:'right',labels:{{boxWidth:10,font:{{size:11}}}}}}}}}}}});
+
+  // Click handlers: charts drill down to detail tabs
+  document.getElementById('exec-daily').onclick=()=>goTab('daily');
+  document.getElementById('exec-users').onclick=()=>goTab('users');
+  document.getElementById('exec-findings').addEventListener('click',(e)=>{{
+    const pts=findingsChart.getElementsAtEventForMode(e,'nearest',{{intersect:true}},false);
+    goTab('compliance');
+  }});
 }}
 
 function renderWorkspace(){{
@@ -864,12 +890,15 @@ function renderCost(){{
     }});
   }}
 
+  // Click cost-by-user chart -> users tab
+  document.getElementById('cost-by-user').onclick=()=>goTab('users');
+
   // Cost by Category - doughnut
   const sqlCost = {sql_cost};
   const appCost = {app_cost_est};
   const storageCost = {storage_cost};
   const modelCost = D.models.length * 2; // rough estimate
-  new Chart(document.getElementById('cost-category'), {{
+  const costCatChart=new Chart(document.getElementById('cost-category'), {{
     type: 'doughnut',
     data: {{
       labels: ['SQL Compute', 'Apps', 'Storage', 'Models'],
@@ -885,6 +914,12 @@ function renderCost(){{
         legend: {{ position: 'right', labels: {{ boxWidth: 10, font: {{ size: 11 }} }} }}
       }}
     }}
+  }});
+  // Click cost category segments -> relevant tab
+  const costCatTabs=['infrastructure','apps','tables','apps'];
+  document.getElementById('cost-category').addEventListener('click',(e)=>{{
+    const pts=costCatChart.getElementsAtEventForMode(e,'nearest',{{intersect:true}},false);
+    if(pts.length)goTab(costCatTabs[pts[0].index]);
   }});
 }}
 
@@ -915,6 +950,8 @@ function renderTables(){{
   if(sized.length){{
     new Chart(document.getElementById('storage-chart'),{{type:'bar',data:{{labels:sized.map(t=>t.name.replace(/_/g,' ')),datasets:[{{label:'Size (MB)',data:sized.map(t=>(t.size/1048576).toFixed(2)),backgroundColor:sized.map((_,i)=>COLORS[i%COLORS.length]),borderRadius:4}}]}},options:{{...chartDef,indexAxis:'y',plugins:{{legend:{{display:false}}}},scales:{{x:{{beginAtZero:true,title:{{display:true,text:'MB',color:'#8B949E'}}}}}}}}}});
   }}
+  // Click storage bar -> scroll to table list
+  document.getElementById('storage-chart').onclick=()=>document.getElementById('tables-table').scrollIntoView({{behavior:'smooth'}});
   renderTableList('');
   document.getElementById('table-search').addEventListener('input',e=>renderTableList(e.target.value.toLowerCase()));
 }}
@@ -932,6 +969,9 @@ function renderUsers(){{
   const entries=Object.entries(agg).sort((a,b)=>b[1]-a[1]);
   new Chart(document.getElementById('user-donut'),{{type:'doughnut',data:{{labels:entries.map(e=>shortN(e[0])),datasets:[{{data:entries.map(e=>e[1]),backgroundColor:COLORS.slice(0,entries.length)}}]}},options:{{...chartDef,cutout:'55%',plugins:{{legend:{{position:'right',labels:{{boxWidth:10,font:{{size:10}}}}}}}}}}}});
 
+  // Click donut -> scroll to user detail table
+  document.getElementById('user-donut').onclick=()=>document.getElementById('users-table').scrollIntoView({{behavior:'smooth'}});
+
   const unames=[...new Set(users.map(u=>u.user))];
   const fin=unames.map(u=>(users.find(x=>x.user===u&&x.status==='FINISHED')||{{}}).queries||0);
   const fail=unames.map(u=>(users.find(x=>x.user===u&&x.status==='FAILED')||{{}}).queries||0);
@@ -939,6 +979,9 @@ function renderUsers(){{
     {{label:'Finished',data:fin,backgroundColor:'rgba(52,211,153,.7)',borderRadius:3}},
     {{label:'Failed',data:fail,backgroundColor:'rgba(248,113,113,.7)',borderRadius:3}}
   ]}},options:{{...chartDef,indexAxis:'y',plugins:{{legend:{{position:'top',labels:{{boxWidth:12}}}}}},scales:{{x:{{stacked:true,beginAtZero:true}},y:{{stacked:true}}}}}}}});
+
+  // Click user bar chart -> scroll to detail table
+  document.getElementById('user-bar').onclick=()=>document.getElementById('users-table').scrollIntoView({{behavior:'smooth'}});
 
   const tbody=document.querySelector('#users-table tbody');
   tbody.innerHTML = '';
@@ -960,6 +1003,10 @@ function renderDaily(){{
     {{label:'Data Read (GB)',data:daily.map(d=>d.dataGb),borderColor:'#4B7BF5',backgroundColor:'rgba(75,123,245,.1)',fill:true,yAxisID:'y',tension:.3,pointRadius:3}},
     {{label:'Compute (min)',data:daily.map(d=>d.computeMin),borderColor:'#FBBF24',backgroundColor:'rgba(251,191,36,.1)',fill:true,yAxisID:'y1',tension:.3,pointRadius:3}}
   ]}},options:{{...chartDef,plugins:{{legend:{{position:'top',labels:{{boxWidth:12}}}}}},scales:{{y:{{type:'linear',position:'left',beginAtZero:true,title:{{display:true,text:'GB',color:'#8B949E'}}}},y1:{{type:'linear',position:'right',beginAtZero:true,title:{{display:true,text:'Minutes',color:'#8B949E'}},grid:{{drawOnChartArea:false}}}}}}}}}});
+
+  // Click stacked/dual charts -> scroll to daily detail table
+  document.getElementById('daily-stacked').onclick=()=>document.getElementById('daily-table').scrollIntoView({{behavior:'smooth'}});
+  document.getElementById('daily-dual').onclick=()=>document.getElementById('daily-table').scrollIntoView({{behavior:'smooth'}});
 
   const hm=document.getElementById('heatmap');
   hm.innerHTML = '';

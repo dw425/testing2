@@ -9,15 +9,27 @@ Blueprint dark theme. Two modes:
 # ---------------------------------------------------------------------------
 # Blueprint Logo SVG (inline)
 # ---------------------------------------------------------------------------
-LOGO_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" fill="none" style="height:32px">
-  <g fill="white"><polygon points="0,5 18,30 0,55"/><polygon points="14,5 32,30 14,55"/><polygon points="28,5 46,30 28,55"/></g>
-  <text x="56" y="42" font-family="'DM Sans','Inter',sans-serif" font-size="36" font-weight="700" fill="white">Blueprint</text>
-</svg>'''
+LOGO_SVG = '<img src="/static/blueprint-logo.png" alt="Blueprint" style="height:32px">'
 
 
-def render_admin_page(config: dict = None, is_setup: bool = False, message: str = "") -> str:
+def render_admin_page(config: dict = None, is_setup: bool = False, message: str = "",
+                      license_state: dict = None) -> str:
     """Return the full admin page HTML string."""
     config = config or {}
+    license_state = license_state or {}
+
+    license_key = config.get("license_key", "")
+    license_valid = license_state.get("valid", False)
+    license_expires = license_state.get("expires") or ""
+    license_msg = license_state.get("message") or ""
+
+    if license_valid:
+        lic_status_html = f'<div style="margin-top:12px;padding:12px 16px;border-radius:8px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:#34D399;font-size:13px"><i class="fas fa-check-circle"></i> License active{" — expires " + license_expires if license_expires else ""}</div>'
+    elif license_key:
+        lic_status_html = f'<div style="margin-top:12px;padding:12px 16px;border-radius:8px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#F87171;font-size:13px"><i class="fas fa-times-circle"></i> {license_msg or "License is invalid"}</div>'
+    else:
+        lic_status_html = ''
+
     workspace_url = config.get("workspace_url", "")
     auth_method = config.get("auth_method", "pat")
     pat_token = config.get("pat_token", "")
@@ -107,6 +119,19 @@ input::placeholder{{color:#484F58}}
   {'<a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>' if not is_setup else ''}
 
   <form id="admin-form" method="POST" action="/admin/save">
+
+    <!-- License Key -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-certificate"></i> License</div>
+      <div class="field-group">
+        <label>License Key <span class="label-hint">(provided by Blueprint Technologies)</span></label>
+        <input type="password" name="license_key" value="{license_key}" placeholder="BPT-XXXX-XXXX-XXXX-XXXX" autocomplete="off" id="license-key-input">
+      </div>
+      <button type="button" class="btn btn-test" id="license-btn" onclick="validateLicense()">
+        <i class="fas fa-shield-halved"></i> Validate License
+      </button>
+      <div id="license-result">{lic_status_html}</div>
+    </div>
 
     <!-- Auth Method -->
     <div class="card">
@@ -269,6 +294,36 @@ async function testConnection() {{
   }}
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-plug"></i> Test Connection';
+}}
+
+// Validate license
+async function validateLicense() {{
+  const btn = document.getElementById('license-btn');
+  const res = document.getElementById('license-result');
+  const key = document.getElementById('license-key-input').value.trim();
+  if (!key) {{
+    res.innerHTML = '<div style="margin-top:12px;padding:12px 16px;border-radius:8px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#F87171;font-size:13px"><i class="fas fa-times-circle"></i> Please enter a license key</div>';
+    return;
+  }}
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validating...';
+  try {{
+    const resp = await fetch('/admin/validate-license', {{
+      method: 'POST',
+      headers: {{'Content-Type': 'application/json'}},
+      body: JSON.stringify({{license_key: key}})
+    }});
+    const data = await resp.json();
+    if (data.valid) {{
+      res.innerHTML = '<div style="margin-top:12px;padding:12px 16px;border-radius:8px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:#34D399;font-size:13px"><i class="fas fa-check-circle"></i> License valid' + (data.expires ? ' — expires ' + data.expires : '') + '</div>';
+    }} else {{
+      res.innerHTML = '<div style="margin-top:12px;padding:12px 16px;border-radius:8px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#F87171;font-size:13px"><i class="fas fa-times-circle"></i> ' + (data.message || 'License is invalid') + '</div>';
+    }}
+  }} catch (e) {{
+    res.innerHTML = '<div style="margin-top:12px;padding:12px 16px;border-radius:8px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#F87171;font-size:13px"><i class="fas fa-times-circle"></i> Error: ' + e.message + '</div>';
+  }}
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-shield-halved"></i> Validate License';
 }}
 </script>
 </body>

@@ -35,6 +35,9 @@ from app.dashboard import render_dashboard
 from app.admin import render_admin_page
 from app.excel_export import generate_security_excel, generate_usage_excel
 from app import scheduler as sched
+from app.license import (
+    check_and_update_license, is_licensed, get_license_state, license_blocked_page,
+)
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -53,6 +56,19 @@ flask_app = Flask(__name__)
 flask_app.secret_key = os.urandom(24)
 
 IS_DATABRICKS_APP = bool(os.environ.get("DATABRICKS_APP_PORT"))
+
+
+# ---------------------------------------------------------------------------
+# License gate — blocks all routes except /admin and /health if unlicensed
+# ---------------------------------------------------------------------------
+@flask_app.before_request
+def _check_license():
+    # Allow admin page (to enter/update license key), health check, and static files
+    allowed = ("/admin", "/health", "/static/")
+    if any(request.path.startswith(p) for p in allowed):
+        return None
+    if not is_licensed():
+        return license_blocked_page(), 403
 
 
 # ---------------------------------------------------------------------------
@@ -149,12 +165,24 @@ def admin():
     is_setup = request.args.get("setup") == "1"
     cfg = get_config() if has_config() else {}
     msg = request.args.get("msg", "")
-    return render_admin_page(config=cfg, is_setup=is_setup, message=msg)
+    lic_state = get_license_state()
+    return render_admin_page(config=cfg, is_setup=is_setup, message=msg, license_state=lic_state)
+
+
+@flask_app.route("/admin/validate-license", methods=["POST"])
+def admin_validate_license():
+    """AJAX license key validation."""
+    from app.license import validate_license
+    body = request.get_json(force=True)
+    key = body.get("license_key", "").strip()
+    result = validate_license(license_key=key)
+    return jsonify(result)
 
 
 @flask_app.route("/admin/save", methods=["POST"])
 def admin_save():
     data = {
+        "license_key": request.form.get("license_key", "").strip(),
         "workspace_url": request.form.get("workspace_url", "").strip(),
         "auth_method": request.form.get("auth_method", "pat"),
         "pat_token": request.form.get("pat_token", "").strip(),
@@ -171,6 +199,10 @@ def admin_save():
         data["workspace_url"] = "https://" + url
 
     save_config(data)
+
+    # Validate and activate license
+    if data["license_key"]:
+        check_and_update_license(force=True)
 
     # Configure schedule
     sched.configure_schedule(data["refresh_schedule"], int(data.get("refresh_hour", 6)))
@@ -291,10 +323,39 @@ def main():
     parser.add_argument("--token", help="Personal Access Token")
     parser.add_argument("--port", type=int, default=None, help="Port (default: 8050)")
     parser.add_argument("--no-browser", action="store_true", help="Don't open browser")
+    parser.add_argument("--dev-license", action="store_true",
+                        help="Skip license check (local development only)")
     args = parser.parse_args()
 
     # Initialize scheduler
     sched.init_scheduler(_do_refresh)
+
+    # Promote pre-seeded license key from installer (if present)
+    cfg_pre = get_config()
+    pending_key = cfg_pre.get("license_key_pending", "")
+    if pending_key and not cfg_pre.get("license_key"):
+        save_config({"license_key": pending_key, "license_key_pending": ""})
+        log.info("License key promoted from installer pre-seed.")
+
+    # Validate license on startup
+    if args.dev_license:
+        log.info("DEV MODE: License check bypassed.")
+        from app import license as lic_mod
+        lic_mod._license_state["valid"] = True
+        lic_mod._license_state["message"] = "Development mode — license check bypassed"
+    else:
+        log.info("Checking license...")
+        lic = check_and_update_license()
+        if lic.get("valid"):
+            log.info("License valid.")
+        else:
+            log.warning("License not valid: %s", lic.get("message", "No license key"))
+            log.warning("App will show license gate. Configure via /admin.")
+
+        # Schedule periodic license re-check (every 30 days, polled every 24 hours)
+        def _license_recheck():
+            check_and_update_license()
+        sched.add_license_check(_license_recheck)
 
     # CLI args → save as config for convenience
     if args.host and args.token:

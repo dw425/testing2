@@ -10,3 +10,6 @@ build/
 .databricks/
 *.log
 .DS_Store
+lho-lite/data/
+*.db
+.fernet.key

@@ -1,0 +1,25 @@
+bundle:
+  name: lho-lite
+
+resources:
+  apps:
+    lho_lite:
+      name: "lho-lite"
+      description: "LHO Lite — Lakehouse Optimizer. Security, usage, and cost analysis for your Databricks workspace."
+      source_code_path: .
+      config:
+        command:
+          - "python3"
+          - "app/main.py"
+        env:
+          - name: DATABRICKS_APP_PORT
+            value: "8050"
+          - name: LHO_DATA_DIR
+            value: "/app/data"
+
+targets:
+  dev:
+    mode: development
+    default: true
+  prod:
+    mode: production

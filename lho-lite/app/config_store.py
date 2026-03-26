@@ -23,7 +23,7 @@ _DB_DIR = Path(os.environ.get("LHO_DATA_DIR", Path(__file__).resolve().parent.pa
 _DB_PATH = _DB_DIR / "lho_lite.db"
 _KEY_PATH = _DB_DIR / ".fernet.key"
 
-_SENSITIVE_KEYS = {"pat_token", "sp_client_secret"}
+_SENSITIVE_KEYS = {"pat_token", "sp_client_secret", "license_key"}
 
 _lock = threading.Lock()
 

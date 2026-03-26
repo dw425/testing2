@@ -5,3 +5,5 @@ command:
 env:
   - name: DATABRICKS_APP_PORT
     value: "8050"
+  - name: LHO_DATA_DIR
+    value: "/app/data"

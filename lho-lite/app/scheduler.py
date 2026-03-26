@@ -122,6 +122,20 @@ def get_status() -> dict:
     }
 
 
+def add_license_check(check_func):
+    """Schedule periodic license re-validation (runs every 24 hours, actual
+    remote call only happens if 30+ days have passed since last check;
+    between remote checks the app validates locally against the stored
+    expiration date)."""
+    if not _scheduler:
+        return
+    _scheduler.add_job(
+        check_func, "interval", hours=24, id="license_check",
+        replace_existing=True, max_instances=1,
+    )
+    log.info("License re-check scheduled (every 24 hours).")
+
+
 def shutdown():
     """Gracefully stop the scheduler."""
     if _scheduler:
