@@ -200,84 +200,110 @@ print(f"\n✓ All files written to {WORKSPACE_APP_DIR}")
 
 # COMMAND ----------
 
+import requests as _api
+
+# Get workspace host and token from the notebook context
 from databricks.sdk import WorkspaceClient
+_w = WorkspaceClient()
+_host = _w.config.host.rstrip("/")
+_auth = {"Authorization": f"Bearer {_w.config.token}"}
 
-w = WorkspaceClient()
+def _api_get(path):
+    r = _api.get(f"{_host}/api/2.0{path}", headers=_auth)
+    return r.status_code, r.json() if r.text else {}
 
-# Check if app already exists
+def _api_post(path, body=None):
+    r = _api.post(f"{_host}/api/2.0{path}", headers=_auth, json=body or {})
+    return r.status_code, r.json() if r.text else {}
+
+print(f"Workspace: {_host}")
+print(f"App source: {WORKSPACE_APP_DIR}")
+print()
+
+# --- Check if app already exists ---
 app_exists = False
-try:
-    existing = w.apps.get(APP_NAME)
+app_url = None
+code, data = _api_get(f"/apps/{APP_NAME}")
+if code == 200 and data.get("name"):
     app_exists = True
-    print(f"✓ App '{APP_NAME}' already exists — will update deployment")
-except Exception:
-    pass
+    app_url = data.get("url")
+    print(f"✓ App '{APP_NAME}' already exists (status: {data.get('compute_status', {}).get('state', 'UNKNOWN')})")
+else:
+    print(f"  App not found ({code}). Will create...")
 
+# --- Create app if needed ---
 if not app_exists:
-    print(f"Creating app '{APP_NAME}' ...")
-    try:
-        from databricks.sdk.service.apps import App
-        app = w.apps.create_and_wait(
-            App(
-                name=APP_NAME,
-                description="LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
-            )
-        )
-        print(f"✓ App '{APP_NAME}' created")
-    except Exception as e:
-        # Handle older SDK versions
-        print(f"Creating app via API fallback...")
-        import requests as req
-        host = w.config.host
-        token = w.config.token
-        resp = req.post(
-            f"{host}/api/2.0/apps",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"name": APP_NAME, "description": "LHO Lite — Lakehouse Optimizer by Blueprint Technologies"}
-        )
-        if resp.status_code in (200, 201):
-            print(f"✓ App '{APP_NAME}' created")
-        elif "already exists" in resp.text.lower():
-            print(f"✓ App '{APP_NAME}' already exists")
-        else:
-            print(f"⚠ App creation response: {resp.status_code} {resp.text}")
-
-# Deploy
-print(f"\nDeploying app from {WORKSPACE_APP_DIR} ...")
-try:
-    from databricks.sdk.service.apps import AppDeployment
-    deployment = w.apps.deploy_and_wait(
-        APP_NAME,
-        AppDeployment(source_code_path=WORKSPACE_APP_DIR)
-    )
-    print(f"✓ Deployment complete!")
-except Exception as e:
-    # API fallback for older SDK
-    print(f"Deploying via API fallback...")
-    import requests as req
-    host = w.config.host
-    token = w.config.token
-    resp = req.post(
-        f"{host}/api/2.0/apps/{APP_NAME}/deployments",
-        headers={"Authorization": f"Bearer {token}"},
-        json={"source_code_path": WORKSPACE_APP_DIR}
-    )
-    if resp.status_code in (200, 201):
-        print(f"✓ Deployment initiated!")
-        # Wait for deployment
-        print("  Waiting for app to start...")
-        for _ in range(30):
-            time.sleep(5)
-            status = req.get(
-                f"{host}/api/2.0/apps/{APP_NAME}",
-                headers={"Authorization": f"Bearer {token}"}
-            ).json()
-            state = status.get("compute_status", {}).get("state", "UNKNOWN")
-            if state == "ACTIVE":
-                break
-            print(f"  Status: {state}...")
+    print(f"\nCreating app '{APP_NAME}' ...")
+    create_body = {
+        "name": APP_NAME,
+        "description": "LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
+    }
+    code, data = _api_post("/apps", create_body)
+    print(f"  Create response: {code}")
+    if code in (200, 201):
+        print(f"  ✓ App created: {json.dumps(data, indent=2)[:500]}")
     else:
-        print(f"⚠ Deployment response: {resp.status_code} {resp.text}")
+        print(f"  Response body: {json.dumps(data, indent=2)[:500]}")
+        if "already exists" in str(data).lower():
+            print(f"  ✓ App already exists — continuing")
+        else:
+            print(f"  ⚠ Unexpected response — will try to deploy anyway")
+
+    # Wait for app to be ready before deploying
+    print("  Waiting for app to initialize...")
+    for i in range(24):
+        time.sleep(5)
+        code, data = _api_get(f"/apps/{APP_NAME}")
+        state = data.get("compute_status", {}).get("state", "UNKNOWN")
+        app_url = data.get("url")
+        print(f"  [{i+1}/24] App state: {state}")
+        if state in ("ACTIVE", "IDLE", "STOPPED"):
+            break
+        if code != 200:
+            print(f"  API returned {code}: {data}")
+            break
+    else:
+        print("  ⚠ App did not reach ready state — deploying anyway")
+
+# --- Deploy ---
+print(f"\nDeploying from {WORKSPACE_APP_DIR} ...")
+deploy_body = {
+    "source_code_path": WORKSPACE_APP_DIR,
+}
+code, data = _api_post(f"/apps/{APP_NAME}/deployments", deploy_body)
+print(f"  Deploy response: {code}")
+
+if code in (200, 201):
+    deployment_id = data.get("deployment_id", "")
+    print(f"  ✓ Deployment started (id: {deployment_id})")
+
+    # Wait for deployment to complete
+    print("  Waiting for deployment to finish...")
+    for i in range(60):
+        time.sleep(5)
+        code, app_data = _api_get(f"/apps/{APP_NAME}")
+        compute_state = app_data.get("compute_status", {}).get("state", "UNKNOWN")
+        app_url = app_data.get("url") or app_url
+        active_deployment = app_data.get("active_deployment", {})
+        deploy_status = active_deployment.get("status", {}).get("state", "UNKNOWN")
+        print(f"  [{i+1}/60] Compute: {compute_state} | Deployment: {deploy_status}")
+        if compute_state == "ACTIVE" and deploy_status in ("SUCCEEDED", "ACTIVE"):
+            print(f"\n  ✅ App is ACTIVE and deployment SUCCEEDED!")
+            break
+        if deploy_status in ("FAILED", "CANCELLED"):
+            msg = active_deployment.get("status", {}).get("message", "")
+            print(f"\n  ❌ Deployment {deploy_status}: {msg}")
+            break
+    else:
+        print("  ⚠ Timed out waiting — check Compute → Apps → lho-lite for status")
+else:
+    print(f"  ❌ Deploy failed: {json.dumps(data, indent=2)[:500]}")
+    print(f"  Try manually: Compute → Apps → Create App → source: {WORKSPACE_APP_DIR}")
+
+# Fetch final app URL
+if not app_url:
+    code, data = _api_get(f"/apps/{APP_NAME}")
+    app_url = data.get("url", f"{_host}/apps/{APP_NAME}")
 
 # COMMAND ----------
 
