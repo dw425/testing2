@@ -190,9 +190,34 @@ print(f"\n✓ {written} files written to {WORKSPACE_APP_DIR}")
 
 # COMMAND ----------
 
+import time as _time
 from databricks.sdk import WorkspaceClient
 
 w = WorkspaceClient()
+
+# Build auth headers for REST API calls (SDK Apps API not available on all runtimes)
+_host = w.config.host.rstrip("/")
+_auth_headers = {}
+try:
+    _auth_func = w.config.authenticate()
+    if callable(_auth_func):
+        _auth_headers = _auth_func()
+    elif isinstance(_auth_func, dict):
+        _auth_headers = _auth_func
+except Exception:
+    pass
+if not _auth_headers:
+    # Fallback: get token from SDK config
+    try:
+        _auth_headers = {"Authorization": f"Bearer {w.config.token}"}
+    except Exception:
+        pass
+
+def _api(method, path, body=None):
+    """Call Databricks REST API."""
+    url = f"{_host}{path}"
+    r = requests.request(method, url, headers=_auth_headers, json=body, timeout=60)
+    return r.status_code, r.json() if r.text else {}
 
 # Verify auth
 try:
@@ -201,147 +226,126 @@ try:
 except Exception as e:
     print(f"⚠ Auth check failed: {e}")
 
-_host = w.config.host.rstrip("/")
 print(f"Workspace: {_host}")
 print(f"App source: {WORKSPACE_APP_DIR}")
 print()
 
 # --- Check if app already exists ---
-import time as _time
-
 app_exists = False
 app_url = None
-try:
-    existing = w.apps.get(APP_NAME)
+status_code, app_data = _api("GET", f"/api/2.0/apps/{APP_NAME}")
+if status_code == 200:
     app_exists = True
-    app_url = getattr(existing, 'url', None)
-    compute_state = getattr(getattr(existing, 'compute_status', None), 'state', 'UNKNOWN')
+    app_url = app_data.get("url")
+    compute_state = (app_data.get("compute_status") or {}).get("state", "UNKNOWN")
     print(f"✓ App '{APP_NAME}' already exists (state: {compute_state})")
 
     # If app is being deleted, wait for deletion to complete
-    if compute_state in ('DELETING', 'STOPPING'):
+    if compute_state in ("DELETING", "STOPPING"):
         print(f"  App is being deleted, waiting...")
-        for i in range(12):
+        for i in range(18):  # up to 3 minutes
             _time.sleep(10)
-            try:
-                existing = w.apps.get(APP_NAME)
-                compute_state = getattr(getattr(existing, 'compute_status', None), 'state', 'UNKNOWN')
-                print(f"  ... state: {compute_state}")
-                if compute_state not in ('DELETING', 'STOPPING'):
-                    break
-            except Exception:
+            sc, data = _api("GET", f"/api/2.0/apps/{APP_NAME}")
+            if sc != 200:
                 app_exists = False
                 print(f"  ✓ App deletion complete")
                 break
-except Exception as e:
-    err = str(e)
-    if "does not exist" in err.lower() or "not found" in err.lower() or "404" in err or "deleted" in err.lower():
+            compute_state = (data.get("compute_status") or {}).get("state", "UNKNOWN")
+            print(f"  ... state: {compute_state}")
+            if compute_state not in ("DELETING", "STOPPING"):
+                break
+else:
+    err_msg = app_data.get("message", str(status_code))
+    if status_code == 404 or "not exist" in err_msg.lower() or "deleted" in err_msg.lower():
         print(f"  App not found. Will create...")
     else:
-        print(f"  Error checking app: {err[:300]}")
+        print(f"  Error checking app ({status_code}): {err_msg[:300]}")
         print(f"  Will try to create anyway...")
 
 # --- Create app if needed ---
 if not app_exists:
     print(f"\nCreating app '{APP_NAME}' ...")
-    from databricks.sdk.service.apps import App
-
-    # Retry creation up to 3 times (handles "name still reserved" after deletion)
-    _created = False
-    for _attempt in range(3):
-        try:
-            try:
-                app = w.apps.create_and_wait(
-                    App(
-                        name=APP_NAME,
-                        description="LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
-                    ),
-                    timeout=datetime.timedelta(minutes=5),
-                )
-            except TypeError:
-                # Some SDK versions don't accept timeout
-                app = w.apps.create_and_wait(
-                    App(
-                        name=APP_NAME,
-                        description="LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
-                    )
-                )
-            app_url = getattr(app, 'url', None)
-            print(f"  ✓ App created!")
-            print(f"  URL: {app_url}")
-            _created = True
+    for _attempt in range(4):
+        sc, data = _api("POST", "/api/2.0/apps", {
+            "name": APP_NAME,
+            "description": "LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
+        })
+        if sc in (200, 201):
+            app_url = data.get("url")
+            print(f"  ✓ App create initiated!")
+            if app_url:
+                print(f"  URL: {app_url}")
             break
-        except Exception as e:
-            err = str(e)
-            if "already exists" in err.lower():
-                print(f"  ✓ App already exists — continuing")
-                _created = True
-                break
-            elif "deleted" in err.lower() or "reserved" in err.lower():
-                print(f"  Name still reserved from deletion. Waiting 30s... (attempt {_attempt+1}/3)")
-                _time.sleep(30)
+        err_msg = data.get("message", str(sc))
+        if "already exists" in err_msg.lower():
+            print(f"  ✓ App already exists — continuing")
+            sc2, d2 = _api("GET", f"/api/2.0/apps/{APP_NAME}")
+            if sc2 == 200:
+                app_url = d2.get("url")
+            break
+        elif "deleted" in err_msg.lower() or "reserved" in err_msg.lower() or sc == 409:
+            print(f"  Name still reserved from deletion. Waiting 30s... (attempt {_attempt+1}/4)")
+            _time.sleep(30)
+        else:
+            print(f"  Create failed ({sc}): {err_msg[:400]}")
+            if _attempt < 3:
+                print(f"  Retrying in 15s... (attempt {_attempt+1}/4)")
+                _time.sleep(15)
             else:
-                print(f"  Create failed: {err[:400]}")
-                if _attempt < 2:
-                    print(f"  Retrying in 15s... (attempt {_attempt+1}/3)")
-                    _time.sleep(15)
-                else:
-                    print(f"\n  ⚠ Will try to deploy anyway...")
-                    break
+                print(f"\n  ⚠ Could not create app. Try manually: Compute → Apps → Create App")
 
 # --- Wait for compute to be ACTIVE before deploying ---
 print(f"\nWaiting for app compute to be ready...")
-for i in range(24):  # up to 4 minutes
-    try:
-        app_info = w.apps.get(APP_NAME)
-        compute_state = getattr(getattr(app_info, 'compute_status', None), 'state', 'UNKNOWN')
-        app_url = getattr(app_info, 'url', None) or app_url
-        if compute_state == 'ACTIVE':
+for i in range(30):  # up to 5 minutes
+    sc, data = _api("GET", f"/api/2.0/apps/{APP_NAME}")
+    if sc == 200:
+        compute_state = (data.get("compute_status") or {}).get("state", "UNKNOWN")
+        app_url = data.get("url") or app_url
+        if compute_state == "ACTIVE":
             print(f"  ✓ Compute is ACTIVE")
             break
         print(f"  ... compute state: {compute_state} (waiting)")
-        _time.sleep(10)
-    except Exception:
-        _time.sleep(10)
+    _time.sleep(10)
 else:
-    print(f"  ⚠ Compute not active after 4 minutes — attempting deploy anyway")
+    print(f"  ⚠ Compute not active after 5 minutes — attempting deploy anyway")
 
 # --- Deploy ---
 print(f"\nDeploying from {WORKSPACE_APP_DIR} ...")
-try:
-    from databricks.sdk.service.apps import AppDeployment
-    deployment = w.apps.deploy_and_wait(
-        APP_NAME,
-        AppDeployment(source_code_path=WORKSPACE_APP_DIR),
-    )
-    deploy_status = getattr(getattr(deployment, 'status', None), 'state', 'UNKNOWN')
-    print(f"  ✓ Deployment complete! Status: {deploy_status}")
+sc, data = _api("POST", f"/api/2.0/apps/{APP_NAME}/deployments", {
+    "source_code_path": WORKSPACE_APP_DIR,
+})
+if sc in (200, 201):
+    deployment_id = data.get("deployment_id", "")
+    print(f"  Deploy initiated (ID: {deployment_id})")
+
+    # Poll for deployment completion
+    for i in range(30):  # up to 5 minutes
+        _time.sleep(10)
+        sc2, d2 = _api("GET", f"/api/2.0/apps/{APP_NAME}/deployments/{deployment_id}")
+        if sc2 == 200:
+            state = (d2.get("status") or {}).get("state", "UNKNOWN")
+            if state == "SUCCEEDED":
+                print(f"  ✓ Deployment complete!")
+                break
+            elif state in ("FAILED", "CANCELLED"):
+                msg = (d2.get("status") or {}).get("message", "")
+                print(f"  ❌ Deployment {state}: {msg[:300]}")
+                break
+            print(f"  ... deploy state: {state}")
+    else:
+        print(f"  ⚠ Deployment still in progress — check Compute → Apps")
 
     # Get final app info
-    try:
-        final_app = w.apps.get(APP_NAME)
-        app_url = getattr(final_app, 'url', None) or app_url
-        compute_state = getattr(getattr(final_app, 'compute_status', None), 'state', 'UNKNOWN')
+    sc3, d3 = _api("GET", f"/api/2.0/apps/{APP_NAME}")
+    if sc3 == 200:
+        app_url = d3.get("url") or app_url
+        compute_state = (d3.get("compute_status") or {}).get("state", "UNKNOWN")
         print(f"  App URL: {app_url}")
         print(f"  Compute state: {compute_state}")
-    except Exception:
-        pass
-
-except Exception as e:
-    err = str(e)
-    print(f"  ❌ Deploy failed: {err[:500]}")
-
-    try:
-        final_app = w.apps.get(APP_NAME)
-        app_url = getattr(final_app, 'url', None)
-        compute_state = getattr(getattr(final_app, 'compute_status', None), 'state', 'UNKNOWN')
-        print(f"\n  App exists but deploy failed. State: {compute_state}")
-        print(f"  URL: {app_url}")
-        print(f"  Try redeploying from Compute → Apps → {APP_NAME}")
-    except Exception:
-        print(f"\n  App may not have been created.")
-        print(f"  Manual fallback: Compute → Apps → Create App")
-        print(f"  Set source code path to: {WORKSPACE_APP_DIR}")
+else:
+    err_msg = data.get("message", str(sc))
+    print(f"  ❌ Deploy failed ({sc}): {err_msg[:500]}")
+    print(f"  Try redeploying from Compute → Apps → {APP_NAME}")
 
 if not app_url:
     app_url = f"{_host}/compute/apps"
@@ -359,32 +363,26 @@ if not app_url:
 # Get the app's service principal
 sp_id = None
 sp_display = None
-try:
-    app_info = w.apps.get(APP_NAME)
-    sp_client_id = getattr(app_info, 'service_principal_client_id', None)
-    sp_name = getattr(app_info, 'service_principal_name', None)
-    if sp_client_id:
-        sp_id = sp_client_id
-        sp_display = sp_name or sp_client_id
+sc, app_data = _api("GET", f"/api/2.0/apps/{APP_NAME}")
+if sc == 200:
+    sp_id = app_data.get("service_principal_client_id")
+    sp_display = app_data.get("service_principal_name") or sp_id
+    if sp_id:
         print(f"✓ App service principal: {sp_display} ({sp_id})")
     else:
         print("⚠ No service principal found on app — permissions must be granted manually")
-except Exception as e:
-    print(f"⚠ Could not get app info: {e}")
+else:
+    print(f"⚠ Could not get app info ({sc}) — permissions must be granted manually")
 
-# Grant system table access
+# Grant system table access using SQL
 if sp_id:
     schemas_to_grant = ["system.billing", "system.query", "system.compute", "system.lakeflow"]
     print(f"\nGranting system table access to {sp_display}...")
+    print("  (requires metastore admin privileges)")
 
     for schema_path in schemas_to_grant:
         try:
-            # Use SQL GRANT via the SDK
-            w.statement_execution.execute_statement(
-                warehouse_id=None,  # will be auto-selected
-                statement=f"GRANT USE_SCHEMA, SELECT ON SCHEMA `{schema_path}` TO `{sp_display}`",
-                wait_timeout="30s"
-            )
+            spark.sql(f"GRANT USE_SCHEMA, SELECT ON SCHEMA `{schema_path}` TO `{sp_display}`")
             print(f"  ✓ Granted USE_SCHEMA + SELECT on {schema_path}")
         except Exception as e:
             err = str(e)
@@ -396,11 +394,7 @@ if sp_id:
 
     # Also grant USE_CATALOG on system
     try:
-        w.statement_execution.execute_statement(
-            warehouse_id=None,
-            statement=f"GRANT USE_CATALOG ON CATALOG `system` TO `{sp_display}`",
-            wait_timeout="30s"
-        )
+        spark.sql(f"GRANT USE_CATALOG ON CATALOG `system` TO `{sp_display}`")
         print(f"  ✓ Granted USE_CATALOG on system")
     except Exception as e:
         err = str(e)
@@ -427,10 +421,10 @@ else:
 
 # Get the app URL
 if not app_url or "Compute" in str(app_url):
-    try:
-        final = w.apps.get(APP_NAME)
-        app_url = getattr(final, 'url', None) or f"{_host}/compute/apps"
-    except Exception:
+    sc, data = _api("GET", f"/api/2.0/apps/{APP_NAME}")
+    if sc == 200:
+        app_url = data.get("url") or f"{_host}/compute/apps"
+    else:
         app_url = f"{_host}/compute/apps"
 
 print("=" * 60)
