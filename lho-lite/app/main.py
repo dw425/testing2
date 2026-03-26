@@ -197,6 +197,12 @@ def admin_save():
         "sp_tenant_id": request.form.get("sp_tenant_id", "").strip(),
         "refresh_schedule": request.form.get("refresh_schedule", "manual"),
         "refresh_hour": request.form.get("refresh_hour", "6"),
+        "data_destination": request.form.get("data_destination", "local"),
+        "dest_catalog": request.form.get("dest_catalog", "").strip(),
+        "dest_schema": request.form.get("dest_schema", "").strip(),
+        "dest_table_prefix": request.form.get("dest_table_prefix", "lho_").strip(),
+        "lakebase_instance": request.form.get("lakebase_instance", "").strip(),
+        "lakebase_schema": request.form.get("lakebase_schema", "public").strip(),
     }
 
     # Normalize URL

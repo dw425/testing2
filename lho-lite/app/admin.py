@@ -39,6 +39,14 @@ def render_admin_page(config: dict = None, is_setup: bool = False, message: str 
     refresh_schedule = config.get("refresh_schedule", "manual")
     refresh_hour = config.get("refresh_hour", "6")
 
+    # Data destination settings
+    data_dest = config.get("data_destination", "local")
+    dest_catalog = config.get("dest_catalog", "")
+    dest_schema = config.get("dest_schema", "")
+    dest_table_prefix = config.get("dest_table_prefix", "lho_")
+    lakebase_instance = config.get("lakebase_instance", "")
+    lakebase_schema = config.get("lakebase_schema", "public")
+
     pat_checked = 'checked' if auth_method == "pat" else ""
     sp_checked = 'checked' if auth_method == "sp" else ""
     auto_checked = 'checked' if auth_method == "auto" else ""
@@ -243,6 +251,76 @@ input::placeholder{{color:#484F58}}
       </div>
     </div>
 
+    <!-- Data Destination -->
+    <div class="card">
+      <div class="card-title"><i class="fas fa-database"></i> Data Destination</div>
+      <p style="font-size:12px;color:#8B949E;margin-bottom:16px">Choose where collected data is stored after each refresh. Local stores in the app's SQLite DB. Delta and Lakebase persist data externally for querying.</p>
+      <div class="radio-group">
+        <label class="radio-card {'selected' if data_dest=='local' else ''}" id="rc-local">
+          <input type="radio" name="data_destination" value="local" {'checked' if data_dest=='local' else ''}>
+          <span class="rc-icon"><i class="fas fa-hard-drive"></i></span>
+          <span class="rc-label">Local Only</span>
+          <span class="rc-hint">App SQLite DB</span>
+        </label>
+        <label class="radio-card {'selected' if data_dest=='delta' else ''}" id="rc-delta">
+          <input type="radio" name="data_destination" value="delta" {'checked' if data_dest=='delta' else ''}>
+          <span class="rc-icon"><i class="fas fa-layer-group"></i></span>
+          <span class="rc-label">Delta Table</span>
+          <span class="rc-hint">Unity Catalog</span>
+        </label>
+        <label class="radio-card {'selected' if data_dest=='lakebase' else ''}" id="rc-lakebase">
+          <input type="radio" name="data_destination" value="lakebase" {'checked' if data_dest=='lakebase' else ''}>
+          <span class="rc-icon"><i class="fas fa-cubes"></i></span>
+          <span class="rc-label">Lakebase</span>
+          <span class="rc-hint">PostgreSQL-compatible</span>
+        </label>
+        <label class="radio-card {'selected' if data_dest=='both' else ''}" id="rc-both">
+          <input type="radio" name="data_destination" value="both" {'checked' if data_dest=='both' else ''}>
+          <span class="rc-icon"><i class="fas fa-arrows-split-up-and-left"></i></span>
+          <span class="rc-label">Both</span>
+          <span class="rc-hint">Delta + Lakebase</span>
+        </label>
+      </div>
+
+      <!-- Delta Table fields -->
+      <div class="delta-fields" style="{'display:block' if data_dest in ('delta','both') else 'display:none'}">
+        <div style="background:#0D1117;border:1px solid #272D3F;border-radius:8px;padding:16px;margin-bottom:12px">
+          <h4 style="font-size:12px;font-weight:600;color:#4B7BF5;text-transform:uppercase;margin-bottom:12px"><i class="fas fa-layer-group"></i> Delta Table Settings</h4>
+          <div class="schedule-grid">
+            <div class="field-group">
+              <label>Catalog</label>
+              <input type="text" name="dest_catalog" value="{dest_catalog}" placeholder="lho_data">
+            </div>
+            <div class="field-group">
+              <label>Schema</label>
+              <input type="text" name="dest_schema" value="{dest_schema}" placeholder="lho_lite">
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Table Prefix <span class="label-hint">(tables: &lt;prefix&gt;security, &lt;prefix&gt;usage, etc.)</span></label>
+            <input type="text" name="dest_table_prefix" value="{dest_table_prefix}" placeholder="lho_">
+          </div>
+        </div>
+      </div>
+
+      <!-- Lakebase fields -->
+      <div class="lakebase-fields" style="{'display:block' if data_dest in ('lakebase','both') else 'display:none'}">
+        <div style="background:#0D1117;border:1px solid #272D3F;border-radius:8px;padding:16px">
+          <h4 style="font-size:12px;font-weight:600;color:#34D399;text-transform:uppercase;margin-bottom:12px"><i class="fas fa-cubes"></i> Lakebase Settings</h4>
+          <div class="schedule-grid">
+            <div class="field-group">
+              <label>Instance Name</label>
+              <input type="text" name="lakebase_instance" value="{lakebase_instance}" placeholder="my-lakebase">
+            </div>
+            <div class="field-group">
+              <label>Schema</label>
+              <input type="text" name="lakebase_schema" value="{lakebase_schema}" placeholder="public">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="actions">
       <button type="submit" class="btn btn-primary">
@@ -256,14 +334,25 @@ input::placeholder{{color:#484F58}}
 </div>
 
 <script>
-// Radio card selection
-document.querySelectorAll('.radio-card input').forEach(r => {{
+// Radio card selection — auth method
+document.querySelectorAll('.radio-card input[name="auth_method"]').forEach(r => {{
   r.addEventListener('change', () => {{
-    document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+    r.closest('.radio-group').querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
     r.closest('.radio-card').classList.add('selected');
     document.querySelector('.pat-fields').style.display = r.value === 'pat' ? 'block' : 'none';
     document.querySelector('.sp-fields').style.display = r.value === 'sp' ? 'block' : 'none';
     document.querySelector('.auto-fields').style.display = r.value === 'auto' ? 'block' : 'none';
+  }});
+}});
+
+// Radio card selection — data destination
+document.querySelectorAll('.radio-card input[name="data_destination"]').forEach(r => {{
+  r.addEventListener('change', () => {{
+    r.closest('.radio-group').querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+    r.closest('.radio-card').classList.add('selected');
+    const v = r.value;
+    document.querySelector('.delta-fields').style.display = (v === 'delta' || v === 'both') ? 'block' : 'none';
+    document.querySelector('.lakebase-fields').style.display = (v === 'lakebase' || v === 'both') ? 'block' : 'none';
   }});
 }});
 
