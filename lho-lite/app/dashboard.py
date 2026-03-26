@@ -323,12 +323,25 @@ def render_dashboard(snapshot: dict, findings=None, security_score=None,
     # Infrastructure KPIs
     running_clusters = sum(1 for c in cluster_raw if c.get("state") == "RUNNING")
 
-    # Cost estimates — compute minutes -> DBUs (1 DBU ≈ 1 compute-minute for serverless SQL)
-    total_dbu = round(total_min, 1)
-    sql_cost = round(total_dbu * 0.07, 2)
-    app_cost_est = len(app_list) * 15  # rough per-app estimate
-    storage_cost = round(est_mb * 0.023 / 1024, 2) if est_mb else 5
-    total_cost_est = round(sql_cost + app_cost_est + storage_cost, 2)
+    # Cost estimates — use real billing data when available
+    if billing_total_dbus > 0:
+        # Use real billing data (90d); estimate monthly as 30d fraction
+        total_dbu = round(billing_total_dbus, 1)
+        # Break down by product from real billing
+        sql_dbus = sum(c["dbus"] for c in cost_by_product_js if "SQL" in c["product"].upper())
+        app_dbus = sum(c["dbus"] for c in cost_by_product_js if "APPS" in c["product"].upper())
+        other_dbus = total_dbu - sql_dbus - app_dbus
+        sql_cost = round(sql_dbus * avg_dbu_price, 2)
+        app_cost_est = round(app_dbus * avg_dbu_price, 2)
+        storage_cost = round(est_mb * 0.023 / 1024, 2) if est_mb else 5
+        total_cost_est = round(billing_total_cost + storage_cost, 2)
+    else:
+        # Fallback: compute minutes -> DBU estimate
+        total_dbu = round(total_min, 1)
+        sql_cost = round(total_dbu * 0.07, 2)
+        app_cost_est = len(app_list) * 15
+        storage_cost = round(est_mb * 0.023 / 1024, 2) if est_mb else 5
+        total_cost_est = round(sql_cost + app_cost_est + storage_cost, 2)
 
     # Mermaid
     arch_mermaid = mermaid_diagrams.get("architecture", "").replace("\n", "\\n")
@@ -467,7 +480,10 @@ body{{background:var(--bg);color:var(--text);font-family:var(--font);font-size:1
 .hm-cell:hover::after{{content:attr(data-tip);position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:var(--elevated);color:var(--text);padding:4px 8px;border-radius:4px;font-size:10px;white-space:nowrap;z-index:10;border:1px solid var(--border)}}
 .pill{{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;margin:1px 2px;background:rgba(255,255,255,.06);color:var(--text2)}}
 details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2);padding:8px 0}}
-.mermaid-box{{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:16px;overflow-x:auto}}
+.mermaid-box{{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:24px;margin-bottom:16px;overflow-x:auto;min-height:300px}}
+.mermaid-box svg{{width:100%;height:auto;max-height:600px}}
+.mermaid-box .node rect,.mermaid-box .node polygon{{rx:8!important;ry:8!important}}
+.mermaid-box .cluster rect{{rx:12!important;ry:12!important}}
 
 /* Grade circle */
 .grade-circle{{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;margin:0 auto 12px}}
@@ -542,8 +558,8 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
   <div class="section-title">Executive Summary</div>
   <div class="kpi-grid">
     <div class="kpi blue" data-goto="daily"><div class="kpi-icon"><i class="fas fa-search"></i></div><div class="kpi-label">Total Queries</div><div class="kpi-value" id="kpi-exec-queries">{total_queries:,}</div><div class="kpi-sub">{success_pct}% success rate</div></div>
-    <div class="kpi green" data-goto="cost"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Est. Monthly Cost</div><div class="kpi-value">${total_cost_est:,.2f}</div><div class="kpi-sub">SQL ${sql_cost:,.0f} &bull; Apps ${app_cost_est:,.0f} &bull; Storage ${storage_cost:,.0f}</div></div>
-    <div class="kpi purple" data-goto="cost"><div class="kpi-icon"><i class="fas fa-bolt"></i></div><div class="kpi-label">DBUs Consumed (30d)</div><div class="kpi-value">{total_dbu:,.0f}</div><div class="kpi-sub">{total_gb} GB read &bull; {active_users} users</div></div>
+    <div class="kpi green" data-goto="cost"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Est. Total Cost (90d)</div><div class="kpi-value">${total_cost_est:,.2f}</div><div class="kpi-sub">SQL ${sql_cost:,.0f} &bull; Apps ${app_cost_est:,.0f} &bull; Storage ${storage_cost:,.0f}</div></div>
+    <div class="kpi purple" data-goto="cost"><div class="kpi-icon"><i class="fas fa-bolt"></i></div><div class="kpi-label">DBUs Consumed (90d)</div><div class="kpi-value">{total_dbu:,.0f}</div><div class="kpi-sub">${avg_dbu_price:.4f}/DBU avg &bull; {active_users} users</div></div>
     <div class="kpi cyan" data-goto="compliance"><div class="kpi-icon"><i class="fas fa-shield-halved"></i></div><div class="kpi-label">Security Grade</div><div class="kpi-value" style="color:{grade_color}">{grade}</div><div class="kpi-sub">{score_val}/100 &bull; {security_score.get("total_findings",0)} findings</div></div>
   </div>
   <div class="grid-2">
@@ -554,7 +570,7 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
         <tr class="clickable-row" data-goto="apps"><td style="font-weight:600">Active Apps</td><td>{len(app_list)} <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
         <tr class="clickable-row" data-goto="apps"><td style="font-weight:600">Model Endpoints</td><td>{len(model_list)} <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
         <tr class="clickable-row" data-goto="daily"><td style="font-weight:600">Data Read (30d)</td><td>{total_gb} GB <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
-        <tr class="clickable-row" data-goto="cost"><td style="font-weight:600">DBUs Consumed (30d)</td><td>{total_dbu:,.0f} DBU <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
+        <tr class="clickable-row" data-goto="cost"><td style="font-weight:600">DBUs Consumed (90d)</td><td>{total_dbu:,.0f} DBU <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
         <tr class="clickable-row" data-goto="compliance"><td style="font-weight:600">Security Findings</td><td>{security_score.get("critical",0)} critical, {security_score.get("high",0)} high <i class="fas fa-arrow-right" style="font-size:9px;opacity:.4;margin-left:4px"></i></td></tr>
       </table>
     </div></div>
@@ -720,7 +736,7 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
 <section class="tab" id="tab-cost">
   <div class="section-title">Cost Details</div>
   <div class="kpi-grid">
-    <div class="kpi blue"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Est. Monthly Total</div><div class="kpi-value">${total_cost_est:,.2f}</div></div>
+    <div class="kpi blue"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Est. Total (90d)</div><div class="kpi-value">${total_cost_est:,.2f}</div></div>
     <div class="kpi green"><div class="kpi-icon"><i class="fas fa-database"></i></div><div class="kpi-label">SQL Compute Cost</div><div class="kpi-value">${sql_cost:,.2f}</div></div>
     <div class="kpi purple"><div class="kpi-icon"><i class="fas fa-rocket"></i></div><div class="kpi-label">App Compute Cost</div><div class="kpi-value">${app_cost_est:,.2f}</div></div>
     <div class="kpi yellow"><div class="kpi-icon"><i class="fas fa-hdd"></i></div><div class="kpi-label">Storage Cost</div><div class="kpi-value">${storage_cost:,.2f}</div></div>
@@ -730,8 +746,8 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
     <div class="card"><div class="card-hdr">Cost by Category</div><div class="card-body"><div class="chart-box h400"><canvas id="cost-category"></canvas></div></div></div>
   </div>
   <div class="card"><div class="card-hdr">Cost Breakdown (Monthly)</div><div class="card-body">
-    <div class="cost-row"><span class="cost-comp">Serverless SQL Compute</span><span class="cost-est">${sql_cost:,.2f}</span><span class="cost-basis">~{total_dbu:,.0f} DBU * $0.07/DBU</span></div>
-    <div class="cost-row"><span class="cost-comp">Apps ({len(app_list)}x)</span><span class="cost-est">${app_cost_est:,.2f}</span><span class="cost-basis">~$15/app estimated</span></div>
+    <div class="cost-row"><span class="cost-comp">SQL Compute</span><span class="cost-est">${sql_cost:,.2f}</span><span class="cost-basis">{total_dbu:,.0f} DBU &bull; ${avg_dbu_price:.4f}/DBU avg</span></div>
+    <div class="cost-row"><span class="cost-comp">Apps Compute</span><span class="cost-est">${app_cost_est:,.2f}</span><span class="cost-basis">from billing data</span></div>
     <div class="cost-row"><span class="cost-comp">Managed Storage</span><span class="cost-est">${storage_cost:,.2f}</span><span class="cost-basis">~{est_mb} MB across {total_tables} tables</span></div>
     <div class="cost-row"><span class="cost-comp">Foundation Models</span><span class="cost-est">Pay-per-token</span><span class="cost-basis">{len(model_list)} endpoints</span></div>
     <div class="cost-total"><div class="cost-row"><span class="cost-comp">TOTAL ESTIMATED</span><span class="cost-est">${total_cost_est:,.2f}</span><span class="cost-basis">Cloud: {cloud}</span></div></div>
@@ -1007,7 +1023,14 @@ function renderArchitecture(){{
   const archDef = `{arch_mermaid}`;
   const secDef = `{sec_mermaid}`;
   const flowDef = `{flow_mermaid}`;
-  mermaid.initialize({{startOnLoad:false,theme:'dark',themeVariables:{{primaryColor:'#4B7BF5',primaryTextColor:'#E6EDF3',primaryBorderColor:'#272D3F',lineColor:'#4B7BF5',secondaryColor:'#161B22',tertiaryColor:'#21262D'}}}});
+  mermaid.initialize({{startOnLoad:false,theme:'dark',themeVariables:{{
+    primaryColor:'#1E3A5F',primaryTextColor:'#E6EDF3',primaryBorderColor:'#4B7BF5',
+    lineColor:'#4B7BF5',secondaryColor:'#1A2332',tertiaryColor:'#162030',
+    mainBkg:'#1E3A5F',nodeBorder:'#4B7BF5',clusterBkg:'#161B22',clusterBorder:'#272D3F',
+    titleColor:'#E6EDF3',edgeLabelBackground:'#161B22',
+    nodeTextColor:'#E6EDF3',
+    fontFamily:'DM Sans, Inter, system-ui, sans-serif',fontSize:'14px'
+  }}}});
   async function renderMM(id, def) {{
     try {{
       const {{svg}} = await mermaid.render(id+'-svg', def);
@@ -1103,14 +1126,14 @@ function renderSpend(){{
         datasets:[{{data: entries.map(e=>Math.round(e[1]*price*100)/100), backgroundColor: COLORS.slice(0,entries.length)}}]
       }},
       options:{{...chartDef, cutout:'55%', plugins:{{
-        legend:{{position:'right',labels:{{boxWidth:14,padding:14,font:{{size:13,weight:'500'}},
+        legend:{{position:'right',labels:{{boxWidth:14,padding:14,color:'#E6EDF3',font:{{size:13,weight:'500'}},
           generateLabels:function(chart){{
             const data=chart.data;
             const total=data.datasets[0].data.reduce((a,b)=>a+b,0);
             return data.labels.map((label,i)=>{{
               const val=data.datasets[0].data[i];
               const pct=total>0?Math.round(val/total*100):0;
-              return {{text:label+' — $'+fmtN(val)+' ('+pct+'%)',fillStyle:data.datasets[0].backgroundColor[i],strokeStyle:data.datasets[0].backgroundColor[i],lineWidth:0,index:i}};
+              return {{text:label+' — $'+fmtN(val)+' ('+pct+'%)',fillStyle:data.datasets[0].backgroundColor[i],strokeStyle:data.datasets[0].backgroundColor[i],fontColor:'#E6EDF3',lineWidth:0,index:i}};
             }});
           }}
         }}}},
