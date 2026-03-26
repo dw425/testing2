@@ -344,17 +344,23 @@ def main():
         lic_mod._license_state["valid"] = True
         lic_mod._license_state["message"] = "Development mode — license check bypassed"
     else:
-        log.info("Checking license...")
-        lic = check_and_update_license()
-        if lic.get("valid"):
-            log.info("License valid.")
-        else:
-            log.warning("License not valid: %s", lic.get("message", "No license key"))
-            log.warning("App will show license gate. Configure via /admin.")
+        try:
+            log.info("Checking license...")
+            lic = check_and_update_license()
+            if lic.get("valid"):
+                log.info("License valid.")
+            else:
+                log.warning("License not valid: %s", lic.get("message", "No license key"))
+                log.warning("App will show license gate. Configure via /admin.")
+        except Exception as e:
+            log.warning("License check failed on startup: %s (app will show license gate)", e)
 
         # Schedule periodic license re-check (every 30 days, polled every 24 hours)
         def _license_recheck():
-            check_and_update_license()
+            try:
+                check_and_update_license()
+            except Exception as e:
+                log.warning("Periodic license check failed: %s", e)
         sched.add_license_check(_license_recheck)
 
     # CLI args → save as config for convenience
