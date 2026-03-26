@@ -1,12 +1,12 @@
 """
 Blueprint dark-themed HTML dashboard generator for LHO Lite.
 
-13-tab layout with sidebar groups:
+14-tab layout with sidebar groups:
   OVERVIEW:  1. Executive Summary  2. Workspace Overview
   SECURITY:  3. Compliance  4. Architecture
-  OPERATIONS:  5. Infrastructure  6. Spend Overview  7. Workflows  8. Cost Details
-  DATA:  9. Apps & Models  10. Table Inventory
-  ACTIVITY:  11. User Activity  12. Daily Trends  13. DBU Pricing
+  OPERATIONS:  5. Infrastructure  6. Spend Overview  7. Workflows  8. Cost Explorer  9. Cost Details
+  DATA:  10. Apps & Models  11. Table Inventory
+  ACTIVITY:  12. User Activity  13. Daily Trends  14. DBU Pricing
 
 CDN: Chart.js 4.x, Mermaid 11, DM Sans, Font Awesome 6.x
 """
@@ -219,6 +219,14 @@ def render_dashboard(snapshot: dict, findings=None, security_score=None,
                        "product": r[2] or "Other", "dbus": _float(r[3])}
                       for r in cost_by_tag_rows]
 
+    # Billing line items for Cost Explorer
+    billing_line_rows = usage_data.get("billing_line_items", {}).get("rows", [])
+    billing_lines_js = [{"product": r[0] or "Other", "sku": r[1] or "", "warehouseId": r[2] or "",
+                         "jobId": str(r[3] or ""), "notebookId": str(r[4] or ""),
+                         "dbus": _float(r[5]), "activeDays": _int(r[6]),
+                         "firstSeen": str(r[7] or "")[:10], "lastSeen": str(r[8] or "")[:10]}
+                        for r in billing_line_rows]
+
     # Build price lookup: sku_name -> usd_per_dbu
     price_map = {}
     for r in price_rows:
@@ -290,6 +298,7 @@ def render_dashboard(snapshot: dict, findings=None, security_score=None,
         "dailyCost": daily_cost_js,
         "costByTag": cost_by_tag_js,
         "workflows": workflow_js,
+        "billingLines": billing_lines_js,
         "avgDbuPrice": avg_dbu_price,
     }
 
@@ -490,6 +499,7 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
       <button class="nav-item" data-tab="infrastructure"><i class="fas fa-server"></i> Infrastructure</button>
       <button class="nav-item" data-tab="spend"><i class="fas fa-dollar-sign"></i> Spend Overview</button>
       <button class="nav-item" data-tab="workflows"><i class="fas fa-cogs"></i> Workflows</button>
+      <button class="nav-item" data-tab="costexplorer"><i class="fas fa-magnifying-glass-dollar"></i> Cost Explorer</button>
       <button class="nav-item" data-tab="cost"><i class="fas fa-calculator"></i> Cost Details</button>
       <div class="sidebar-group">Data</div>
       <button class="nav-item" data-tab="apps"><i class="fas fa-rocket"></i> Apps & Models</button>
@@ -632,9 +642,9 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
     <div class="kpi purple"><div class="kpi-icon"><i class="fas fa-chart-pie"></i></div><div class="kpi-label">Top Category</div><div class="kpi-value" id="spend-top-cat">—</div><div class="kpi-sub" id="spend-top-cat-pct"></div></div>
     <div class="kpi yellow"><div class="kpi-icon"><i class="fas fa-tags"></i></div><div class="kpi-label">Avg DBU Price</div><div class="kpi-value">${avg_dbu_price:.4f}</div><div class="kpi-sub">per DBU</div></div>
   </div>
-  <div class="grid-2">
+  <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:20px;margin-bottom:24px">
     <div class="card"><div class="card-hdr">Monthly Cost by Category</div><div class="card-body"><div class="chart-box h400"><canvas id="spend-monthly-chart"></canvas></div></div></div>
-    <div class="card"><div class="card-hdr">Cost by Tag</div><div class="card-body"><div class="chart-box h400"><canvas id="spend-tag-chart"></canvas></div></div></div>
+    <div class="card"><div class="card-hdr">Cost by Tag <span style="font-size:11px;font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;cursor:pointer" onclick="costExplorerCategory='';rendered['costexplorer']=false;goTab('costexplorer')">→ View Details</span></div><div class="card-body"><div class="chart-box" style="height:420px"><canvas id="spend-tag-chart"></canvas></div></div></div>
   </div>
   <div class="card"><div class="card-hdr">Cost Breakdown by Category (90 Days)</div><div class="card-body" style="overflow-x:auto">
     <table class="dtable" id="spend-breakdown-table">
@@ -668,6 +678,38 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
     <table class="dtable" id="wf-table">
       <thead><tr>
         <th>Name</th><th>Compute Type</th><th class="num">Est. Cost</th><th>Run Statuses</th><th class="num">Duration</th><th class="num">Runs</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div></div>
+</section>
+
+<!-- ============ TAB: COST EXPLORER ============ -->
+<section class="tab" id="tab-costexplorer">
+  <div class="section-title">Cost Explorer <span style="font-size:12px;color:var(--text2);font-weight:400">(Last 90 Days — Billing Line Items)</span></div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><div class="kpi-icon"><i class="fas fa-receipt"></i></div><div class="kpi-label">Line Items</div><div class="kpi-value" id="ce-total-lines">—</div></div>
+    <div class="kpi green"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Total Est. Cost</div><div class="kpi-value" id="ce-total-cost">—</div></div>
+    <div class="kpi purple"><div class="kpi-icon"><i class="fas fa-bolt"></i></div><div class="kpi-label">Total DBUs</div><div class="kpi-value" id="ce-total-dbus">—</div></div>
+    <div class="kpi yellow"><div class="kpi-icon"><i class="fas fa-layer-group"></i></div><div class="kpi-label">Categories</div><div class="kpi-value" id="ce-total-cats">—</div></div>
+  </div>
+  <div class="card"><div class="card-hdr">
+    <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+      <span>Billing Line Items</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="ce-filter-cat" style="background:var(--elevated);color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:11px;font-family:var(--font)">
+          <option value="">All Categories</option>
+        </select>
+        <select id="ce-sort" style="background:var(--elevated);color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:11px;font-family:var(--font)">
+          <option value="cost">Sort: Cost</option><option value="dbus">Sort: DBUs</option><option value="days">Sort: Active Days</option><option value="sku">Sort: SKU</option>
+        </select>
+        <input type="text" id="ce-search" placeholder="Search SKU, job, warehouse..." style="background:var(--elevated);color:var(--text);border:1px solid var(--border);padding:4px 10px;border-radius:4px;font-size:12px;font-family:var(--font);width:200px">
+      </div>
+    </div>
+  </div><div class="card-body" style="overflow-x:auto;max-height:600px;overflow-y:auto">
+    <table class="dtable" id="ce-table">
+      <thead><tr>
+        <th>Category</th><th>SKU</th><th>Resource</th><th class="num">Est. Cost</th><th class="num">DBUs</th><th class="num">% of Total</th><th class="num">Active Days</th><th>Period</th>
       </tr></thead>
       <tbody></tbody>
     </table>
@@ -791,6 +833,7 @@ function applyDateFilter(){{
   }}
   D._filteredUsers = D.users;
   // Destroy existing charts for affected tabs before re-render
+  costExplorerCategory='';
   ['exec-daily','exec-users','exec-findings','user-donut','user-bar','daily-stacked','daily-dual','cost-by-user','cost-category','spend-monthly-chart','spend-tag-chart','spend-daily-chart'].forEach(id=>{{
     const el=document.getElementById(id);
     if(el){{const ch=Chart.getChart(el);if(ch)ch.destroy();}}
@@ -802,6 +845,7 @@ function applyDateFilter(){{
 document.getElementById('date-range').addEventListener('change', applyDateFilter);
 
 // Tab navigation
+let costExplorerCategory='';
 const tabs=document.querySelectorAll('.nav-item'),secs=document.querySelectorAll('.tab');
 let rendered={{}};
 tabs.forEach(t=>t.addEventListener('click',()=>{{
@@ -829,6 +873,7 @@ function renderTab(id){{if(rendered[id])return;rendered[id]=true;
   else if(id==='infrastructure')renderInfra();
   else if(id==='spend')renderSpend();
   else if(id==='workflows')renderWorkflows();
+  else if(id==='costexplorer')renderCostExplorer();
   else if(id==='cost')renderCost();
   else if(id==='apps')renderApps();
   else if(id==='tables')renderTables();
@@ -1051,13 +1096,42 @@ function renderSpend(){{
       tagGroups[key] = (tagGroups[key] || 0) + t.dbus;
     }});
     const entries = Object.entries(tagGroups).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    new Chart(document.getElementById('spend-tag-chart'),{{
+    const tagChart = new Chart(document.getElementById('spend-tag-chart'),{{
       type:'doughnut',
       data:{{
         labels: entries.map(e=>e[0]),
         datasets:[{{data: entries.map(e=>Math.round(e[1]*price*100)/100), backgroundColor: COLORS.slice(0,entries.length)}}]
       }},
-      options:{{...chartDef, cutout:'55%', plugins:{{legend:{{position:'right',labels:{{boxWidth:10,font:{{size:10}}}}}}}}}}
+      options:{{...chartDef, cutout:'55%', plugins:{{
+        legend:{{position:'right',labels:{{boxWidth:14,padding:14,font:{{size:13,weight:'500'}},
+          generateLabels:function(chart){{
+            const data=chart.data;
+            const total=data.datasets[0].data.reduce((a,b)=>a+b,0);
+            return data.labels.map((label,i)=>{{
+              const val=data.datasets[0].data[i];
+              const pct=total>0?Math.round(val/total*100):0;
+              return {{text:label+' — $'+fmtN(val)+' ('+pct+'%)',fillStyle:data.datasets[0].backgroundColor[i],strokeStyle:data.datasets[0].backgroundColor[i],lineWidth:0,index:i}};
+            }});
+          }}
+        }}}},
+        tooltip:{{callbacks:{{label:function(ctx){{
+          const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          const pct=total>0?Math.round(ctx.raw/total*100):0;
+          return ctx.label+': $'+ctx.raw.toFixed(2)+' ('+pct+'%)';
+        }}}}}}
+      }}}}
+    }});
+    // Click donut segment -> Cost Explorer with filter
+    document.getElementById('spend-tag-chart').addEventListener('click',(e)=>{{
+      const pts=tagChart.getElementsAtEventForMode(e,'nearest',{{intersect:true}},false);
+      if(pts.length){{
+        const idx=pts[0].index;
+        costExplorerCategory=entries[idx][0];
+      }} else {{
+        costExplorerCategory='';
+      }}
+      rendered['costexplorer']=false;
+      goTab('costexplorer');
     }});
   }}
 
@@ -1172,6 +1246,94 @@ function renderWorkflows(){{
     const filtered = wf.filter(w=>w.name.toLowerCase().includes(q) || w.computeType.toLowerCase().includes(q));
     renderWfTable(filtered);
   }});
+}}
+
+// ---- Cost Explorer ----
+function renderCostExplorer(preFilterCat){{
+  const lines = D.billingLines || [];
+  const price = D.avgDbuPrice || 0.07;
+  const totalDbus = lines.reduce((s,l)=>s+l.dbus,0);
+  const totalCost = totalDbus * price;
+  const categories = [...new Set(lines.map(l=>l.product))].sort();
+
+  // KPIs
+  document.getElementById('ce-total-lines').textContent = lines.length;
+  document.getElementById('ce-total-cost').textContent = '$' + fmtN(totalCost);
+  document.getElementById('ce-total-dbus').textContent = fmtN(totalDbus);
+  document.getElementById('ce-total-cats').textContent = categories.length;
+
+  // Populate category filter dropdown
+  const catSel = document.getElementById('ce-filter-cat');
+  catSel.innerHTML = '<option value="">All Categories</option>';
+  categories.forEach(c=>{{
+    catSel.innerHTML += `<option value="${{c}}">${{c}}</option>`;
+  }});
+
+  // Pre-filter from donut click
+  const initCat = costExplorerCategory || '';
+  if(initCat){{
+    // Match category: could be a product name or tag value
+    const matchProduct = categories.find(c=>c===initCat);
+    if(matchProduct){{
+      catSel.value = matchProduct;
+    }}
+  }}
+
+  const catColors = {{'SQL':'#4B7BF5','JOBS':'#34D399','ALL_PURPOSE':'#FBBF24','DLT':'#A78BFA','APPS':'#00E5FF','INTERACTIVE':'#F87171','LAKEBASE':'#C084FC','PREDICTIVE_OPTIMIZATION':'#FB923C','DATABASE':'#818CF8','NETWORKING':'#94A3B8','SERVERLESS_COMPUTE':'#38BDF8'}};
+
+  function getResource(l){{
+    if(l.jobId && l.jobId !== '0' && l.jobId !== '') return 'Job: ' + l.jobId;
+    if(l.warehouseId) return 'WH: ' + l.warehouseId.substring(0,12);
+    if(l.notebookId && l.notebookId !== '0' && l.notebookId !== '') return 'NB: ' + l.notebookId;
+    return '\u2014';
+  }}
+
+  function renderCeTable(data){{
+    const tbody = document.querySelector('#ce-table tbody');
+    tbody.innerHTML = '';
+    const maxCost = data.length ? data[0].dbus * price : 1;
+    data.forEach(l=>{{
+      const cost = l.dbus * price;
+      const pct = totalDbus > 0 ? (l.dbus / totalDbus * 100).toFixed(1) : '0.0';
+      const color = catColors[l.product] || '#8B949E';
+      const costPct = maxCost > 0 ? Math.round(cost / maxCost * 100) : 0;
+      const resource = getResource(l);
+      tbody.innerHTML += `<tr>
+        <td><span style="background:${{color}}22;color:${{color}};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${{l.product}}</span></td>
+        <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${{l.sku}}">${{l.sku}}</td>
+        <td style="font-size:12px;color:var(--text2)">${{resource}}</td>
+        <td class="num">
+          <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+            <div style="width:60px;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${{costPct}}%;height:100%;background:${{color}};border-radius:3px"></div></div>
+            <span>$${{cost<0.01&&cost>0?'<0.01':cost.toFixed(2)}}</span>
+          </div>
+        </td>
+        <td class="num">${{fmtN(l.dbus)}}</td>
+        <td class="num">${{pct}}%</td>
+        <td class="num">${{l.activeDays}}</td>
+        <td style="font-size:11px;color:var(--text2)">${{l.firstSeen}} → ${{l.lastSeen}}</td>
+      </tr>`;
+    }});
+    if(!data.length) tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text2);text-align:center;padding:24px">No billing line items available</td></tr>';
+  }}
+
+  function applyFilters(){{
+    let data = [...lines];
+    const cat = catSel.value;
+    const q = document.getElementById('ce-search').value.toLowerCase();
+    const sortBy = document.getElementById('ce-sort').value;
+    if(cat) data = data.filter(l=>l.product===cat);
+    if(q) data = data.filter(l=>l.sku.toLowerCase().includes(q) || l.product.toLowerCase().includes(q) || getResource(l).toLowerCase().includes(q));
+    if(sortBy==='cost'||sortBy==='dbus') data.sort((a,b)=>b.dbus-a.dbus);
+    else if(sortBy==='days') data.sort((a,b)=>b.activeDays-a.activeDays);
+    else if(sortBy==='sku') data.sort((a,b)=>a.sku.localeCompare(b.sku));
+    renderCeTable(data);
+  }}
+
+  applyFilters();
+  catSel.addEventListener('change', applyFilters);
+  document.getElementById('ce-sort').addEventListener('change', applyFilters);
+  document.getElementById('ce-search').addEventListener('input', applyFilters);
 }}
 
 function renderCost(){{

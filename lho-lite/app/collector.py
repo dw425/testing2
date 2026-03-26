@@ -438,10 +438,12 @@ class DatabricksCollector:
                 continue
             key = f"{cat}.{schema}"
             log.info("  Fetching tables for %s ...", key)
+            safe_cat = cat.replace('`', '``')
+            safe_schema = schema.replace('`', '``')
             cols2, rows2 = self.sql(wh_id,
                 f"SELECT table_name, table_type, created, last_altered, comment "
                 f"FROM system.information_schema.tables "
-                f"WHERE table_catalog = '{cat}' AND table_schema = '{schema}' "
+                f"WHERE table_catalog = '{safe_cat}' AND table_schema = '{safe_schema}' "
                 f"ORDER BY table_name LIMIT 500"
             )
             data["table_inventory"][key] = {"cols": cols2, "rows": rows2}
@@ -563,6 +565,26 @@ class DatabricksCollector:
         )
         data["daily_cost"] = {"cols": cols, "rows": rows}
         log.info("  → daily_cost: %d rows", len(rows))
+
+        # 14. Detailed billing line items for Cost Explorer (90d)
+        log.info("  Querying billing line items...")
+        cols, rows = self.sql(wh_id,
+            "SELECT "
+            "billing_origin_product, "
+            "sku_name, "
+            "usage_metadata.warehouse_id as warehouse_id, "
+            "usage_metadata.job_id as job_id, "
+            "usage_metadata.notebook_id as notebook_id, "
+            "ROUND(SUM(usage_quantity), 4) as total_dbus, "
+            "COUNT(DISTINCT usage_date) as active_days, "
+            "MIN(usage_date) as first_seen, "
+            "MAX(usage_date) as last_seen "
+            "FROM system.billing.usage "
+            "WHERE usage_date >= date_sub(current_date(), 90) "
+            "GROUP BY 1, 2, 3, 4, 5 ORDER BY 6 DESC LIMIT 500"
+        )
+        data["billing_line_items"] = {"cols": cols, "rows": rows}
+        log.info("  → billing_line_items: %d rows", len(rows))
 
         log.info("  Done. Collected usage data with %d datasets.", len(data))
         return data

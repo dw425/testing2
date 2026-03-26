@@ -77,6 +77,12 @@ def _check_license():
         return license_blocked_page(), 403
 
 
+@flask_app.errorhandler(Exception)
+def _handle_error(e):
+    log.error("Unhandled error on %s: %s", request.path, e)
+    return jsonify({"error": "Internal server error", "detail": str(e)}), 500
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -101,11 +107,14 @@ def _do_refresh():
     """Full data collection + analysis + save snapshot."""
     log.info("Starting data refresh...")
     t0 = time.time()
-    collector = _build_collector()
-    data = collector.collect_all()
-    duration = round(time.time() - t0, 1)
-    save_data_snapshot(data, duration)
-    log.info("Data refresh completed in %.1f seconds.", duration)
+    try:
+        collector = _build_collector()
+        data = collector.collect_all()
+        duration = round(time.time() - t0, 1)
+        save_data_snapshot(data, duration)
+        log.info("Data refresh completed in %.1f seconds.", duration)
+    except Exception as e:
+        log.error("Data refresh failed after %.1f seconds: %s", time.time() - t0, e)
 
 
 def _collecting_page() -> str:
@@ -179,6 +188,9 @@ def index():
 def admin():
     is_setup = request.args.get("setup") == "1"
     cfg = get_config() if has_config() else {}
+    # Default to auto auth in Databricks App mode
+    if IS_DATABRICKS_APP and not cfg.get("auth_method"):
+        cfg["auth_method"] = "auto"
     msg = request.args.get("msg", "")
     lic_state = get_license_state()
     return render_admin_page(config=cfg, is_setup=is_setup, message=msg, license_state=lic_state)
