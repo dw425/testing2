@@ -129,16 +129,32 @@ class DatabricksCollector:
         log.info("SP token obtained, expires in %ds", expires_in)
 
     def _ensure_token_valid(self):
-        """Refresh SP token if near expiry."""
+        """Refresh SP/SDK token if near expiry."""
         if self.auth_method == "sp" and time.time() >= self._token_expires_at:
             log.info("SP token nearing expiry, refreshing...")
             self._refresh_sp_token()
+        elif self.auth_method == "auto" and hasattr(self, "_sdk_client"):
+            # Re-fetch token from SDK (handles refresh internally)
+            try:
+                header = self._sdk_client.config.authenticate()
+                if callable(header):
+                    h = header()
+                    if "Authorization" in h:
+                        self.session.headers["Authorization"] = h["Authorization"]
+                elif isinstance(header, dict) and "Authorization" in header:
+                    self.session.headers["Authorization"] = header["Authorization"]
+            except Exception:
+                pass
 
     def _setup_sdk_auth(self):
         """Use databricks-sdk default auth chain (for Databricks Apps runtime)."""
         try:
             from databricks.sdk import WorkspaceClient
             w = WorkspaceClient()
+            # Auto-detect workspace URL from SDK if not provided
+            if not self.host and w.config.host:
+                self.host = w.config.host.rstrip("/")
+                log.info("Auto-detected workspace URL from SDK: %s", self.host)
             # Extract token from SDK's auth
             header = w.config.authenticate()
             if callable(header):
@@ -147,6 +163,8 @@ class DatabricksCollector:
                     self.session.headers["Authorization"] = h["Authorization"]
             elif isinstance(header, dict) and "Authorization" in header:
                 self.session.headers["Authorization"] = header["Authorization"]
+            # Store SDK client for token refresh
+            self._sdk_client = w
         except Exception as e:
             log.warning("SDK auto-auth failed: %s. Falling back to env vars.", e)
             # Fallback: check environment
@@ -210,7 +228,7 @@ class DatabricksCollector:
             log.warning("SQL timed out: %s...", statement[:60])
             return [], []
         err = result.get("status", {}).get("error", {}).get("message", str(result)[:200])
-        log.warning("SQL error: %s", err[:150])
+        log.warning("SQL error [%s]: %s", statement[:60], err[:200])
         return [], []
 
     # ---- Connection test ----
@@ -344,6 +362,7 @@ class DatabricksCollector:
             "GROUP BY executed_by, execution_status ORDER BY cnt DESC"
         )
         data["user_queries"] = {"cols": cols, "rows": rows}
+        log.info("  → user_queries: %d rows", len(rows))
 
         # 2. Daily query trends (30d)
         log.info("  Querying daily trends...")
@@ -358,6 +377,7 @@ class DatabricksCollector:
             "GROUP BY DATE(start_time) ORDER BY query_date"
         )
         data["daily_queries"] = {"cols": cols, "rows": rows}
+        log.info("  → daily_queries: %d rows", len(rows))
 
         # 3. Warehouse events (30d)
         log.info("  Querying warehouse events...")
@@ -367,6 +387,7 @@ class DatabricksCollector:
             "WHERE event_time > date_sub(now(), 30) ORDER BY event_time DESC LIMIT 100"
         )
         data["warehouse_events"] = {"cols": cols, "rows": rows}
+        log.info("  → warehouse_events: %d rows", len(rows))
 
         # 4. DBU list prices — cloud-adaptive
         log.info("  Querying DBU list prices...")
@@ -386,6 +407,7 @@ class DatabricksCollector:
                 "WHERE price_end_time IS NULL ORDER BY sku_name LIMIT 200"
             )
         data["list_prices"] = {"cols": cols, "rows": rows}
+        log.info("  → list_prices: %d rows", len(rows))
 
         # 5. Schema overview
         log.info("  Querying table inventory...")
