@@ -202,11 +202,16 @@ print(f"\n✓ All files written to {WORKSPACE_APP_DIR}")
 
 import requests as _api
 
-# Get workspace host and token from the notebook context
-from databricks.sdk import WorkspaceClient
-_w = WorkspaceClient()
-_host = _w.config.host.rstrip("/")
-_auth = {"Authorization": f"Bearer {_w.config.token}"}
+# Get workspace host and token from the notebook context (dbutils is most reliable)
+_ctx = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
+_host = _ctx.apiUrl().get().rstrip("/")
+_token_val = _ctx.apiToken().get()
+_auth = {"Authorization": f"Bearer {_token_val}"}
+
+print(f"Workspace: {_host}")
+print(f"Token: {_token_val[:12]}..." if _token_val else "Token: MISSING!")
+print(f"App source: {WORKSPACE_APP_DIR}")
+print()
 
 def _api_get(path):
     r = _api.get(f"{_host}/api/2.0{path}", headers=_auth)
@@ -216,9 +221,9 @@ def _api_post(path, body=None):
     r = _api.post(f"{_host}/api/2.0{path}", headers=_auth, json=body or {})
     return r.status_code, r.json() if r.text else {}
 
-print(f"Workspace: {_host}")
-print(f"App source: {WORKSPACE_APP_DIR}")
-print()
+def _api_delete(path):
+    r = _api.delete(f"{_host}/api/2.0{path}", headers=_auth)
+    return r.status_code, r.json() if r.text else {}
 
 # --- Check if app already exists ---
 app_exists = False
