@@ -207,17 +207,35 @@ print(f"App source: {WORKSPACE_APP_DIR}")
 print()
 
 # --- Check if app already exists ---
+import time as _time
+
 app_exists = False
 app_url = None
 try:
     existing = w.apps.get(APP_NAME)
     app_exists = True
     app_url = getattr(existing, 'url', None)
-    state = getattr(getattr(existing, 'compute_status', None), 'state', 'UNKNOWN')
-    print(f"✓ App '{APP_NAME}' already exists (state: {state})")
+    compute_state = getattr(getattr(existing, 'compute_status', None), 'state', 'UNKNOWN')
+    print(f"✓ App '{APP_NAME}' already exists (state: {compute_state})")
+
+    # If app is being deleted, wait for deletion to complete
+    if compute_state in ('DELETING', 'STOPPING'):
+        print(f"  App is being deleted, waiting...")
+        for i in range(12):
+            _time.sleep(10)
+            try:
+                existing = w.apps.get(APP_NAME)
+                compute_state = getattr(getattr(existing, 'compute_status', None), 'state', 'UNKNOWN')
+                print(f"  ... state: {compute_state}")
+                if compute_state not in ('DELETING', 'STOPPING'):
+                    break
+            except Exception:
+                app_exists = False
+                print(f"  ✓ App deletion complete")
+                break
 except Exception as e:
     err = str(e)
-    if "does not exist" in err.lower() or "not found" in err.lower() or "404" in err:
+    if "does not exist" in err.lower() or "not found" in err.lower() or "404" in err or "deleted" in err.lower():
         print(f"  App not found. Will create...")
     else:
         print(f"  Error checking app: {err[:300]}")
@@ -226,37 +244,67 @@ except Exception as e:
 # --- Create app if needed ---
 if not app_exists:
     print(f"\nCreating app '{APP_NAME}' ...")
+    from databricks.sdk.service.apps import App
+
+    # Retry creation up to 3 times (handles "name still reserved" after deletion)
+    _created = False
+    for _attempt in range(3):
+        try:
+            try:
+                app = w.apps.create_and_wait(
+                    App(
+                        name=APP_NAME,
+                        description="LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
+                    ),
+                    timeout=datetime.timedelta(minutes=5),
+                )
+            except TypeError:
+                # Some SDK versions don't accept timeout
+                app = w.apps.create_and_wait(
+                    App(
+                        name=APP_NAME,
+                        description="LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
+                    )
+                )
+            app_url = getattr(app, 'url', None)
+            print(f"  ✓ App created!")
+            print(f"  URL: {app_url}")
+            _created = True
+            break
+        except Exception as e:
+            err = str(e)
+            if "already exists" in err.lower():
+                print(f"  ✓ App already exists — continuing")
+                _created = True
+                break
+            elif "deleted" in err.lower() or "reserved" in err.lower():
+                print(f"  Name still reserved from deletion. Waiting 30s... (attempt {_attempt+1}/3)")
+                _time.sleep(30)
+            else:
+                print(f"  Create failed: {err[:400]}")
+                if _attempt < 2:
+                    print(f"  Retrying in 15s... (attempt {_attempt+1}/3)")
+                    _time.sleep(15)
+                else:
+                    print(f"\n  ⚠ Will try to deploy anyway...")
+                    break
+
+# --- Wait for compute to be ACTIVE before deploying ---
+print(f"\nWaiting for app compute to be ready...")
+for i in range(24):  # up to 4 minutes
     try:
-        from databricks.sdk.service.apps import App
-        app = w.apps.create_and_wait(
-            App(
-                name=APP_NAME,
-                description="LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
-            ),
-            timeout=datetime.timedelta(minutes=5),
-        )
-        app_url = getattr(app, 'url', None)
-        print(f"  ✓ App created!")
-        print(f"  URL: {app_url}")
-    except TypeError:
-        from databricks.sdk.service.apps import App
-        app = w.apps.create_and_wait(
-            App(
-                name=APP_NAME,
-                description="LHO Lite — Lakehouse Optimizer by Blueprint Technologies",
-            )
-        )
-        app_url = getattr(app, 'url', None)
-        print(f"  ✓ App created!")
-        print(f"  URL: {app_url}")
-    except Exception as e:
-        err = str(e)
-        print(f"  SDK create failed: {err[:500]}")
-        if "already exists" in err.lower():
-            print(f"  ✓ App already exists — continuing")
-            app_exists = True
-        else:
-            print(f"\n  ⚠ Will try to deploy anyway...")
+        app_info = w.apps.get(APP_NAME)
+        compute_state = getattr(getattr(app_info, 'compute_status', None), 'state', 'UNKNOWN')
+        app_url = getattr(app_info, 'url', None) or app_url
+        if compute_state == 'ACTIVE':
+            print(f"  ✓ Compute is ACTIVE")
+            break
+        print(f"  ... compute state: {compute_state} (waiting)")
+        _time.sleep(10)
+    except Exception:
+        _time.sleep(10)
+else:
+    print(f"  ⚠ Compute not active after 4 minutes — attempting deploy anyway")
 
 # --- Deploy ---
 print(f"\nDeploying from {WORKSPACE_APP_DIR} ...")
