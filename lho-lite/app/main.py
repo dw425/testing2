@@ -170,14 +170,16 @@ def _get_dashboard_html() -> str:
 
 @flask_app.route("/")
 def index():
-    if not has_config() and not IS_DATABRICKS_APP:
+    cfg = get_config()
+    setup_done = cfg.get("setup_complete") == "true"
+    if not setup_done:
         return redirect("/admin?setup=1")
     # If data is still being collected for the first time, show a waiting page
     if not get_latest_snapshot():
         if sched.get_status().get("is_refreshing"):
             return _collecting_page()
-        # In Databricks App mode without config, auto-trigger refresh
-        if IS_DATABRICKS_APP:
+        # Trigger refresh if we have config or running as Databricks App
+        if has_config() or IS_DATABRICKS_APP:
             sched.trigger_manual_refresh()
             return _collecting_page()
         return redirect("/admin?setup=1")
@@ -231,6 +233,8 @@ def admin_save():
     if url and not url.startswith("http"):
         data["workspace_url"] = "https://" + url
 
+    # Mark setup as complete
+    data["setup_complete"] = "true"
     save_config(data)
 
     # Validate and activate license
@@ -403,15 +407,19 @@ def main():
             "auth_method": "pat",
             "pat_token": args.token,
             "refresh_schedule": "manual",
+            "setup_complete": "true",
         })
         log.info("Config saved from CLI arguments.")
 
-    # If we have config (or running as Databricks App with SDK auth) but no data,
-    # trigger initial refresh
-    can_collect = has_config() or IS_DATABRICKS_APP
-    if can_collect and not get_latest_snapshot():
-        log.info("No cached data found. Triggering initial data collection...")
-        sched.trigger_manual_refresh()
+    # If setup is complete and we have config but no data, trigger initial refresh
+    cfg_startup = get_config()
+    if cfg_startup.get("setup_complete") == "true":
+        can_collect = has_config() or IS_DATABRICKS_APP
+        if can_collect and not get_latest_snapshot():
+            log.info("No cached data found. Triggering initial data collection...")
+            sched.trigger_manual_refresh()
+    else:
+        log.info("Setup not complete. Waiting for admin configuration...")
 
     # Restore schedule from config
     if has_config():
