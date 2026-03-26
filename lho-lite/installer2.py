@@ -374,35 +374,33 @@ if sc == 200:
 else:
     print(f"⚠ Could not get app info ({sc}) — permissions must be granted manually")
 
-# Grant system table access using SQL
+# Grant system table access via Unity Catalog REST API (uses SP UUID which always works)
 if sp_id:
     schemas_to_grant = ["system.billing", "system.query", "system.compute", "system.lakeflow"]
-    print(f"\nGranting system table access to {sp_display}...")
+    print(f"\nGranting system table access to {sp_display} ({sp_id})...")
     print("  (requires metastore admin privileges)")
 
     for schema_path in schemas_to_grant:
-        try:
-            spark.sql(f"GRANT USE_SCHEMA, SELECT ON SCHEMA `{schema_path}` TO `{sp_display}`")
+        sc, data = _api("PATCH", f"/api/2.1/unity-catalog/permissions/schema/{schema_path}", {
+            "changes": [{"principal": sp_id, "add": ["USE_SCHEMA", "SELECT"]}]
+        })
+        if sc == 200:
             print(f"  ✓ Granted USE_SCHEMA + SELECT on {schema_path}")
-        except Exception as e:
-            err = str(e)
-            if "already" in err.lower():
-                print(f"  ✓ {schema_path} — already granted")
-            else:
-                print(f"  ⚠ {schema_path} — grant failed: {err[:200]}")
-                print(f"    → Run manually: GRANT USE_SCHEMA, SELECT ON SCHEMA `{schema_path}` TO `{sp_display}`")
+        else:
+            err_msg = data.get("message", str(sc))
+            print(f"  ⚠ {schema_path} — grant failed ({sc}): {err_msg[:200]}")
+            print(f"    → Run manually: GRANT USE_SCHEMA, SELECT ON SCHEMA `{schema_path}` TO `{sp_display}`")
 
     # Also grant USE_CATALOG on system
-    try:
-        spark.sql(f"GRANT USE_CATALOG ON CATALOG `system` TO `{sp_display}`")
+    sc, data = _api("PATCH", "/api/2.1/unity-catalog/permissions/catalog/system", {
+        "changes": [{"principal": sp_id, "add": ["USE_CATALOG"]}]
+    })
+    if sc == 200:
         print(f"  ✓ Granted USE_CATALOG on system")
-    except Exception as e:
-        err = str(e)
-        if "already" in err.lower():
-            print(f"  ✓ system catalog — already granted")
-        else:
-            print(f"  ⚠ USE_CATALOG on system — grant failed: {err[:200]}")
-            print(f"    → Run manually: GRANT USE_CATALOG ON CATALOG `system` TO `{sp_display}`")
+    else:
+        err_msg = data.get("message", str(sc))
+        print(f"  ⚠ USE_CATALOG on system — grant failed ({sc}): {err_msg[:200]}")
+        print(f"    → Run manually: GRANT USE_CATALOG ON CATALOG `system` TO `{sp_display}`")
 else:
     print("\n⚠ Skipping system table grants — no service principal detected.")
     print("  You will need to grant these manually after the app starts:")
