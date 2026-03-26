@@ -1,0 +1,7 @@
+# Databricks App manifest for LHO Lite
+command:
+  - "python3"
+  - "app/main.py"
+env:
+  - name: DATABRICKS_APP_PORT
+    value: "8050"

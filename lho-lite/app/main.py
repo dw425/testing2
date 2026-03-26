@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+"""
+LHO Lite — Lakehouse Optimizer Lite
+====================================
+Flask app with Blueprint dark theme dashboard, admin setup, scheduled refresh,
+and Excel export.  Universal across AWS / Azure / GCP Databricks workspaces.
+
+Usage:
+  # Local mode (interactive)
+  python3 app/main.py --host https://<workspace> --token dapi...
+
+  # Databricks App mode (auto-detects env)
+  python3 app/main.py
+"""
+
+import argparse
+import json
+import logging
+import os
+import sys
+import time
+from datetime import datetime
+
+from flask import Flask, request, redirect, send_file, jsonify
+
+from app.config_store import (
+    has_config, get_config, save_config, delete_config, save_data_snapshot, get_latest_snapshot,
+)
+from app.collector import DatabricksCollector
+from app.analyzer import (
+    analyze_security, compute_security_score, generate_mermaid_architecture,
+    assess_compliance, build_workspace_profile,
+)
+from app.dashboard import render_dashboard
+from app.admin import render_admin_page
+from app.excel_export import generate_security_excel, generate_usage_excel
+from app import scheduler as sched
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger("lho")
+
+# ---------------------------------------------------------------------------
+# Flask app
+# ---------------------------------------------------------------------------
+flask_app = Flask(__name__)
+flask_app.secret_key = os.urandom(24)
+
+IS_DATABRICKS_APP = bool(os.environ.get("DATABRICKS_APP_PORT"))
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _build_collector() -> DatabricksCollector:
+    """Build a collector from stored config."""
+    cfg = get_config()
+    return DatabricksCollector(
+        workspace_url=cfg.get("workspace_url", ""),
+        auth_method=cfg.get("auth_method", "pat"),
+        pat_token=cfg.get("pat_token", ""),
+        sp_client_id=cfg.get("sp_client_id", ""),
+        sp_client_secret=cfg.get("sp_client_secret", ""),
+        sp_tenant_id=cfg.get("sp_tenant_id", ""),
+    )
+
+
+def _do_refresh():
+    """Full data collection + analysis + save snapshot."""
+    log.info("Starting data refresh...")
+    t0 = time.time()
+    collector = _build_collector()
+    data = collector.collect_all()
+    duration = round(time.time() - t0, 1)
+    save_data_snapshot(data, duration)
+    log.info("Data refresh completed in %.1f seconds.", duration)
+
+
+def _collecting_page() -> str:
+    """Show a loading page while initial data collection runs."""
+    return '''<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>LHO Lite — Collecting Data</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{background:#0D1117;color:#E6EDF3;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.box{text-align:center;max-width:400px}.spinner{width:48px;height:48px;border:4px solid #272D3F;border-top:4px solid #4B7BF5;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 24px}
+@keyframes spin{to{transform:rotate(360deg)}}h2{margin-bottom:8px}p{color:#8B949E;font-size:14px}
+</style></head><body><div class="box"><div class="spinner"></div><h2>Collecting workspace data...</h2>
+<p>This may take 1-3 minutes depending on workspace size.<br>The page will refresh automatically.</p></div>
+<script>setTimeout(()=>location.reload(),5000);</script></body></html>'''
+
+
+def _get_dashboard_html() -> str:
+    """Render dashboard from latest snapshot."""
+    snap = get_latest_snapshot()
+    if not snap:
+        return "<h2 style='color:#E6EDF3;font-family:sans-serif;padding:40px'>No data collected yet. <a href='/admin?setup=1' style='color:#4B7BF5'>Configure your workspace</a> and run a refresh.</h2>"
+
+    data = snap["data"]
+    sec_data = data.get("security", {})
+    usage_data = data.get("usage", {})
+
+    findings = analyze_security(sec_data)
+    score = compute_security_score(findings)
+    diagrams = generate_mermaid_architecture(sec_data)
+    compliance = assess_compliance(sec_data, findings)
+    workspace_profile = build_workspace_profile(sec_data)
+
+    collected_at = snap.get("collected_at", "")
+    try:
+        dt = datetime.fromisoformat(collected_at)
+        last_refresh = dt.strftime("Updated %Y-%m-%d %H:%M UTC")
+    except Exception:
+        last_refresh = f"Updated {collected_at}"
+
+    return render_dashboard(
+        snapshot=data,
+        findings=findings,
+        security_score=score,
+        mermaid_diagrams=diagrams,
+        compliance=compliance,
+        workspace_profile=workspace_profile,
+        last_refresh=last_refresh,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
+@flask_app.route("/")
+def index():
+    if not has_config():
+        return redirect("/admin?setup=1")
+    # If data is still being collected for the first time, show a waiting page
+    if not get_latest_snapshot() and sched.get_status().get("is_refreshing"):
+        return _collecting_page()
+    return _get_dashboard_html()
+
+
+@flask_app.route("/admin")
+def admin():
+    is_setup = request.args.get("setup") == "1"
+    cfg = get_config() if has_config() else {}
+    msg = request.args.get("msg", "")
+    return render_admin_page(config=cfg, is_setup=is_setup, message=msg)
+
+
+@flask_app.route("/admin/save", methods=["POST"])
+def admin_save():
+    data = {
+        "workspace_url": request.form.get("workspace_url", "").strip(),
+        "auth_method": request.form.get("auth_method", "pat"),
+        "pat_token": request.form.get("pat_token", "").strip(),
+        "sp_client_id": request.form.get("sp_client_id", "").strip(),
+        "sp_client_secret": request.form.get("sp_client_secret", "").strip(),
+        "sp_tenant_id": request.form.get("sp_tenant_id", "").strip(),
+        "refresh_schedule": request.form.get("refresh_schedule", "manual"),
+        "refresh_hour": request.form.get("refresh_hour", "6"),
+    }
+
+    # Normalize URL
+    url = data["workspace_url"]
+    if url and not url.startswith("http"):
+        data["workspace_url"] = "https://" + url
+
+    save_config(data)
+
+    # Configure schedule
+    sched.configure_schedule(data["refresh_schedule"], int(data.get("refresh_hour", 6)))
+
+    # Trigger initial refresh if first setup
+    if not get_latest_snapshot():
+        sched.trigger_manual_refresh()
+        return redirect("/?msg=collecting")
+
+    return redirect("/admin?msg=Settings+saved")
+
+
+@flask_app.route("/admin/test", methods=["POST"])
+def admin_test():
+    """AJAX connection test."""
+    workspace_url = request.form.get("workspace_url", "").strip()
+    if not workspace_url.startswith("http"):
+        workspace_url = "https://" + workspace_url
+
+    auth_method = request.form.get("auth_method", "pat")
+
+    try:
+        collector = DatabricksCollector(
+            workspace_url=workspace_url,
+            auth_method=auth_method,
+            pat_token=request.form.get("pat_token", "").strip(),
+            sp_client_id=request.form.get("sp_client_id", "").strip(),
+            sp_client_secret=request.form.get("sp_client_secret", "").strip(),
+            sp_tenant_id=request.form.get("sp_tenant_id", "").strip(),
+        )
+        result = collector.test_connection()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+
+@flask_app.route("/admin/reset")
+def admin_reset():
+    delete_config()
+    return redirect("/admin?setup=1")
+
+
+# ---- API endpoints ----
+
+@flask_app.route("/api/data")
+def api_data():
+    snap = get_latest_snapshot()
+    if not snap:
+        return jsonify({"error": "No data available"}), 404
+    return jsonify(snap)
+
+
+@flask_app.route("/api/refresh", methods=["POST"])
+def api_refresh():
+    started = sched.trigger_manual_refresh()
+    if started:
+        return jsonify({"ok": True, "message": "Refresh started"})
+    return jsonify({"ok": False, "message": "Refresh already in progress"})
+
+
+@flask_app.route("/api/status")
+def api_status():
+    snap = get_latest_snapshot()
+    status = sched.get_status()
+    status["last_collected"] = snap["collected_at"] if snap else None
+    status["last_duration"] = snap["duration_sec"] if snap else None
+    return jsonify(status)
+
+
+# ---- Excel exports ----
+
+@flask_app.route("/export/security")
+def export_security():
+    snap = get_latest_snapshot()
+    if not snap:
+        return "No data available", 404
+    sec_data = snap["data"].get("security", {})
+    findings = analyze_security(sec_data)
+    buf = generate_security_excel(sec_data, findings)
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=f"LHO_Security_Report_{datetime.now().strftime('%Y%m%d')}.xlsx",
+    )
+
+
+@flask_app.route("/export/usage")
+def export_usage():
+    snap = get_latest_snapshot()
+    if not snap:
+        return "No data available", 404
+    sec_data = snap["data"].get("security", {})
+    usage_data = snap["data"].get("usage", {})
+    buf = generate_usage_excel(sec_data, usage_data)
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=f"LHO_Usage_Report_{datetime.now().strftime('%Y%m%d')}.xlsx",
+    )
+
+
+# ---- Health ----
+
+@flask_app.route("/health")
+def health():
+    return jsonify({"status": "ok", "version": "1.0.0"})
+
+
+# ---------------------------------------------------------------------------
+# Startup
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(description="LHO Lite — Lakehouse Optimizer")
+    parser.add_argument("--host", help="Databricks workspace URL")
+    parser.add_argument("--token", help="Personal Access Token")
+    parser.add_argument("--port", type=int, default=None, help="Port (default: 8050)")
+    parser.add_argument("--no-browser", action="store_true", help="Don't open browser")
+    args = parser.parse_args()
+
+    # Initialize scheduler
+    sched.init_scheduler(_do_refresh)
+
+    # CLI args → save as config for convenience
+    if args.host and args.token:
+        save_config({
+            "workspace_url": args.host if args.host.startswith("http") else f"https://{args.host}",
+            "auth_method": "pat",
+            "pat_token": args.token,
+            "refresh_schedule": "manual",
+        })
+        log.info("Config saved from CLI arguments.")
+
+    # If we have config but no data, trigger initial refresh
+    if has_config() and not get_latest_snapshot():
+        log.info("No cached data found. Triggering initial data collection...")
+        sched.trigger_manual_refresh()
+
+    # Restore schedule from config
+    if has_config():
+        cfg = get_config()
+        sched.configure_schedule(
+            cfg.get("refresh_schedule", "manual"),
+            int(cfg.get("refresh_hour", 6)),
+        )
+
+    # Determine port
+    port = args.port or int(os.environ.get("DATABRICKS_APP_PORT", 8050))
+
+    # Open browser in local mode
+    if not IS_DATABRICKS_APP and not args.no_browser:
+        import webbrowser
+        import threading
+        threading.Timer(1.5, lambda: webbrowser.open(f"http://localhost:{port}")).start()
+
+    log.info("Starting LHO Lite on port %d (Databricks App: %s)", port, IS_DATABRICKS_APP)
+    flask_app.run(host="0.0.0.0", port=port, debug=False)
+
+
+if __name__ == "__main__":
+    main()
