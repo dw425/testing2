@@ -446,13 +446,13 @@ class DatabricksCollector:
             )
             data["table_inventory"][key] = {"cols": cols2, "rows": rows2}
 
-        # 7. Sample table sizes via DESCRIBE DETAIL
+        # 7. Sample table sizes via DESCRIBE DETAIL (limit to 5 per schema to reduce noise)
         log.info("  Sampling table sizes...")
         data["table_sizes"] = {}
         for key, inv in data["table_inventory"].items():
             sampled = 0
             for r in inv["rows"]:
-                if sampled >= 15:
+                if sampled >= 5:
                     break
                 tname = r[0]
                 try:
@@ -465,6 +465,104 @@ class DatabricksCollector:
                             sampled += 1
                 except Exception:
                     pass
+
+        # ---- Phase 2b: Billing & cost data ----
+
+        # 8. Monthly cost by billing product (90d)
+        log.info("  Querying monthly cost by product...")
+        cols, rows = self.sql(wh_id,
+            "SELECT DATE_TRUNC('month', usage_date) as month, "
+            "billing_origin_product, "
+            "ROUND(SUM(usage_quantity), 2) as total_dbus "
+            "FROM system.billing.usage "
+            "WHERE usage_date >= date_sub(current_date(), 90) "
+            "GROUP BY 1, 2 ORDER BY 1, 2"
+        )
+        data["monthly_cost_by_product"] = {"cols": cols, "rows": rows}
+        log.info("  → monthly_cost_by_product: %d rows", len(rows))
+
+        # 9. Cost by billing_origin_product (90d totals)
+        log.info("  Querying cost by product category...")
+        cols, rows = self.sql(wh_id,
+            "SELECT billing_origin_product, "
+            "ROUND(SUM(usage_quantity), 2) as total_dbus, "
+            "COUNT(DISTINCT usage_date) as active_days "
+            "FROM system.billing.usage "
+            "WHERE usage_date >= date_sub(current_date(), 90) "
+            "GROUP BY 1 ORDER BY 2 DESC"
+        )
+        data["cost_by_product"] = {"cols": cols, "rows": rows}
+        log.info("  → cost_by_product: %d rows", len(rows))
+
+        # 10. Cost by custom tags (90d)
+        log.info("  Querying cost by tags...")
+        cols, rows = self.sql(wh_id,
+            "SELECT "
+            "CASE WHEN size(custom_tags) > 0 THEN map_keys(custom_tags)[0] "
+            "     ELSE 'Untagged' END as tag_key, "
+            "CASE WHEN size(custom_tags) > 0 THEN map_values(custom_tags)[0] "
+            "     ELSE 'Untagged' END as tag_value, "
+            "billing_origin_product, "
+            "ROUND(SUM(usage_quantity), 2) as total_dbus "
+            "FROM system.billing.usage "
+            "WHERE usage_date >= date_sub(current_date(), 90) "
+            "GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 50"
+        )
+        data["cost_by_tag"] = {"cols": cols, "rows": rows}
+        log.info("  → cost_by_tag: %d rows", len(rows))
+
+        # 11. Job run cost & performance (30d) — join billing with job run timeline
+        log.info("  Querying job costs...")
+        cols, rows = self.sql(wh_id,
+            "SELECT "
+            "j.job_id, "
+            "COALESCE(j.run_name, CAST(j.job_id AS STRING)) as job_name, "
+            "COUNT(DISTINCT j.run_id) as total_runs, "
+            "SUM(CASE WHEN j.result_state = 'SUCCESS' THEN 1 ELSE 0 END) as succeeded, "
+            "SUM(CASE WHEN j.result_state IN ('FAILED','TIMEDOUT','INTERNAL_ERROR') THEN 1 ELSE 0 END) as failed, "
+            "SUM(CASE WHEN j.result_state = 'CANCELED' THEN 1 ELSE 0 END) as canceled, "
+            "ROUND(AVG(j.run_duration_seconds) / 60, 1) as avg_duration_min, "
+            "ROUND(SUM(j.run_duration_seconds) / 60, 1) as total_duration_min "
+            "FROM system.lakeflow.job_run_timeline j "
+            "WHERE j.period_start_time >= date_sub(now(), 30) "
+            "GROUP BY j.job_id, COALESCE(j.run_name, CAST(j.job_id AS STRING)) "
+            "ORDER BY total_runs DESC LIMIT 100"
+        )
+        data["job_runs"] = {"cols": cols, "rows": rows}
+        log.info("  → job_runs: %d rows", len(rows))
+
+        # 12. Job DBU costs from billing (30d)
+        log.info("  Querying job billing...")
+        cols, rows = self.sql(wh_id,
+            "SELECT "
+            "usage_metadata.job_id as job_id, "
+            "usage_metadata.job_name as job_name, "
+            "sku_name, "
+            "ROUND(SUM(usage_quantity), 4) as total_dbus "
+            "FROM system.billing.usage "
+            "WHERE usage_metadata.job_id IS NOT NULL "
+            "AND usage_date >= date_sub(current_date(), 30) "
+            "GROUP BY 1, 2, 3 ORDER BY 4 DESC LIMIT 200"
+        )
+        data["job_billing"] = {"cols": cols, "rows": rows}
+        log.info("  → job_billing: %d rows", len(rows))
+
+        # 13. Daily cost trend (90d)
+        log.info("  Querying daily cost trend...")
+        cols, rows = self.sql(wh_id,
+            "SELECT usage_date, "
+            "ROUND(SUM(usage_quantity), 2) as total_dbus, "
+            "ROUND(SUM(CASE WHEN billing_origin_product = 'SQL' THEN usage_quantity ELSE 0 END), 2) as sql_dbus, "
+            "ROUND(SUM(CASE WHEN billing_origin_product = 'JOBS' THEN usage_quantity ELSE 0 END), 2) as jobs_dbus, "
+            "ROUND(SUM(CASE WHEN billing_origin_product = 'ALL_PURPOSE' THEN usage_quantity ELSE 0 END), 2) as allpurpose_dbus, "
+            "ROUND(SUM(CASE WHEN billing_origin_product = 'DLT' THEN usage_quantity ELSE 0 END), 2) as dlt_dbus, "
+            "ROUND(SUM(CASE WHEN billing_origin_product NOT IN ('SQL','JOBS','ALL_PURPOSE','DLT') THEN usage_quantity ELSE 0 END), 2) as other_dbus "
+            "FROM system.billing.usage "
+            "WHERE usage_date >= date_sub(current_date(), 90) "
+            "GROUP BY usage_date ORDER BY usage_date"
+        )
+        data["daily_cost"] = {"cols": cols, "rows": rows}
+        log.info("  → daily_cost: %d rows", len(rows))
 
         log.info("  Done. Collected usage data with %d datasets.", len(data))
         return data

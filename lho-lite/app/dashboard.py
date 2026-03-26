@@ -1,12 +1,12 @@
 """
 Blueprint dark-themed HTML dashboard generator for LHO Lite.
 
-11-tab layout with sidebar groups:
+13-tab layout with sidebar groups:
   OVERVIEW:  1. Executive Summary  2. Workspace Overview
   SECURITY:  3. Compliance  4. Architecture
-  OPERATIONS:  5. Infrastructure  6. Cost Analysis
-  DATA:  7. Apps & Models  8. Table Inventory
-  ACTIVITY:  9. User Activity  10. Daily Trends  11. DBU Pricing
+  OPERATIONS:  5. Infrastructure  6. Spend Overview  7. Workflows  8. Cost Details
+  DATA:  9. Apps & Models  10. Table Inventory
+  ACTIVITY:  11. User Activity  12. Daily Trends  13. DBU Pricing
 
 CDN: Chart.js 4.x, Mermaid 11, DM Sans, Font Awesome 6.x
 """
@@ -196,6 +196,78 @@ def render_dashboard(snapshot: dict, findings=None, security_score=None,
         "maxClusters": w.get("max_num_clusters", 1),
     } for w in warehouse_raw]
 
+    # ---- Billing / cost data for new tabs ----
+    cost_by_product_rows = usage_data.get("cost_by_product", {}).get("rows", [])
+    monthly_cost_rows = usage_data.get("monthly_cost_by_product", {}).get("rows", [])
+    daily_cost_rows = usage_data.get("daily_cost", {}).get("rows", [])
+    cost_by_tag_rows = usage_data.get("cost_by_tag", {}).get("rows", [])
+    job_runs_rows = usage_data.get("job_runs", {}).get("rows", [])
+    job_billing_rows = usage_data.get("job_billing", {}).get("rows", [])
+
+    cost_by_product_js = [{"product": r[0] or "Other", "dbus": _float(r[1]), "days": _int(r[2])}
+                          for r in cost_by_product_rows]
+
+    monthly_cost_js = [{"month": (r[0] or "")[:10], "product": r[1] or "Other", "dbus": _float(r[2])}
+                       for r in monthly_cost_rows]
+
+    daily_cost_js = [{"date": str(r[0] or ""), "total": _float(r[1]), "sql": _float(r[2]),
+                      "jobs": _float(r[3]), "allPurpose": _float(r[4]),
+                      "dlt": _float(r[5]), "other": _float(r[6])}
+                     for r in daily_cost_rows]
+
+    cost_by_tag_js = [{"tagKey": r[0] or "Untagged", "tagValue": r[1] or "Untagged",
+                       "product": r[2] or "Other", "dbus": _float(r[3])}
+                      for r in cost_by_tag_rows]
+
+    # Build price lookup: sku_name -> usd_per_dbu
+    price_map = {}
+    for r in price_rows:
+        sku = r[0]
+        price = _float(r[1])
+        if price > 0:
+            price_map[sku] = price
+    avg_dbu_price = round(sum(price_map.values()) / max(len(price_map), 1), 4) if price_map else 0.07
+
+    # Merge job run data with billing data
+    job_cost_map = {}  # job_id -> {dbus, sku, name}
+    for r in job_billing_rows:
+        jid = str(r[0] or "")
+        if jid not in job_cost_map:
+            job_cost_map[jid] = {"dbus": 0, "sku": r[2] or "", "name": r[1] or ""}
+        job_cost_map[jid]["dbus"] += _float(r[3])
+
+    workflow_js = []
+    for r in job_runs_rows:
+        jid = str(r[0] or "")
+        billing = job_cost_map.get(jid, {})
+        total_dbus = billing.get("dbus", 0)
+        sku = billing.get("sku", "")
+        compute_type = "Job Compute"
+        if "ALL_PURPOSE" in sku.upper():
+            compute_type = "All-Purpose"
+        elif "SERVERLESS" in sku.upper():
+            compute_type = "Serverless"
+        elif "DLT" in sku.upper():
+            compute_type = "DLT"
+        workflow_js.append({
+            "jobId": jid,
+            "name": r[1] or jid,
+            "computeType": compute_type,
+            "totalRuns": _int(r[2]),
+            "succeeded": _int(r[3]),
+            "failed": _int(r[4]),
+            "canceled": _int(r[5]),
+            "avgDurationMin": _float(r[6]),
+            "totalDurationMin": _float(r[7]),
+            "totalDbus": round(total_dbus, 4),
+            "estCost": round(total_dbus * avg_dbu_price, 2),
+        })
+    workflow_js.sort(key=lambda w: w["estCost"], reverse=True)
+
+    # Totals from billing
+    billing_total_dbus = sum(c["dbus"] for c in cost_by_product_js)
+    billing_total_cost = round(billing_total_dbus * avg_dbu_price, 2)
+
     DATA = {
         "meta": {"workspace": workspace_url, "cloud": cloud, "period": "Last 30 Days"},
         "apps": app_list,
@@ -213,6 +285,12 @@ def render_dashboard(snapshot: dict, findings=None, security_score=None,
         "clusters": cluster_js,
         "warehouses": warehouse_js,
         "jobs": len(jobs_raw),
+        "costByProduct": cost_by_product_js,
+        "monthlyCost": monthly_cost_js,
+        "dailyCost": daily_cost_js,
+        "costByTag": cost_by_tag_js,
+        "workflows": workflow_js,
+        "avgDbuPrice": avg_dbu_price,
     }
 
     data_json = json.dumps(DATA, separators=(",", ":"), default=str)
@@ -410,7 +488,9 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
       <button class="nav-item" data-tab="architecture"><i class="fas fa-sitemap"></i> Architecture</button>
       <div class="sidebar-group">Operations</div>
       <button class="nav-item" data-tab="infrastructure"><i class="fas fa-server"></i> Infrastructure</button>
-      <button class="nav-item" data-tab="cost"><i class="fas fa-dollar-sign"></i> Cost Analysis</button>
+      <button class="nav-item" data-tab="spend"><i class="fas fa-dollar-sign"></i> Spend Overview</button>
+      <button class="nav-item" data-tab="workflows"><i class="fas fa-cogs"></i> Workflows</button>
+      <button class="nav-item" data-tab="cost"><i class="fas fa-calculator"></i> Cost Details</button>
       <div class="sidebar-group">Data</div>
       <button class="nav-item" data-tab="apps"><i class="fas fa-rocket"></i> Apps & Models</button>
       <button class="nav-item" data-tab="tables"><i class="fas fa-database"></i> Table Inventory</button>
@@ -543,8 +623,60 @@ details summary{{cursor:pointer;font-weight:600;font-size:13px;color:var(--text2
 </section>
 
 <!-- ============ TAB 6: COST ANALYSIS ============ -->
+<!-- ============ TAB: SPEND OVERVIEW ============ -->
+<section class="tab" id="tab-spend">
+  <div class="section-title">Spend Overview <span style="font-size:12px;color:var(--text2);font-weight:400">(Last 90 Days from system.billing.usage)</span></div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Total DBUs (90d)</div><div class="kpi-value" id="spend-total-dbus">—</div><div class="kpi-sub" id="spend-total-cost"></div></div>
+    <div class="kpi green" data-goto="workflows"><div class="kpi-icon"><i class="fas fa-cogs"></i></div><div class="kpi-label">Avg. Daily Cost</div><div class="kpi-value" id="spend-daily-avg">—</div><div class="kpi-sub">per day</div></div>
+    <div class="kpi purple"><div class="kpi-icon"><i class="fas fa-chart-pie"></i></div><div class="kpi-label">Top Category</div><div class="kpi-value" id="spend-top-cat">—</div><div class="kpi-sub" id="spend-top-cat-pct"></div></div>
+    <div class="kpi yellow"><div class="kpi-icon"><i class="fas fa-tags"></i></div><div class="kpi-label">Avg DBU Price</div><div class="kpi-value">${avg_dbu_price:.4f}</div><div class="kpi-sub">per DBU</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-hdr">Monthly Cost by Category</div><div class="card-body"><div class="chart-box h400"><canvas id="spend-monthly-chart"></canvas></div></div></div>
+    <div class="card"><div class="card-hdr">Cost by Tag</div><div class="card-body"><div class="chart-box h400"><canvas id="spend-tag-chart"></canvas></div></div></div>
+  </div>
+  <div class="card"><div class="card-hdr">Cost Breakdown by Category (90 Days)</div><div class="card-body" style="overflow-x:auto">
+    <table class="dtable" id="spend-breakdown-table">
+      <thead><tr><th></th><th>Category</th><th class="num">Total DBUs</th><th class="num">% of Total</th><th class="num">Est. Cost</th><th class="num">Active Days</th><th class="num">Avg DBU/Day</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div></div>
+  <div class="card"><div class="card-hdr">Daily Cost Trend (90 Days)</div><div class="card-body"><div class="chart-box h300"><canvas id="spend-daily-chart"></canvas></div></div></div>
+</section>
+
+<!-- ============ TAB: WORKFLOWS ============ -->
+<section class="tab" id="tab-workflows">
+  <div class="section-title">Workflows <span style="font-size:12px;color:var(--text2);font-weight:400">(Last 30 Days)</span></div>
+  <div class="kpi-grid">
+    <div class="kpi blue"><div class="kpi-icon"><i class="fas fa-cogs"></i></div><div class="kpi-label">Total Jobs</div><div class="kpi-value" id="wf-total-jobs">—</div></div>
+    <div class="kpi green"><div class="kpi-icon"><i class="fas fa-play-circle"></i></div><div class="kpi-label">Total Runs</div><div class="kpi-value" id="wf-total-runs">—</div></div>
+    <div class="kpi purple"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Total Job Cost</div><div class="kpi-value" id="wf-total-cost">—</div></div>
+    <div class="kpi yellow"><div class="kpi-icon"><i class="fas fa-clock"></i></div><div class="kpi-label">Total Duration</div><div class="kpi-value" id="wf-total-duration">—</div></div>
+  </div>
+  <div class="card"><div class="card-hdr">
+    <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+      <span>Job Runs</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="wf-sort" style="background:var(--elevated);color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:11px;font-family:var(--font)">
+          <option value="cost">Sort: Cost</option><option value="runs">Sort: Runs</option><option value="duration">Sort: Duration</option><option value="name">Sort: Name</option>
+        </select>
+        <input type="text" id="wf-search" placeholder="Search jobs..." style="background:var(--elevated);color:var(--text);border:1px solid var(--border);padding:4px 10px;border-radius:4px;font-size:12px;font-family:var(--font);width:160px">
+      </div>
+    </div>
+  </div><div class="card-body" style="overflow-x:auto">
+    <table class="dtable" id="wf-table">
+      <thead><tr>
+        <th>Name</th><th>Compute Type</th><th class="num">Est. Cost</th><th>Run Statuses</th><th class="num">Duration</th><th class="num">Runs</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div></div>
+</section>
+
+<!-- ============ TAB: COST DETAILS ============ -->
 <section class="tab" id="tab-cost">
-  <div class="section-title">Cost Analysis</div>
+  <div class="section-title">Cost Details</div>
   <div class="kpi-grid">
     <div class="kpi blue"><div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="kpi-label">Est. Monthly Total</div><div class="kpi-value">${total_cost_est:,.2f}</div></div>
     <div class="kpi green"><div class="kpi-icon"><i class="fas fa-database"></i></div><div class="kpi-label">SQL Compute Cost</div><div class="kpi-value">${sql_cost:,.2f}</div></div>
@@ -638,6 +770,7 @@ const D={data_json};
 const COLORS=['#4B7BF5','#34D399','#FBBF24','#A78BFA','#F87171','#00E5FF','#ec4899','#14b8a6','#f97316','#6366f1'];
 const chartDef={{responsive:true,maintainAspectRatio:false}};
 function fmt(n){{return n!=null?n.toLocaleString():'\u2014';}}
+function fmtN(n){{if(n==null)return'\u2014';if(Math.abs(n)>=1e6)return(n/1e6).toFixed(1)+'M';if(Math.abs(n)>=1e3)return(n/1e3).toFixed(1)+'k';return n<10?n.toFixed(2):Math.round(n).toLocaleString();}}
 function fmtB(b){{if(!b)return'\u2014';if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';if(b<1073741824)return(b/1048576).toFixed(2)+' MB';return(b/1073741824).toFixed(2)+' GB';}}
 function shortN(s){{return s&&s.length>22?s.slice(0,20)+'...':s;}}
 
@@ -658,7 +791,7 @@ function applyDateFilter(){{
   }}
   D._filteredUsers = D.users;
   // Destroy existing charts for affected tabs before re-render
-  ['exec-daily','exec-users','exec-findings','user-donut','user-bar','daily-stacked','daily-dual','cost-by-user','cost-category'].forEach(id=>{{
+  ['exec-daily','exec-users','exec-findings','user-donut','user-bar','daily-stacked','daily-dual','cost-by-user','cost-category','spend-monthly-chart','spend-tag-chart','spend-daily-chart'].forEach(id=>{{
     const el=document.getElementById(id);
     if(el){{const ch=Chart.getChart(el);if(ch)ch.destroy();}}
   }});
@@ -694,6 +827,8 @@ function renderTab(id){{if(rendered[id])return;rendered[id]=true;
   else if(id==='compliance')renderCompliance();
   else if(id==='architecture')renderArchitecture();
   else if(id==='infrastructure')renderInfra();
+  else if(id==='spend')renderSpend();
+  else if(id==='workflows')renderWorkflows();
   else if(id==='cost')renderCost();
   else if(id==='apps')renderApps();
   else if(id==='tables')renderTables();
@@ -859,6 +994,184 @@ function renderInfra(){{
     wTb.innerHTML += `<tr><td style="font-weight:500">${{w.name}}</td><td><span class="badge ${{stateBadge}}">${{w.state}}</span></td><td>${{w.size}}</td><td>${{w.type}}</td><td>${{srvBadge}}</td><td class="num">${{w.maxClusters}}</td></tr>`;
   }});
   if(!D.warehouses.length) wTb.innerHTML = '<tr><td colspan="6" style="color:var(--text2)">No SQL warehouses found</td></tr>';
+}}
+
+// ---- Spend Overview ----
+function renderSpend(){{
+  const cbp = D.costByProduct || [];
+  const mc = D.monthlyCost || [];
+  const dc = D.dailyCost || [];
+  const cbt = D.costByTag || [];
+  const price = D.avgDbuPrice || 0.07;
+
+  // KPIs
+  const totalDbus = cbp.reduce((s,c)=>s+c.dbus,0);
+  const totalCost = totalDbus * price;
+  document.getElementById('spend-total-dbus').textContent = fmtN(totalDbus) + ' DBU';
+  document.getElementById('spend-total-cost').textContent = '$' + fmtN(totalCost);
+  const activeDays = dc.length || 1;
+  document.getElementById('spend-daily-avg').textContent = '$' + fmtN(totalCost / activeDays);
+  if(cbp.length){{
+    const top = cbp[0];
+    document.getElementById('spend-top-cat').textContent = top.product;
+    const pct = totalDbus > 0 ? Math.round(top.dbus / totalDbus * 100) : 0;
+    document.getElementById('spend-top-cat-pct').textContent = pct + '% of total spend';
+  }}
+
+  // Monthly stacked bar chart
+  if(mc.length){{
+    const months = [...new Set(mc.map(r=>r.month))].sort();
+    const products = [...new Set(mc.map(r=>r.product))];
+    const prodColors = {{'SQL':'#4B7BF5','JOBS':'#34D399','ALL_PURPOSE':'#FBBF24','DLT':'#A78BFA','APPS':'#00E5FF','INTERACTIVE':'#F87171','LAKEBASE':'#C084FC','SERVERLESS_COMPUTE':'#38BDF8','PREDICTIVE_OPTIMIZATION':'#FB923C','DATABASE':'#818CF8','NETWORKING':'#94A3B8'}};
+    const datasets = products.map(p=>{{
+      const color = prodColors[p] || COLORS[products.indexOf(p) % COLORS.length];
+      return {{
+        label: p,
+        data: months.map(m=>{{
+          const row = mc.find(r=>r.month===m && r.product===p);
+          return row ? Math.round(row.dbus * price * 100) / 100 : 0;
+        }}),
+        backgroundColor: color,
+        borderRadius: 2
+      }};
+    }});
+    new Chart(document.getElementById('spend-monthly-chart'),{{
+      type:'bar',
+      data:{{ labels: months.map(m=>m.substring(0,7)), datasets }},
+      options:{{...chartDef, plugins:{{legend:{{position:'bottom',labels:{{boxWidth:10,font:{{size:10}}}}}}}}, scales:{{x:{{stacked:true}},y:{{stacked:true,title:{{display:true,text:'Est. Cost ($)',color:'#8B949E'}}}}}}}}
+    }});
+  }}
+
+  // Cost by Tag donut
+  if(cbt.length){{
+    // Group by product for the donut (since tags are mostly empty)
+    const tagGroups = {{}};
+    cbt.forEach(t=>{{
+      const key = t.tagKey === 'Untagged' ? t.product : t.tagValue;
+      tagGroups[key] = (tagGroups[key] || 0) + t.dbus;
+    }});
+    const entries = Object.entries(tagGroups).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    new Chart(document.getElementById('spend-tag-chart'),{{
+      type:'doughnut',
+      data:{{
+        labels: entries.map(e=>e[0]),
+        datasets:[{{data: entries.map(e=>Math.round(e[1]*price*100)/100), backgroundColor: COLORS.slice(0,entries.length)}}]
+      }},
+      options:{{...chartDef, cutout:'55%', plugins:{{legend:{{position:'right',labels:{{boxWidth:10,font:{{size:10}}}}}}}}}}
+    }});
+  }}
+
+  // Breakdown table
+  const tbody = document.querySelector('#spend-breakdown-table tbody');
+  const catColors = {{'SQL':'#4B7BF5','JOBS':'#34D399','ALL_PURPOSE':'#FBBF24','DLT':'#A78BFA','APPS':'#00E5FF','INTERACTIVE':'#F87171','LAKEBASE':'#C084FC','PREDICTIVE_OPTIMIZATION':'#FB923C','DATABASE':'#818CF8','NETWORKING':'#94A3B8'}};
+  cbp.forEach(c=>{{
+    const pct = totalDbus > 0 ? Math.round(c.dbus / totalDbus * 100) : 0;
+    const color = catColors[c.product] || '#8B949E';
+    const cost = (c.dbus * price);
+    const avgPerDay = c.days > 0 ? (c.dbus / c.days) : 0;
+    tbody.innerHTML += `<tr>
+      <td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${{color}}"></span></td>
+      <td style="font-weight:600">${{c.product}}</td>
+      <td class="num">${{fmtN(c.dbus)}}</td>
+      <td class="num">${{pct}}%</td>
+      <td class="num">$${{fmtN(cost)}}</td>
+      <td class="num">${{c.days}}</td>
+      <td class="num">${{fmtN(avgPerDay)}}</td>
+    </tr>`;
+  }});
+  // Total row
+  tbody.innerHTML += `<tr style="font-weight:700;border-top:2px solid var(--border)"><td></td><td>Total</td><td class="num">${{fmtN(totalDbus)}}</td><td class="num">100%</td><td class="num">$${{fmtN(totalCost)}}</td><td class="num">${{activeDays}}</td><td class="num">${{fmtN(totalDbus/activeDays)}}</td></tr>`;
+
+  // Daily cost trend line
+  if(dc.length){{
+    new Chart(document.getElementById('spend-daily-chart'),{{
+      type:'line',
+      data:{{
+        labels: dc.map(d=>d.date.substring(5)),
+        datasets:[
+          {{label:'SQL',data:dc.map(d=>Math.round(d.sql*price*100)/100),borderColor:'#4B7BF5',backgroundColor:'rgba(75,123,245,0.1)',fill:true,tension:.3,pointRadius:0}},
+          {{label:'Jobs',data:dc.map(d=>Math.round(d.jobs*price*100)/100),borderColor:'#34D399',backgroundColor:'rgba(52,211,153,0.1)',fill:true,tension:.3,pointRadius:0}},
+          {{label:'All-Purpose',data:dc.map(d=>Math.round(d.allPurpose*price*100)/100),borderColor:'#FBBF24',backgroundColor:'rgba(251,191,36,0.1)',fill:true,tension:.3,pointRadius:0}},
+          {{label:'DLT',data:dc.map(d=>Math.round(d.dlt*price*100)/100),borderColor:'#A78BFA',backgroundColor:'rgba(167,139,250,0.1)',fill:true,tension:.3,pointRadius:0}},
+          {{label:'Other',data:dc.map(d=>Math.round(d.other*price*100)/100),borderColor:'#8B949E',backgroundColor:'rgba(139,148,158,0.1)',fill:true,tension:.3,pointRadius:0}}
+        ]
+      }},
+      options:{{...chartDef, plugins:{{legend:{{position:'bottom',labels:{{boxWidth:10,font:{{size:10}}}}}}}}, scales:{{y:{{title:{{display:true,text:'Est. Cost ($)',color:'#8B949E'}}}}}}}}
+    }});
+  }}
+}}
+
+// ---- Workflows ----
+function renderWorkflows(){{
+  const wf = D.workflows || [];
+  const totalRuns = wf.reduce((s,w)=>s+w.totalRuns,0);
+  const totalCost = wf.reduce((s,w)=>s+w.estCost,0);
+  const totalDur = wf.reduce((s,w)=>s+w.totalDurationMin,0);
+  document.getElementById('wf-total-jobs').textContent = wf.length;
+  document.getElementById('wf-total-runs').textContent = fmtN(totalRuns);
+  document.getElementById('wf-total-cost').textContent = '$' + fmtN(totalCost);
+  const hrs = Math.floor(totalDur/60); const mins = Math.round(totalDur%60);
+  document.getElementById('wf-total-duration').textContent = hrs + 'h ' + mins + 'm';
+
+  function renderWfTable(data){{
+    const tbody = document.querySelector('#wf-table tbody');
+    tbody.innerHTML = '';
+    data.forEach(w=>{{
+      // Compute type badge
+      const ctColors = {{'Job Compute':'#34D399','All-Purpose':'#FBBF24','Serverless':'#4B7BF5','DLT':'#A78BFA'}};
+      const ctColor = ctColors[w.computeType] || '#8B949E';
+
+      // Run status dots
+      let statusHtml = '';
+      for(let i=0;i<Math.min(w.succeeded,8);i++) statusHtml += '<span style="color:#34D399" title="Success">●</span>';
+      for(let i=0;i<Math.min(w.failed,8);i++) statusHtml += '<span style="color:#F87171" title="Failed">●</span>';
+      for(let i=0;i<Math.min(w.canceled,4);i++) statusHtml += '<span style="color:#FBBF24" title="Canceled">●</span>';
+
+      // Duration formatting
+      const durH = Math.floor(w.totalDurationMin/60);
+      const durM = Math.round(w.totalDurationMin%60);
+      const durStr = durH > 0 ? durH + 'h ' + durM + 'm' : durM + 'm';
+
+      // Cost bar
+      const maxCost = data.length ? data[0].estCost : 1;
+      const costPct = maxCost > 0 ? Math.round(w.estCost / maxCost * 100) : 0;
+
+      tbody.innerHTML += `<tr>
+        <td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${{w.name}}">${{w.name}}</td>
+        <td><span style="background:${{ctColor}}22;color:${{ctColor}};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${{w.computeType}}</span></td>
+        <td class="num">
+          <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+            <div style="width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${{costPct}}%;height:100%;background:${{ctColor}};border-radius:3px"></div></div>
+            <span>$${{w.estCost < 0.01 && w.estCost > 0 ? '<0.01' : w.estCost.toFixed(2)}}</span>
+          </div>
+        </td>
+        <td style="font-size:16px;letter-spacing:2px">${{statusHtml}}</td>
+        <td class="num">${{durStr}}</td>
+        <td class="num">${{w.totalRuns}}</td>
+      </tr>`;
+    }});
+    if(!data.length) tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text2);text-align:center;padding:24px">No job run data available</td></tr>';
+  }}
+
+  renderWfTable(wf);
+
+  // Sort
+  document.getElementById('wf-sort').addEventListener('change',(e)=>{{
+    const v = e.target.value;
+    const sorted = [...wf];
+    if(v==='cost') sorted.sort((a,b)=>b.estCost-a.estCost);
+    else if(v==='runs') sorted.sort((a,b)=>b.totalRuns-a.totalRuns);
+    else if(v==='duration') sorted.sort((a,b)=>b.totalDurationMin-a.totalDurationMin);
+    else if(v==='name') sorted.sort((a,b)=>a.name.localeCompare(b.name));
+    renderWfTable(sorted);
+  }});
+
+  // Search
+  document.getElementById('wf-search').addEventListener('input',(e)=>{{
+    const q = e.target.value.toLowerCase();
+    const filtered = wf.filter(w=>w.name.toLowerCase().includes(q) || w.computeType.toLowerCase().includes(q));
+    renderWfTable(filtered);
+  }});
 }}
 
 function renderCost(){{
