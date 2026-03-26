@@ -194,6 +194,7 @@ class DatabricksCollector:
             r = self.session.post(f"{self.host}{path}", json=data, timeout=60, **kwargs)
             if r.status_code in (200, 201):
                 return r.json()
+            log.warning("POST %s returned %d: %s", path, r.status_code, r.text[:300])
             try:
                 return r.json()
             except Exception:
@@ -211,6 +212,9 @@ class DatabricksCollector:
             "disposition": "INLINE",
             "format": "JSON_ARRAY",
         })
+        if not result:
+            log.warning("SQL empty response [%s]", statement[:60])
+            return [], []
         state = result.get("status", {}).get("state", "")
         if state == "SUCCEEDED":
             cols = [c["name"] for c in result.get("manifest", {}).get("schema", {}).get("columns", [])]
@@ -227,8 +231,12 @@ class DatabricksCollector:
                     return cols, rows
             log.warning("SQL timed out: %s...", statement[:60])
             return [], []
-        err = result.get("status", {}).get("error", {}).get("message", str(result)[:200])
-        log.warning("SQL error [%s]: %s", statement[:60], err[:200])
+        # Log error with full context
+        err_msg = result.get("status", {}).get("error", {}).get("message", "")
+        err_code = result.get("error_code", result.get("message", ""))
+        if not err_msg and not state:
+            err_msg = str(result)[:300]
+        log.warning("SQL error [%s] state=%s: %s %s", statement[:60], state, err_code, err_msg[:200])
         return [], []
 
     # ---- Connection test ----
