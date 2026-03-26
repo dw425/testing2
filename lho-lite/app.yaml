@@ -3,6 +3,3 @@ command:
   - python
   - app/main.py
   - "--no-browser"
-env:
-  - name: DATABRICKS_APP_PORT
-    value: "8050"
