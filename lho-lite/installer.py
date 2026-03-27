@@ -104,7 +104,7 @@ full_tree = requests.get(
 
 # Files to skip (not needed for the running app)
 SKIP_PREFIXES = (
-    "data/", "__pycache__/", "app/__pycache__/",
+    "data/", "__pycache__/", "app/__pycache__/", "docs/",
     "seed_demo", "deploy.sh", "databricks.yml", "Dockerfile",
     "installer", ".gitignore", "README", "lite.md",
 )
