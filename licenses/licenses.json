@@ -1,10 +1,10 @@
 {
     "licenses": {
         "LHO-DEMO-0001-BPTECH": {
-            "valid": true,
-            "expires": "2027-03-26",
+            "valid": false,
+            "expires": "2026-03-25",
             "customer": "Blueprint Technologies (Internal)",
-            "message": "Internal demo license — Blueprint Technologies"
+            "message": "License expired — contact sales@blueprinttech.com to renew"
         },
         "LHO-TRIAL-0001-EVAL": {
             "valid": true,
