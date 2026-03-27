@@ -147,14 +147,19 @@ for d in sorted(dirs_needed):
 
 # Download and write each file
 written = 0
+failed_files = []
 for f in app_files:
-    content = get_file_content(f["sha"])
-    full_path = f"{WORKSPACE_APP_DIR}/{f['path']}"
-    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-    with open(full_path, "wb") as fh:
-        fh.write(content)
-    written += 1
-    print(f"  ✓ {f['path']}")
+    try:
+        content = get_file_content(f["sha"])
+        full_path = f"{WORKSPACE_APP_DIR}/{f['path']}"
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "wb") as fh:
+            fh.write(content)
+        written += 1
+        print(f"  ✓ {f['path']}")
+    except Exception as e:
+        failed_files.append(f['path'])
+        print(f"  ❌ {f['path']} — {e}")
 
 # Create empty data directory
 os.makedirs(f"{WORKSPACE_APP_DIR}/data", exist_ok=True)
@@ -166,22 +171,32 @@ if not os.path.exists(init_path):
         fh.write("")
 
 # Pre-seed config: license key + auto auth method
-import sqlite3
-db_path = f"{WORKSPACE_APP_DIR}/data/lho_lite.db"
-db = sqlite3.connect(db_path)
-db.execute("CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT NOT NULL, encrypted INTEGER DEFAULT 0)")
-if LICENSE_KEY:
-    # Seed as pending — main.py promotes it on first startup
+try:
+    import sqlite3
+    db_path = f"{WORKSPACE_APP_DIR}/data/lho_lite.db"
+    db = sqlite3.connect(db_path)
+    db.execute("CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT NOT NULL, encrypted INTEGER DEFAULT 0)")
+    if LICENSE_KEY:
+        # Seed as pending — main.py promotes it on first startup
+        db.execute("INSERT OR REPLACE INTO config (key, value, encrypted) VALUES (?, ?, 0)",
+                   ("license_key_pending", LICENSE_KEY))
+        print(f"  ✓ License key pre-configured: {LICENSE_KEY[:12]}...")
+    # Pre-set auth to auto (SDK) so the admin page shows the right default
     db.execute("INSERT OR REPLACE INTO config (key, value, encrypted) VALUES (?, ?, 0)",
-               ("license_key_pending", LICENSE_KEY))
-    print(f"  ✓ License key pre-configured: {LICENSE_KEY[:12]}...")
-# Pre-set auth to auto (SDK) so the admin page shows the right default
-db.execute("INSERT OR REPLACE INTO config (key, value, encrypted) VALUES (?, ?, 0)",
-           ("auth_method", "auto"))
-db.commit()
-db.close()
+               ("auth_method", "auto"))
+    db.commit()
+    db.close()
+except Exception as e:
+    print(f"  ⚠ Config pre-seed failed: {e}")
+    print("    License key and auth method can be set on the admin page")
 
-print(f"\n✓ {written} files written to {WORKSPACE_APP_DIR}")
+if failed_files:
+    print(f"\n⚠ {written} files written, {len(failed_files)} FAILED:")
+    for ff in failed_files:
+        print(f"  ❌ {ff}")
+    raise Exception(f"Failed to download {len(failed_files)} files — cannot proceed with deployment")
+else:
+    print(f"\n✓ {written} files written to {WORKSPACE_APP_DIR}")
 
 # COMMAND ----------
 
@@ -310,22 +325,29 @@ else:
     print(f"  ⚠ Compute not active after 5 minutes — attempting deploy anyway")
 
 # --- Deploy ---
+_deploy_succeeded = False
 print(f"\nDeploying from {WORKSPACE_APP_DIR} ...")
 sc, data = _api("POST", f"/api/2.0/apps/{APP_NAME}/deployments", {
     "source_code_path": WORKSPACE_APP_DIR,
 })
 if sc in (200, 201):
     deployment_id = data.get("deployment_id", "")
-    print(f"  Deploy initiated (ID: {deployment_id})")
+    if not deployment_id:
+        print(f"  ⚠ No deployment ID returned — cannot track status")
+    else:
+        print(f"  Deploy initiated (ID: {deployment_id})")
 
     # Poll for deployment completion
     for i in range(30):  # up to 5 minutes
         _time.sleep(10)
+        if not deployment_id:
+            break
         sc2, d2 = _api("GET", f"/api/2.0/apps/{APP_NAME}/deployments/{deployment_id}")
         if sc2 == 200:
             state = (d2.get("status") or {}).get("state", "UNKNOWN")
             if state == "SUCCEEDED":
                 print(f"  ✓ Deployment complete!")
+                _deploy_succeeded = True
                 break
             elif state in ("FAILED", "CANCELLED"):
                 msg = (d2.get("status") or {}).get("message", "")
@@ -342,6 +364,8 @@ if sc in (200, 201):
         compute_state = (d3.get("compute_status") or {}).get("state", "UNKNOWN")
         print(f"  App URL: {app_url}")
         print(f"  Compute state: {compute_state}")
+        if compute_state == "ACTIVE":
+            _deploy_succeeded = True
 else:
     err_msg = data.get("message", str(sc))
     print(f"  ❌ Deploy failed ({sc}): {err_msg[:500]}")
