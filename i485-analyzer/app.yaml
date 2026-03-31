@@ -1,0 +1,12 @@
+command:
+  - python
+  - app/main.py
+env:
+  - name: I485_SCHEMA
+    value: lho_ucm.i485_form
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: 0c5bd90f54a5bd8b
+  - name: DATABRICKS_HOST
+    value: https://dbc-1459cbde-0cff.cloud.databricks.com
+  - name: PORT
+    value: "8060"

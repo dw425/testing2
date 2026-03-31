@@ -1,0 +1,14 @@
+# Generated data — recreated by pipeline
+data/features/
+data/models/
+data/results/
+synthetic_data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
