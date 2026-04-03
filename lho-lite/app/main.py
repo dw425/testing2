@@ -425,26 +425,37 @@ def main():
         log.info("Config saved from CLI arguments.")
 
     # Always load pre-seeded snapshot (contains full data from system tables)
-    _preload_path = os.path.join(_PROJECT_ROOT, "data", "preloaded_snapshot.json")
+    # Try app/ directory first (bundled with source), then data/ directory
+    _preload_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "preloaded_snapshot.json")
+    if not os.path.exists(_preload_path):
+        _preload_path = os.path.join(_PROJECT_ROOT, "data", "preloaded_snapshot.json")
     if os.path.exists(_preload_path):
         try:
             with open(_preload_path) as _f:
                 _pre = json.load(_f)
             save_data_snapshot(_pre["data"], _pre.get("duration_sec", 0))
-            save_config({"setup_complete": "true", "workspace_url": "https://" + _pre["data"].get("security", {}).get("_workspace_url", ""), "auth_method": "auto"})
-            log.info("Loaded pre-seeded snapshot from %s", _preload_path)
+            save_config({
+                "setup_complete": "true",
+                "workspace_url": "https://" + _pre["data"].get("security", {}).get("_workspace_url", ""),
+                "auth_method": "auto",
+                "refresh_schedule": "manual",
+            })
+            log.info("Loaded pre-seeded snapshot from %s (%d bytes)", _preload_path, os.path.getsize(_preload_path))
         except Exception as e:
             log.warning("Failed to load pre-seeded snapshot: %s", e)
-
-    # If setup is complete and we have config but no data, trigger initial refresh
-    cfg_startup = get_config()
-    if cfg_startup.get("setup_complete") == "true":
-        can_collect = has_config() or IS_DATABRICKS_APP
-        if can_collect and not get_latest_snapshot():
-            log.info("No cached data found. Triggering initial data collection...")
-            sched.trigger_manual_refresh()
     else:
-        log.info("Setup not complete. Waiting for admin configuration...")
+        log.warning("No pre-seeded snapshot found at %s", _preload_path)
+
+    # Only trigger auto-refresh if no data at all (preload should have handled it)
+    cfg_startup = get_config()
+    if not get_latest_snapshot():
+        if cfg_startup.get("setup_complete") == "true":
+            can_collect = has_config() or IS_DATABRICKS_APP
+            if can_collect:
+                log.info("No cached data found. Triggering initial data collection...")
+                sched.trigger_manual_refresh()
+        else:
+            log.info("Setup not complete. Waiting for admin configuration...")
 
     # Restore schedule from config
     if has_config():
