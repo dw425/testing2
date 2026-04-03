@@ -424,6 +424,19 @@ def main():
         })
         log.info("Config saved from CLI arguments.")
 
+    # Load pre-seeded snapshot if no data exists yet
+    if not get_latest_snapshot():
+        _preload_path = os.path.join(_PROJECT_ROOT, "data", "preloaded_snapshot.json")
+        if os.path.exists(_preload_path):
+            try:
+                with open(_preload_path) as _f:
+                    _pre = json.load(_f)
+                save_data_snapshot(_pre["data"], _pre.get("duration_sec", 0))
+                save_config({"setup_complete": "true", "workspace_url": "https://" + _pre["data"].get("security", {}).get("_workspace_url", ""), "auth_method": "auto"})
+                log.info("Loaded pre-seeded snapshot from %s", _preload_path)
+            except Exception as e:
+                log.warning("Failed to load pre-seeded snapshot: %s", e)
+
     # If setup is complete and we have config but no data, trigger initial refresh
     cfg_startup = get_config()
     if cfg_startup.get("setup_complete") == "true":

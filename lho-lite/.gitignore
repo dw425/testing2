@@ -1,3 +1,4 @@
 data/
+!data/preloaded_snapshot.json
 __pycache__/
 *.pyc
