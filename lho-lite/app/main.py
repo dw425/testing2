@@ -104,7 +104,7 @@ def _build_collector() -> DatabricksCollector:
 
 
 def _do_refresh():
-    """Full data collection + analysis + save snapshot."""
+    """Full data collection + analysis + save snapshot + write to destinations."""
     log.info("Starting data refresh...")
     t0 = time.time()
     try:
@@ -113,6 +113,22 @@ def _do_refresh():
         duration = round(time.time() - t0, 1)
         save_data_snapshot(data, duration)
         log.info("Data refresh completed in %.1f seconds.", duration)
+
+        # Write to external destinations (Delta / Lakebase) if configured
+        cfg = get_config()
+        dest = cfg.get("data_destination", "local")
+        if dest != "local":
+            try:
+                sec_data = data.get("security", {})
+                findings = analyze_security(sec_data)
+                score = compute_security_score(findings)
+                compliance = assess_compliance(sec_data, findings)
+                profile = build_workspace_profile(sec_data)
+
+                from app.data_writer import write_to_destinations
+                write_to_destinations(collector, data, findings, score, compliance, profile, duration)
+            except Exception as e:
+                log.error("External data write failed: %s", e)
     except Exception as e:
         log.error("Data refresh failed after %.1f seconds: %s", time.time() - t0, e)
 
