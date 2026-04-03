@@ -73,6 +73,16 @@ def _check_license():
     return None
 
 
+@flask_app.after_request
+def _no_cache(response):
+    """Prevent browser/proxy caching of HTML pages."""
+    if response.content_type and "text/html" in response.content_type:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 @flask_app.errorhandler(Exception)
 def _handle_error(e):
     log.error("Unhandled error on %s: %s", request.path, e)
@@ -360,6 +370,39 @@ def export_usage():
 @flask_app.route("/health")
 def health():
     return jsonify({"status": "ok", "version": "1.0.0"})
+
+
+@flask_app.route("/debug/data-check")
+def debug_data_check():
+    """Debug endpoint to verify data state in SQLite."""
+    snap = get_latest_snapshot()
+    if not snap:
+        return jsonify({"error": "No snapshot in SQLite", "has_config": has_config()})
+
+    data = snap["data"]
+    sec = data.get("security", {})
+    usage = data.get("usage", {})
+
+    summary = {
+        "snapshot_exists": True,
+        "collected_at": snap.get("collected_at"),
+        "duration_sec": snap.get("duration_sec"),
+        "security_keys": list(sec.keys()),
+        "security_key_count": len(sec),
+        "usage_keys": list(usage.keys()),
+        "usage_key_count": len(usage),
+        "daily_queries_rows": len(usage.get("daily_queries", {}).get("rows", [])),
+        "user_queries_rows": len(usage.get("user_queries", {}).get("rows", [])),
+        "cost_by_product_rows": len(usage.get("cost_by_product", {}).get("rows", [])),
+        "daily_cost_rows": len(usage.get("daily_cost", {}).get("rows", [])),
+        "job_runs_rows": len(usage.get("job_runs", {}).get("rows", [])),
+        "billing_line_items_rows": len(usage.get("billing_line_items", {}).get("rows", [])),
+        "warehouse_events_rows": len(usage.get("warehouse_events", {}).get("rows", [])),
+        "list_prices_rows": len(usage.get("list_prices", {}).get("rows", [])),
+        "config": {k: ("***" if k in ("pat_token", "sp_client_secret", "license_key") else v)
+                   for k, v in get_config().items()},
+    }
+    return jsonify(summary)
 
 
 # ---------------------------------------------------------------------------
