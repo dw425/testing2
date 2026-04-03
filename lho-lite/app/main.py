@@ -65,16 +65,12 @@ IS_DATABRICKS_APP = bool(os.environ.get("DATABRICKS_APP_PORT"))
 
 
 # ---------------------------------------------------------------------------
-# License gate — blocks all routes except /admin and /health if unlicensed
+# License gate — disabled; kept for reference
 # ---------------------------------------------------------------------------
 @flask_app.before_request
 def _check_license():
-    # Allow admin page (to enter/update license key), health check, and static files
-    allowed = ("/admin", "/health", "/static/")
-    if any(request.path.startswith(p) for p in allowed):
-        return None
-    if not is_licensed():
-        return license_blocked_page(), 403
+    # License gate bypassed — allow all requests
+    return None
 
 
 @flask_app.errorhandler(Exception)
