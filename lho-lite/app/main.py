@@ -391,7 +391,8 @@ def main():
         log.info("License key promoted from installer pre-seed.")
 
     # Validate license on startup
-    if args.dev_license:
+    skip_license = args.dev_license or os.environ.get("LHO_SKIP_LICENSE", "").lower() in ("1", "true", "yes")
+    if skip_license:
         log.info("DEV MODE: License check bypassed.")
         from app import license as lic_mod
         lic_mod._license_state["valid"] = True

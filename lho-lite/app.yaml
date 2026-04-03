@@ -3,3 +3,6 @@ command:
   - python
   - app/main.py
   - "--no-browser"
+env:
+  - name: LHO_SKIP_LICENSE
+    value: "true"

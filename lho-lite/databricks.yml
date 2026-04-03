@@ -16,6 +16,8 @@ resources:
             value: "8050"
           - name: LHO_DATA_DIR
             value: "/app/data"
+          - name: LHO_SKIP_LICENSE
+            value: "true"
 
 targets:
   dev:
